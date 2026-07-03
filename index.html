@@ -9,11 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
       --primary: #1a5276;
@@ -33,12 +29,7 @@
       --transition: all 0.3s ease;
     }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      color: var(--dark);
-      line-height: 1.6;
-    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: var(--dark); line-height: 1.6; }
 
     .hidden { display: none !important; }
     .text-center { text-align: center; }
@@ -64,9 +55,7 @@
       animation: spin 0.8s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .login-container {
       display: flex;
@@ -87,10 +76,7 @@
       animation: slideUp 0.6s ease;
     }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
     .login-box .logo { text-align: center; margin-bottom: 30px; }
     .login-box .logo h1 { color: var(--primary); font-size: 1.8em; font-weight: 700; }
@@ -235,14 +221,9 @@
     .charts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
     .chart-container { position: relative; height: 280px; }
 
-    /* Performance rankings */
     .rank-1 { background: #f9e79f !important; font-weight: bold; }
     .rank-2 { background: #fdebd0 !important; }
     .rank-3 { background: #d5f5e3 !important; }
-
-    .dorm-badge { padding: 2px 10px; border-radius: 20px; font-size: 0.7em; font-weight: 600; display: inline-block; }
-    .dorm-boys { background: #e3f2fd; color: #0d47a1; }
-    .dorm-girls { background: #fce4ec; color: #c2185b; }
 
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
@@ -333,11 +314,11 @@
         <div class="nav-item" onclick="showTab('clinic')" data-tab="clinic"><span class="icon">🏥</span> Clinic Visits</div>
 
         <div class="sidebar-section">⭐ Leadership</div>
-        <div class="nav-item" onclick="showTab('prefects')" data-tab="prefects"><span class="icon">⭐</span> Prefect Roles</div>
+        <div class="nav-item" id="prefectNav" onclick="showTab('prefects')" data-tab="prefects"><span class="icon">⭐</span> Prefect Roles</div>
 
         <div class="sidebar-section">👨‍🏫 Staff</div>
         <div class="nav-item" onclick="showTab('teachers')" data-tab="teachers"><span class="icon">👨‍🏫</span> Teachers</div>
-        <div class="nav-item" onclick="showTab('teacherAttendance')" data-tab="teacherAttendance"><span class="icon">📅</span> Teacher Attendance</div>
+        <div class="nav-item" id="teacherAttNav" onclick="showTab('teacherAttendance')" data-tab="teacherAttendance"><span class="icon">📅</span> Teacher Attendance</div>
 
         <div class="sidebar-section">📈 Analytics</div>
         <div class="nav-item" onclick="showTab('analytics')" data-tab="analytics"><span class="icon">📈</span> Analytics</div>
@@ -351,16 +332,10 @@
         <!-- DASHBOARD -->
         <div class="tab-content active" id="tab-dashboard">
           <div class="card">
-            <div class="card-header">
-              <h2>📊 Dashboard Overview</h2>
-              <span style="font-size:0.8em;color:var(--gray);">Last updated: <span id="lastUpdated">Just now</span></span>
-            </div>
+            <div class="card-header"><h2>📊 Dashboard Overview</h2><span style="font-size:0.8em;color:var(--gray);">Last updated: <span id="lastUpdated">Just now</span></span></div>
             <div class="stats-grid" id="dashboardStats"></div>
           </div>
-          <div class="card">
-            <div class="card-header"><h3>🏠 Boarding Status</h3></div>
-            <div class="stats-grid" id="boardingStats"></div>
-          </div>
+          <div class="card"><div class="card-header"><h3>🏠 Boarding Status</h3></div><div class="stats-grid" id="boardingStats"></div></div>
           <div class="charts-grid">
             <div class="card"><div class="card-header"><h3>Students Per Class</h3></div><div class="chart-container"><canvas id="dashClassChart"></canvas></div></div>
             <div class="card"><div class="card-header"><h3>Grade Distribution</h3></div><div class="chart-container"><canvas id="dashGradeChart"></canvas></div></div>
@@ -372,32 +347,15 @@
         <!-- STUDENTS -->
         <div class="tab-content" id="tab-students">
           <div class="card">
-            <div class="card-header">
-              <h2>👩‍🎓 Student Records</h2>
-              <button class="btn btn-primary" id="addStudentBtn" onclick="showAddStudentModal()">+ Add Student</button>
-            </div>
+            <div class="card-header"><h2>👩‍🎓 Student Records</h2><button class="btn btn-primary" id="addStudentBtn" onclick="showAddStudentModal()">+ Add Student</button></div>
             <div class="form-row" style="margin-bottom:16px;">
-              <div class="form-group">
-                <label>Search</label>
-                <div class="search-box">
-                  <span class="search-icon">🔍</span>
-                  <input type="text" id="studentSearch" placeholder="Search by name or admission..." oninput="renderStudents()">
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Class</label>
-                <select id="studentClassFilter" onchange="renderStudents()"><option value="">All Classes</option></select>
-              </div>
-              <div class="form-group">
-                <label>Status</label>
-                <select id="studentStatusFilter" onchange="renderStudents()"><option value="">All</option><option value="Boarder">Boarders</option><option value="Day Scholar">Day Scholars</option></select>
-              </div>
+              <div class="form-group"><label>Search</label><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="studentSearch" placeholder="Search by name or admission..." oninput="renderStudents()"></div></div>
+              <div class="form-group"><label>Class</label><select id="studentClassFilter" onchange="renderStudents()"><option value="">All Classes</option></select></div>
+              <div class="form-group"><label>Status</label><select id="studentStatusFilter" onchange="renderStudents()"><option value="">All</option><option value="Boarder">Boarders</option><option value="Day Scholar">Day Scholars</option></select></div>
             </div>
             <div class="table-container">
               <table>
-                <thead>
-                  <tr><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Sponsorship</th><th>Prefect</th><th>Prefect Role</th><th>Parent/Guardian</th><th>Actions</th></tr>
-                </thead>
+                <thead><tr><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Sponsorship</th><th>Prefect</th><th>Prefect Role</th><th>Parent/Guardian</th><th>Actions</th></tr></thead>
                 <tbody id="studentTableBody"></tbody>
               </table>
             </div>
@@ -407,17 +365,10 @@
         <!-- SPONSORSHIP -->
         <div class="tab-content" id="tab-sponsorship">
           <div class="card">
-            <div class="card-header">
-              <h2>💰 Student Sponsorship</h2>
-              <button class="btn btn-primary" id="editSponsorshipBtn" onclick="showEditSponsorshipModal()">✏️ Edit Sponsorship</button>
-            </div>
+            <div class="card-header"><h2>💰 Student Sponsorship</h2><button class="btn btn-primary" id="editSponsorshipBtn" onclick="showEditSponsorshipModal()">✏️ Edit Sponsorship</button></div>
             <div class="table-container">
-              <table>
-                <thead>
-                  <tr><th>Student</th><th>Class</th><th>Sponsor Type</th><th>Sponsor Name</th><th>Contact</th><th>Notes</th></tr>
-                </thead>
-                <tbody id="sponsorshipTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Student</th><th>Class</th><th>Sponsor Type</th><th>Sponsor Name</th><th>Contact</th><th>Notes</th></tr></thead>
+              <tbody id="sponsorshipTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -425,20 +376,15 @@
         <!-- GRADES -->
         <div class="tab-content" id="tab-grades">
           <div class="card">
-            <div class="card-header">
-              <h2>📝 Student Grades</h2>
-              <button class="btn btn-primary" id="addGradeBtn" onclick="showAddGradeModal()">+ Add Grade</button>
-            </div>
+            <div class="card-header"><h2>📝 Student Grades</h2><button class="btn btn-primary" id="addGradeBtn" onclick="showAddGradeModal()">+ Add Grade</button></div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Class</label><select id="gradeClassFilter" onchange="renderGrades()"><option value="">All Classes</option></select></div>
               <div class="form-group"><label>Subject</label><select id="gradeSubjectFilter" onchange="renderGrades()"><option value="">All Subjects</option></select></div>
               <div class="form-group"><label>Term</label><select id="gradeTermFilter" onchange="renderGrades()"><option value="">All Terms</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
             </div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Test 1</th><th>Test 2</th><th>Exam</th><th>Total</th><th>Grade</th><th>Actions</th></tr></thead>
-                <tbody id="gradesTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Test 1</th><th>Test 2</th><th>Exam</th><th>Total</th><th>Grade</th><th>Actions</th></tr></thead>
+              <tbody id="gradesTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -446,19 +392,14 @@
         <!-- STUDENT ATTENDANCE -->
         <div class="tab-content" id="tab-attendance">
           <div class="card">
-            <div class="card-header">
-              <h2>📋 Student Attendance</h2>
-              <button class="btn btn-primary" id="addAttendanceBtn" onclick="showAddAttendanceModal()">+ Mark Attendance</button>
-            </div>
+            <div class="card-header"><h2>📋 Student Attendance</h2><button class="btn btn-primary" id="addAttendanceBtn" onclick="showAddAttendanceModal()">+ Mark Attendance</button></div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Date</label><input type="date" id="attendanceDateFilter" onchange="renderAttendance()"></div>
               <div class="form-group"><label>Class</label><select id="attendanceClassFilter" onchange="renderAttendance()"><option value="">All Classes</option></select></div>
             </div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th><th>Reason</th><th>Marked By</th></tr></thead>
-                <tbody id="attendanceTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th><th>Reason</th><th>Marked By</th></tr></thead>
+              <tbody id="attendanceTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -466,58 +407,23 @@
         <!-- CLASS PERFORMANCE -->
         <div class="tab-content" id="tab-classPerformance">
           <div class="card">
-            <div class="card-header">
-              <h2>📈 Class Performance Analytics</h2>
-            </div>
+            <div class="card-header"><h2>📈 Class Performance Analytics</h2></div>
             <div class="form-row" style="margin-bottom:16px;">
-              <div class="form-group">
-                <label>Select Class</label>
-                <select id="performanceClassSelect" onchange="renderClassPerformance()">
-                  <option value="">Select a class...</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Select Term</label>
-                <select id="performanceTermSelect" onchange="renderClassPerformance()">
-                  <option value="">All Terms</option>
-                  <option value="Term 1">Term 1</option>
-                  <option value="Term 2">Term 2</option>
-                  <option value="Term 3">Term 3</option>
-                </select>
-              </div>
+              <div class="form-group"><label>Select Class</label><select id="performanceClassSelect" onchange="renderClassPerformance()"><option value="">Select a class...</option></select></div>
+              <div class="form-group"><label>Select Term</label><select id="performanceTermSelect" onchange="renderClassPerformance()"><option value="">All Terms</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
             </div>
           </div>
-
           <div class="charts-grid">
-            <div class="card">
-              <div class="card-header"><h3>📊 Subject Averages</h3></div>
-              <div class="chart-container"><canvas id="perfSubjectChart"></canvas></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h3>📈 Student Performance Comparison</h3></div>
-              <div class="chart-container"><canvas id="perfStudentChart"></canvas></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h3>🏆 Grade Distribution</h3></div>
-              <div class="chart-container"><canvas id="perfGradeChart"></canvas></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h3>📊 Pass/Fail Ratio</h3></div>
-              <div class="chart-container"><canvas id="perfPassFailChart"></canvas></div>
-            </div>
+            <div class="card"><div class="card-header"><h3>📊 Subject Averages</h3></div><div class="chart-container"><canvas id="perfSubjectChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h3>📈 Student Performance Comparison</h3></div><div class="chart-container"><canvas id="perfStudentChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h3>🏆 Grade Distribution</h3></div><div class="chart-container"><canvas id="perfGradeChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h3>📊 Pass/Fail Ratio</h3></div><div class="chart-container"><canvas id="perfPassFailChart"></canvas></div></div>
           </div>
-
           <div class="card">
-            <div class="card-header">
-              <h3>🏆 Student Rankings</h3>
-            </div>
+            <div class="card-header"><h3>🏆 Student Rankings</h3></div>
             <div class="table-container">
-              <table>
-                <thead>
-                  <tr><th>Rank</th><th>Student</th><th>Average Score</th><th>Grade</th><th>Subjects Passed</th><th>Subjects Failed</th></tr>
-                </thead>
-                <tbody id="perfRankingsBody"></tbody>
-              </table>
+              <table><thead><tr><th>Rank</th><th>Student</th><th>Average Score</th><th>Grade</th><th>Passed</th><th>Failed</th></tr></thead>
+              <tbody id="perfRankingsBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -525,15 +431,10 @@
         <!-- WARNINGS -->
         <div class="tab-content" id="tab-warnings">
           <div class="card">
-            <div class="card-header">
-              <h2>⚠️ Warning Letters</h2>
-              <button class="btn btn-primary" id="addWarningBtn" onclick="showAddWarningModal()">+ Issue Warning</button>
-            </div>
+            <div class="card-header"><h2>⚠️ Warning Letters</h2><button class="btn btn-primary" id="addWarningBtn" onclick="showAddWarningModal()">+ Issue Warning</button></div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Issued By</th><th>Actions</th></tr></thead>
-                <tbody id="warningsTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Issued By</th><th>Actions</th></tr></thead>
+              <tbody id="warningsTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -541,15 +442,10 @@
         <!-- SUSPENSIONS -->
         <div class="tab-content" id="tab-suspensions">
           <div class="card">
-            <div class="card-header">
-              <h2>🚫 Suspensions</h2>
-              <button class="btn btn-primary" id="addSuspensionBtn" onclick="showAddSuspensionModal()">+ Add Suspension</button>
-            </div>
+            <div class="card-header"><h2>🚫 Suspensions</h2><button class="btn btn-primary" id="addSuspensionBtn" onclick="showAddSuspensionModal()">+ Add Suspension</button></div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody id="suspensionsTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="suspensionsTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -557,15 +453,10 @@
         <!-- EXPULSIONS -->
         <div class="tab-content" id="tab-expulsions">
           <div class="card">
-            <div class="card-header">
-              <h2>❌ Expulsions</h2>
-              <button class="btn btn-primary" id="addExpulsionBtn" onclick="showAddExpulsionModal()">+ Record Expulsion</button>
-            </div>
+            <div class="card-header"><h2>❌ Expulsions</h2><button class="btn btn-primary" id="addExpulsionBtn" onclick="showAddExpulsionModal()">+ Record Expulsion</button></div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Approved By</th><th>Actions</th></tr></thead>
-                <tbody id="expulsionsTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Approved By</th><th>Actions</th></tr></thead>
+              <tbody id="expulsionsTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -573,17 +464,10 @@
         <!-- CLINIC -->
         <div class="tab-content" id="tab-clinic">
           <div class="card">
-            <div class="card-header">
-              <h2>🏥 Clinic Visits</h2>
-              <button class="btn btn-primary" id="addClinicBtn" onclick="showAddClinicModal()">+ Record Visit</button>
-            </div>
+            <div class="card-header"><h2>🏥 Clinic Visits</h2><button class="btn btn-primary" id="addClinicBtn" onclick="showAddClinicModal()">+ Record Visit</button></div>
             <div class="table-container">
-              <table>
-                <thead>
-                  <tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="clinicTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Actions</th></tr></thead>
+              <tbody id="clinicTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -591,33 +475,20 @@
         <!-- PREFECTS -->
         <div class="tab-content" id="tab-prefects">
           <div class="card">
-            <div class="card-header">
-              <h2>⭐ Prefect Roles</h2>
-              <button class="btn btn-primary" id="addPrefectBtn" onclick="showAddPrefectModal()">+ Add Prefect Role</button>
-            </div>
+            <div class="card-header"><h2>⭐ Prefect Roles</h2><button class="btn btn-primary" id="addPrefectBtn" onclick="showAddPrefectModal()">+ Add Prefect Role</button></div>
             <div class="form-row" style="margin-bottom:16px;">
-              <div class="form-group">
-                <label>Department</label>
-                <select id="prefectDeptFilter" onchange="renderPrefects()">
-                  <option value="">All Departments</option>
-                  <option value="Academics">Academics</option>
-                  <option value="Discipline">Discipline</option>
-                  <option value="Games & Sports">Games & Sports</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="Health & Sanitation">Health & Sanitation</option>
-                  <option value="Dining Hall">Dining Hall</option>
-                  <option value="Dormitory">Dormitory/Boarding</option>
-                  <option value="Chapel">Chapel/Spiritual</option>
-                  <option value="Environment">Environment</option>
-                  <option value="Class Prefect">Class Prefect</option>
-                </select>
-              </div>
+              <div class="form-group"><label>Department</label><select id="prefectDeptFilter" onchange="renderPrefects()">
+                <option value="">All Departments</option>
+                <option value="Academics">Academics</option><option value="Discipline">Discipline</option>
+                <option value="Games & Sports">Games & Sports</option><option value="Entertainment">Entertainment</option>
+                <option value="Health & Sanitation">Health & Sanitation</option><option value="Dining Hall">Dining Hall</option>
+                <option value="Dormitory">Dormitory/Boarding</option><option value="Chapel">Chapel/Spiritual</option>
+                <option value="Environment">Environment</option><option value="Class Prefect">Class Prefect</option>
+              </select></div>
             </div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Student</th><th>Class</th><th>Prefect Role</th><th>Department</th><th>Assigned Date</th><th>Actions</th></tr></thead>
-                <tbody id="prefectsTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Student</th><th>Class</th><th>Prefect Role</th><th>Department</th><th>Assigned Date</th><th>Actions</th></tr></thead>
+              <tbody id="prefectsTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -625,17 +496,10 @@
         <!-- TEACHERS -->
         <div class="tab-content" id="tab-teachers">
           <div class="card">
-            <div class="card-header">
-              <h2>👨‍🏫 Teachers</h2>
-              <button class="btn btn-primary" id="addTeacherBtn" onclick="showAddTeacherModal()">+ Add Teacher</button>
-            </div>
+            <div class="card-header"><h2>👨‍🏫 Teachers</h2><button class="btn btn-primary" id="addTeacherBtn" onclick="showAddTeacherModal()">+ Add Teacher</button></div>
             <div class="table-container">
-              <table>
-                <thead>
-                  <tr><th>Name</th><th>Employee ID</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="teachersTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Name</th><th>Employee ID</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="teachersTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -643,19 +507,14 @@
         <!-- TEACHER ATTENDANCE -->
         <div class="tab-content" id="tab-teacherAttendance">
           <div class="card">
-            <div class="card-header">
-              <h2>📅 Teacher Attendance</h2>
-              <button class="btn btn-primary" id="addTeacherAttBtn" onclick="showTeacherAttendanceModal()">+ Mark Attendance</button>
-            </div>
+            <div class="card-header"><h2>📅 Teacher Attendance</h2><button class="btn btn-primary" id="addTeacherAttBtn" onclick="showTeacherAttendanceModal()">+ Mark Attendance</button></div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Date</label><input type="date" id="teacherAttDate" onchange="renderTeacherAttendance()"></div>
               <div class="form-group"><label>Teacher</label><select id="teacherAttFilter" onchange="renderTeacherAttendance()"><option value="">All Teachers</option></select></div>
             </div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Date</th><th>Teacher</th><th>Status</th><th>Reason</th><th>Lessons Today</th><th>Lessons/Week</th><th>Marked By</th><th>Actions</th></tr></thead>
-                <tbody id="teacherAttendanceBody"></tbody>
-              </table>
+              <table><thead><tr><th>Date</th><th>Teacher</th><th>Status</th><th>Reason</th><th>Lessons Today</th><th>Lessons/Week</th><th>Marked By</th><th>Actions</th></tr></thead>
+              <tbody id="teacherAttendanceBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -677,30 +536,22 @@
           </div>
         </div>
 
-        <!-- USERS (Admin Only) -->
+        <!-- USERS -->
         <div class="tab-content" id="tab-users">
           <div class="card">
-            <div class="card-header">
-              <h2>👥 User Management</h2>
-              <button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button>
-            </div>
+            <div class="card-header"><h2>👥 User Management</h2><button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button></div>
             <div class="table-container">
-              <table>
-                <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Class</th><th>Last Login</th><th>Actions</th></tr></thead>
-                <tbody id="usersTableBody"></tbody>
-              </table>
+              <table><thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Class</th><th>Last Login</th><th>Actions</th></tr></thead>
+              <tbody id="usersTableBody"></tbody></table>
             </div>
           </div>
         </div>
 
-        <!-- AUDIT (Admin Only) -->
+        <!-- AUDIT -->
         <div class="tab-content" id="tab-audit">
           <div class="card">
             <div class="card-header"><h2>🔍 Audit Log</h2></div>
-            <div class="form-group" style="max-width:300px;">
-              <label>Filter by User</label>
-              <select id="auditUserFilter" onchange="renderAudit()"><option value="">All Users</option></select>
-            </div>
+            <div class="form-group" style="max-width:300px;"><label>Filter by User</label><select id="auditUserFilter" onchange="renderAudit()"><option value="">All Users</option></select></div>
             <div id="auditLogContent"></div>
           </div>
         </div>
@@ -711,20 +562,14 @@
   <!-- MODALS -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
-      <div class="modal-header">
-        <h2 id="modalTitle">Modal</h2>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-      </div>
+      <div class="modal-header"><h2 id="modalTitle">Modal</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
       <div id="modalBody"></div>
     </div>
   </div>
 
   <div class="modal-overlay" id="changePasswordModal">
     <div class="modal" style="max-width:420px;">
-      <div class="modal-header">
-        <h2>🔑 Change Password</h2>
-        <button class="modal-close" onclick="document.getElementById('changePasswordModal').classList.remove('show')">&times;</button>
-      </div>
+      <div class="modal-header"><h2>🔑 Change Password</h2><button class="modal-close" onclick="document.getElementById('changePasswordModal').classList.remove('show')">&times;</button></div>
       <div class="form-group"><label>Current Password</label><input type="password" id="currentPwd"></div>
       <div class="form-group"><label>New Password (min 6 chars)</label><input type="password" id="newPwd"></div>
       <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPwd"></div>
@@ -781,8 +626,6 @@
       'Chapel/Spiritual', 'Environment', 'Class Prefect'
     ];
     const PREFECT_ROLES = ['Head Prefect', 'Deputy Head Prefect', 'Class Prefect', 'Assistant Class Prefect'];
-    const DORM_ROLES = ['None', 'Class Teacher', 'Dorm Matron', 'Dorm Patron'];
-    const DORMS = ['None', 'Boys Dorm', 'Girls Dorm'];
 
     let currentUser = null;
     let activeTab = 'dashboard';
@@ -824,9 +667,7 @@
       return `<span class="badge ${colors[grade]}">${grade}</span>`;
     }
 
-    function isPass(score) {
-      return score >= 50;
-    }
+    function isPass(score) { return score >= 50; }
 
     function friendlyAuthError(code) {
       const map = {
@@ -845,10 +686,7 @@
 
     function classSelectHtml(selected = '') {
       let html = '<option value="">All Classes</option>';
-      const groups = {
-        'Junior Secondary': CLASSES.slice(0, 6),
-        'Senior Secondary': CLASSES.slice(6)
-      };
+      const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
       for (const [group, classes] of Object.entries(groups)) {
         html += `<optgroup label="${group}">`;
         for (const cls of classes) {
@@ -927,7 +765,7 @@
     });
 
     // ============================================================
-    // 🔒 PERMISSIONS
+    // 🔒 PERMISSIONS - COMPLETE
     // ============================================================
 
     function setupPermissions() {
@@ -949,38 +787,61 @@
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
+      // === ADD STUDENT - Admin, Secretary ONLY ===
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
 
+      // === EDIT SPONSORSHIP - Admin, Director ONLY ===
       const editSponsorshipBtn = document.getElementById('editSponsorshipBtn');
       if (editSponsorshipBtn) editSponsorshipBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
 
+      // === ADD GRADE - Admin, Principal, Teacher, Secretary ===
       const addGradeBtn = document.getElementById('addGradeBtn');
       if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
+      // === ADD ATTENDANCE - Admin, Principal, Teacher, Secretary ===
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
       if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
+      // === ADD WARNING - Admin, Principal ONLY ===
       const addWarningBtn = document.getElementById('addWarningBtn');
       if (addWarningBtn) addWarningBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
+      // === ADD SUSPENSION - Admin, Principal ONLY ===
       const addSuspensionBtn = document.getElementById('addSuspensionBtn');
       if (addSuspensionBtn) addSuspensionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
+      // === ADD EXPULSION - Admin, Principal ONLY ===
       const addExpulsionBtn = document.getElementById('addExpulsionBtn');
       if (addExpulsionBtn) addExpulsionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
+      // === ADD CLINIC - Admin, Nurse, Doctor ===
       const addClinicBtn = document.getElementById('addClinicBtn');
       if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isNurse || isDoctor) ? 'inline-block' : 'none';
 
+      // === ADD TEACHER - Only Admin ===
       const addTeacherBtn = document.getElementById('addTeacherBtn');
       if (addTeacherBtn) addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
 
+      // === ADD TEACHER ATTENDANCE - Admin, Secretary ONLY ===
       const addTeacherAttBtn = document.getElementById('addTeacherAttBtn');
       if (addTeacherAttBtn) addTeacherAttBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
 
+      // === ADD PREFECT - Admin, Principal ONLY (Teacher CANNOT) ===
       const addPrefectBtn = document.getElementById('addPrefectBtn');
       if (addPrefectBtn) addPrefectBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
+
+      // === TEACHER ATTENDANCE TAB - Hide from Teacher ===
+      const teacherAttNav = document.getElementById('teacherAttNav');
+      if (teacherAttNav) {
+        teacherAttNav.style.display = (isAdmin || isPrincipal || isSecretary || isDirector || isTeacher) ? 'flex' : 'none';
+      }
+
+      // === PREFECT TAB - Show for all but edit restricted ===
+      const prefectNav = document.getElementById('prefectNav');
+      if (prefectNav) {
+        prefectNav.style.display = (isAdmin || isPrincipal || isSecretary || isTeacher || isDirector) ? 'flex' : 'none';
+      }
 
       console.log('✅ Permissions configured for:', role);
     }
@@ -997,9 +858,17 @@
         return editTabs.includes(tab);
       }
       
-      if (role === 'teacher') return ['grades', 'attendance'].includes(tab);
-      if (role === 'nurse' || role === 'doctor') return tab === 'clinic';
-      if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance'].includes(tab);
+      if (role === 'teacher') {
+        return ['grades', 'attendance'].includes(tab);
+      }
+      
+      if (role === 'nurse' || role === 'doctor') {
+        return tab === 'clinic';
+      }
+      
+      if (role === 'secretary') {
+        return ['grades', 'attendance', 'teacherAttendance'].includes(tab);
+      }
       
       return false;
     }
@@ -1016,9 +885,17 @@
         return addTabs.includes(tab);
       }
       
-      if (role === 'teacher') return ['grades', 'attendance'].includes(tab);
-      if (role === 'nurse' || role === 'doctor') return tab === 'clinic';
-      if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance'].includes(tab);
+      if (role === 'teacher') {
+        return ['grades', 'attendance'].includes(tab);
+      }
+      
+      if (role === 'nurse' || role === 'doctor') {
+        return tab === 'clinic';
+      }
+      
+      if (role === 'secretary') {
+        return ['grades', 'attendance', 'teacherAttendance'].includes(tab);
+      }
       
       return false;
     }
@@ -1238,7 +1115,7 @@
       const sponsoredTotal = sponsoredBoys + sponsoredGirls;
 
       const prefectCount = students.filter(s => s.isPrefect === 'Yes').length;
-      const classTeachers = teachersCache.filter(t => t.dormRole === 'Class Teacher').length;
+      const classTeachers = teachersCache.filter(t => t.classTeacher && t.classTeacher !== '').length;
       const dormMatrons = teachersCache.filter(t => t.dormRole === 'Dorm Matron').length;
       const dormPatrons = teachersCache.filter(t => t.dormRole === 'Dorm Patron').length;
 
@@ -1433,7 +1310,7 @@
     };
 
     // ============================================================
-    // 💰 SPONSORSHIP
+    // 💰 SPONSORSHIP - Admin & Director ONLY
     // ============================================================
 
     window.showEditSponsorshipModal = function() {
@@ -1701,8 +1578,7 @@
     window.renderClassPerformance = function() {
       const classSelect = document.getElementById('performanceClassSelect');
       if (classSelect.options.length <= 1) {
-        classSelect.innerHTML = '<option value="">Select a class...</option>' +
-          CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+        classSelect.innerHTML = '<option value="">Select a class...</option>' + CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
       }
 
       const className = document.getElementById('performanceClassSelect').value;
@@ -1751,10 +1627,7 @@
       const sorted = [...studentAverages].sort((a, b) => b.avg - a.avg);
 
       const gradeDist = { A: 0, B: 0, C: 0, D: 0, F: 0 };
-      sorted.forEach(s => {
-        const grade = getLetterGrade(s.avg);
-        gradeDist[grade]++;
-      });
+      sorted.forEach(s => { const grade = getLetterGrade(s.avg); gradeDist[grade]++; });
 
       destroyChart('perfGradeChart');
       chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
@@ -1773,20 +1646,11 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
 
-      // Student Performance Chart
       destroyChart('perfStudentChart');
       chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
         type: 'bar',
-        data: {
-          labels: sorted.map(s => s.student.firstName),
-          datasets: [{ data: sorted.map(s => s.avg), backgroundColor: sorted.map(s => getGradeColor(s.avg)) }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, max: 100 } }
-        }
+        data: { labels: sorted.map(s => s.student.firstName), datasets: [{ data: sorted.map(s => s.avg), backgroundColor: sorted.map(s => getGradeColor(s.avg)) }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
       });
 
       document.getElementById('perfRankingsBody').innerHTML = sorted.map((s, index) => `
@@ -2071,7 +1935,7 @@
     };
 
     // ============================================================
-    // ⭐ PREFECTS
+    // ⭐ PREFECTS - Admin & Principal ONLY can add/edit/delete
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
@@ -2083,9 +1947,7 @@
             <select id="p_student">${studentsCache.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
           </div>
           <div class="form-group"><label>Prefect Role *</label>
-            <select id="p_role">
-              ${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}
-            </select>
+            <select id="p_role">${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
           </div>
           <div class="form-group"><label>Department *</label>
             <select id="p_department">${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${prefect?.department === d ? 'selected' : ''}>${d}</option>`).join('')}</select>
@@ -2160,7 +2022,7 @@
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHERS - Updated with Class Teacher & Dorm Roles
+    // 👨‍🏫 TEACHERS
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -2208,7 +2070,6 @@
 
       openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
 
-      // Store toggle function globally
       window.toggleDormSelect = function() {
         const dormRole = document.getElementById('t_dormRole').value;
         const dormGroup = document.getElementById('dormSelectGroup');
@@ -2284,7 +2145,7 @@
     };
 
     // ============================================================
-    // 📅 TEACHER ATTENDANCE
+    // 📅 TEACHER ATTENDANCE - Teacher can ONLY see their own
     // ============================================================
 
     window.showTeacherAttendanceModal = function() {
@@ -2364,17 +2225,38 @@
 
       const filterSelect = document.getElementById('teacherAttFilter');
       if (filterSelect.options.length <= 1) {
-        filterSelect.innerHTML = '<option value="">All Teachers</option>' +
-          teachersCache.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        // If user is a teacher, only show their own attendance
+        if (currentUser?.role === 'teacher') {
+          const teacher = teachersCache.find(t => t.email === currentUser.email || t.name === currentUser.fullName);
+          if (teacher) {
+            filterSelect.innerHTML = `<option value="${teacher.id}">${teacher.name}</option>`;
+            document.getElementById('teacherAttFilter').value = teacher.id;
+          } else {
+            filterSelect.innerHTML = '<option value="">No teacher record found</option>';
+          }
+        } else {
+          filterSelect.innerHTML = '<option value="">All Teachers</option>' +
+            teachersCache.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        }
       }
 
       if (!date) document.getElementById('teacherAttDate').value = new Date().toISOString().split('T')[0];
 
       let filtered = teacherAttCache;
       if (date) filtered = filtered.filter(a => a.date === date);
+      
+      // If teacher, only show their own records
+      if (currentUser?.role === 'teacher') {
+        const teacher = teachersCache.find(t => t.email === currentUser.email || t.name === currentUser.fullName);
+        if (teacher) {
+          filtered = filtered.filter(a => a.teacherId === teacher.id);
+        }
+      }
+      
       if (teacherFilter) filtered = filtered.filter(a => a.teacherId === teacherFilter);
 
       const canDeleteTA = canDeleteSpecific('teacherAttendance');
+      const isTeacher = currentUser?.role === 'teacher';
 
       document.getElementById('teacherAttendanceBody').innerHTML = filtered.map(a => {
         const teacher = teachersCache.find(t => t.id === a.teacherId);
@@ -2388,7 +2270,7 @@
             <td>${a.lessonsWeek || 30}</td>
             <td>${a.markedBy || '-'}</td>
             <td>
-              ${canDeleteTA ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacherAttendance('${a.id}')">Del</button>` : ''}
+              ${canDeleteTA && !isTeacher ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacherAttendance('${a.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
@@ -2505,7 +2387,7 @@
     }
 
     // ============================================================
-    // 👥 USER MANAGEMENT (Admin Only)
+    // 👥 USER MANAGEMENT
     // ============================================================
 
     window.showAddUserModal = function(editId) {
@@ -2581,7 +2463,7 @@
     };
 
     // ============================================================
-    // 🔍 AUDIT LOG (Admin Only)
+    // 🔍 AUDIT LOG
     // ============================================================
 
     function populateAuditFilter() {
@@ -2624,7 +2506,7 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 6.0.0 - Cloud Synced');
+      console.log('📚 Version 7.0.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
     });
   </script>
