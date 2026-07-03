@@ -491,7 +491,9 @@
             </div>
             <div class="table-container">
               <table>
-                <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Actions</th></tr></thead>
+                <thead>
+                  <tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Actions</th></tr>
+                </thead>
                 <tbody id="clinicTableBody"></tbody>
               </table>
             </div>
@@ -681,7 +683,7 @@
       'History', 'Geography'
     ];
 
-    const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'secretary', 'director'];
+    const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director'];
     const CONDITIONS = ['New Illness', 'Pre-existing Condition'];
     const PREFECT_DEPARTMENTS = [
       'Academics', 'Discipline', 'Games & Sports', 'Entertainment',
@@ -828,7 +830,7 @@
     });
 
     // ============================================================
-    // 🔒 PERMISSIONS - UPDATED FOR PRINCIPAL
+    // 🔒 PERMISSIONS - UPDATED
     // ============================================================
 
     function setupPermissions() {
@@ -840,8 +842,10 @@
       const isAdmin = role === 'admin';
       const isPrincipal = role === 'principal';
       const isNurse = role === 'nurse';
+      const isDoctor = role === 'doctor';
       const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
+      const isDirector = role === 'director';
       console.log('🔐 Setting up permissions for:', role);
 
       document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
@@ -860,19 +864,19 @@
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
       if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Warning - Admin, Principal, Secretary
+      // Add Warning - Admin, Principal, Secretary ONLY (Teacher CANNOT)
       const addWarningBtn = document.getElementById('addWarningBtn');
       if (addWarningBtn) addWarningBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Suspension - Admin, Principal, Secretary
+      // Add Suspension - Admin, Principal, Secretary ONLY (Teacher CANNOT)
       const addSuspensionBtn = document.getElementById('addSuspensionBtn');
       if (addSuspensionBtn) addSuspensionBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Clinic - ONLY Admin and Nurse (Principal CANNOT add)
+      // Add Clinic - ONLY Admin, Nurse, Doctor
       const addClinicBtn = document.getElementById('addClinicBtn');
-      if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isNurse) ? 'inline-block' : 'none';
+      if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isNurse || isDoctor) ? 'inline-block' : 'none';
 
-      // Add Teacher - Only Admin
+      // Add Teacher - Only Admin (Principal CANNOT)
       const addTeacherBtn = document.getElementById('addTeacherBtn');
       if (addTeacherBtn) addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
 
@@ -880,70 +884,132 @@
       const addTeacherAttBtn = document.getElementById('addTeacherAttBtn');
       if (addTeacherAttBtn) addTeacherAttBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
+      // Add Prefect - Admin, Principal
+      const addPrefectBtn = document.querySelector('[onclick*="showAddPrefectModal"]');
+      // We handle prefects in the render function
+
       console.log('✅ Permissions configured for:', role);
     }
 
     function canEdit(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
+      
+      // Admin can edit everything
       if (role === 'admin') return true;
+      
+      // Director CANNOT edit ANYTHING
+      if (role === 'director') return false;
+      
+      // Principal permissions
       if (role === 'principal') {
-        // Principal can edit these tabs
         const editTabs = ['grades', 'attendance', 'warnings', 'suspensions'];
-        // Principal CANNOT edit: students, clinic, prefects
         return editTabs.includes(tab);
       }
-      if (role === 'teacher') return ['grades', 'attendance'].includes(tab);
-      if (role === 'nurse') return tab === 'clinic';
+      
+      // Teacher permissions - ONLY grades and attendance
+      if (role === 'teacher') {
+        return ['grades', 'attendance'].includes(tab);
+      }
+      
+      // Nurse permissions - ONLY clinic
+      if (role === 'nurse') {
+        return tab === 'clinic';
+      }
+      
+      // Doctor permissions - ONLY clinic
+      if (role === 'doctor') {
+        return tab === 'clinic';
+      }
+      
+      // Secretary can edit everything except admin stuff
       if (role === 'secretary') {
         const noEdit = ['users', 'audit', 'teachers'];
         return !noEdit.includes(tab);
       }
-      if (role === 'director') return false;
+      
       return false;
     }
 
     function canAdd(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
+      
       if (role === 'admin') return true;
+      
+      // Director CANNOT add ANYTHING
+      if (role === 'director') return false;
+      
+      // Principal can add to these
       if (role === 'principal') {
-        // Principal can add to these
         const addTabs = ['grades', 'attendance', 'warnings', 'suspensions'];
-        // Principal CANNOT add: students, clinic
         return addTabs.includes(tab);
       }
-      if (role === 'teacher') return ['grades', 'attendance'].includes(tab);
-      if (role === 'nurse') return tab === 'clinic';
+      
+      // Teacher can ONLY add grades and attendance
+      if (role === 'teacher') {
+        return ['grades', 'attendance'].includes(tab);
+      }
+      
+      // Nurse and Doctor can ONLY add clinic
+      if (role === 'nurse' || role === 'doctor') {
+        return tab === 'clinic';
+      }
+      
+      // Secretary can add everything except admin stuff
       if (role === 'secretary') {
         const noAdd = ['users', 'audit', 'teachers'];
         return !noAdd.includes(tab);
       }
+      
       return false;
     }
 
     function canDelete() {
       if (!currentUser) return false;
-      return currentUser.role === 'admin';
+      const role = currentUser.role;
+      
+      // Director CANNOT delete ANYTHING
+      if (role === 'director') return false;
+      
+      // Only admin can delete
+      return role === 'admin';
     }
 
     function canDeleteSpecific(tab) {
       if (!currentUser) return false;
-      return currentUser.role === 'admin';
+      const role = currentUser.role;
+      
+      // Director CANNOT delete ANYTHING
+      if (role === 'director') return false;
+      
+      return role === 'admin';
     }
 
     function canView(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
+      
       if (role === 'admin') return true;
+      
+      // Director can view everything
+      if (role === 'director') return true;
+      
       if (role === 'principal') {
         const viewTabs = ['dashboard', 'students', 'grades', 'attendance', 'warnings', 'suspensions', 'clinic', 'prefects', 'teachers', 'teacherAttendance', 'analytics', 'sponsorship'];
         return viewTabs.includes(tab);
       }
-      if (role === 'teacher') return ['dashboard', 'grades', 'attendance'].includes(tab);
-      if (role === 'nurse') return ['dashboard', 'clinic'].includes(tab);
+      
+      if (role === 'teacher') {
+        return ['dashboard', 'grades', 'attendance'].includes(tab);
+      }
+      
+      if (role === 'nurse' || role === 'doctor') {
+        return ['dashboard', 'clinic'].includes(tab);
+      }
+      
       if (role === 'secretary') return true;
-      if (role === 'director') return true;
+      
       return false;
     }
 
@@ -1173,7 +1239,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS (Principal View Only - No Add/Edit)
+    // 👩‍🎓 STUDENTS
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -1290,6 +1356,7 @@
     // ============================================================
 
     window.showEditSponsorshipModal = function() {
+      if (!canEdit('sponsorship')) { showToast('You do not have permission to edit sponsorship', 'error'); return; }
       const html = `
         <div class="form-group"><label>Student *</label>
           <select id="sp_student">
@@ -1351,7 +1418,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES (Principal can add and edit)
+    // 📝 GRADES
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -1453,7 +1520,7 @@
     };
 
     // ============================================================
-    // 📋 STUDENT ATTENDANCE (Principal can mark but not edit/delete)
+    // 📋 STUDENT ATTENDANCE
     // ============================================================
 
     window.showAddAttendanceModal = function() {
@@ -1528,8 +1595,6 @@
       if (currentDate) filtered = filtered.filter(a => a.date === currentDate);
       if (classFilter) filtered = filtered.filter(a => { const s = studentsCache.find(st => st.id === a.studentId); return s && s.class === classFilter; });
 
-      const canDeleteAtt = canDeleteSpecific('attendance');
-
       document.getElementById('attendanceTableBody').innerHTML = filtered.map(a => {
         const student = studentsCache.find(s => s.id === a.studentId);
         return `
@@ -1546,7 +1611,7 @@
     };
 
     // ============================================================
-    // ⚠️ WARNINGS (Principal can add/edit)
+    // ⚠️ WARNINGS (Teacher CANNOT add/edit/delete)
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
@@ -1607,7 +1672,7 @@
     };
 
     // ============================================================
-    // 🚫 SUSPENSIONS (Principal can add/edit)
+    // 🚫 SUSPENSIONS (Teacher CANNOT add/edit/delete)
     // ============================================================
 
     window.showAddSuspensionModal = function(editId) {
@@ -1675,11 +1740,11 @@
     };
 
     // ============================================================
-    // 🏥 CLINIC (Principal View Only - No Add/Edit/Delete)
+    // 🏥 CLINIC - Doctor/Nurse ONLY can edit/record
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
-      if (!canAdd('clinic')) { showToast('You do not have permission to record clinic visits', 'error'); return; }
+      if (!canAdd('clinic')) { showToast('Only Doctor and Nurse can record clinic visits', 'error'); return; }
       const visit = editId ? clinicCache.find(c => c.id === editId) : null;
       const html = `
         <div class="form-grid">
@@ -1736,13 +1801,14 @@
             <td>${c.complaint || '-'}</td>
             <td><span class="badge ${c.condition === 'Pre-existing Condition' ? 'badge-warning' : 'badge-info'}">${c.condition || '-'}</span></td>
             <td>${c.diagnosis || '-'}</td>
+            <td>${c.medication || '-'}</td>
             <td>
               ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
               ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+      }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
     };
 
     window.deleteClinic = async function(id) {
@@ -1755,6 +1821,7 @@
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
+      if (!canAdd('prefects')) { showToast('You do not have permission to add prefects', 'error'); return; }
       const prefect = editId ? prefectsCache.find(p => p.id === editId) : null;
       const html = `
         <div class="form-grid">
@@ -1795,7 +1862,6 @@
         const student = studentsCache.find(s => s.id === studentId);
         if (editId) { await updateDoc(doc(db, 'prefects', editId), data); showToast('Prefect updated'); }
         else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'prefects'), data); showToast(`Prefect role assigned to ${student?.firstName} ${student?.lastName}`); }
-        // Also update the student record to mark them as prefect
         await updateDoc(doc(db, 'students', studentId), { isPrefect: 'Yes', prefectRole: role, prefectDepartment: department });
         await addAuditLog(editId ? 'UPDATE_PREFECT' : 'ADD_PREFECT', `${student?.firstName} ${student?.lastName} - ${role}`);
         closeModal();
@@ -1833,7 +1899,6 @@
       try {
         const prefect = prefectsCache.find(p => p.id === id);
         await deleteDoc(doc(db, 'prefects', id));
-        // Also update the student record
         if (prefect?.studentId) {
           const student = studentsCache.find(s => s.id === prefect.studentId);
           if (student) await updateDoc(doc(db, 'students', prefect.studentId), { isPrefect: 'No', prefectRole: '', prefectDepartment: '' });
@@ -1844,7 +1909,7 @@
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHERS
+    // 👨‍🏫 TEACHERS (Principal CANNOT add/edit/delete)
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -1988,7 +2053,6 @@
       const date = document.getElementById('teacherAttDate').value;
       const teacherFilter = document.getElementById('teacherAttFilter').value;
 
-      // Populate teacher filter
       const filterSelect = document.getElementById('teacherAttFilter');
       if (filterSelect.options.length <= 1) {
         filterSelect.innerHTML = '<option value="">All Teachers</option>' +
@@ -2251,7 +2315,7 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 3.0.0 - Cloud Synced');
+      console.log('📚 Version 4.0.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
     });
   </script>
