@@ -1,49 +1,3373 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Firebase Login Test</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mara Christian High School - Complete Management System</title>
+  
+  <!-- Chart.js for analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <style>
+    /* ============================================================
+       CSS VARIABLES & RESET
+    ============================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #1a5276;
+      --primary-light: #2e86c1;
+      --primary-dark: #154360;
+      --secondary: #27ae60;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --info: #3498db;
+      --light: #ecf0f1;
+      --dark: #2c3e50;
+      --white: #ffffff;
+      --gray: #95a5a6;
+      --shadow: 0 4px 20px rgba(0,0,0,0.1);
+      --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+      --radius: 12px;
+      --transition: all 0.3s ease;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       UTILITY CLASSES
+    ============================================================ */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--gray); }
+    .mt-10 { margin-top: 10px; }
+    .mt-20 { margin-top: 20px; }
+    .mb-10 { margin-bottom: 10px; }
+    .mb-20 { margin-bottom: 20px; }
+    .flex { display: flex; }
+    .flex-center { display: flex; align-items: center; justify-content: center; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .gap-10 { gap: 10px; }
+    .gap-20 { gap: 20px; }
+    .flex-wrap { flex-wrap: wrap; }
+
+    /* ============================================================
+       LOADING SPINNER
+    ============================================================ */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ============================================================
+       LOGIN PAGE
+    ============================================================ */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light), var(--secondary));
+      padding: 20px;
+    }
+
+    .login-box {
+      background: var(--white);
+      padding: 50px 40px;
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 420px;
+      animation: slideUp 0.6s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-box .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-box .logo h1 {
+      color: var(--primary);
+      font-size: 1.8em;
+      font-weight: 700;
+    }
+
+    .login-box .logo p {
+      color: var(--gray);
+      font-size: 0.9em;
+    }
+
+    .login-box .logo .school-icon {
+      font-size: 3em;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .login-box .form-group {
+      margin-bottom: 18px;
+    }
+
+    .login-box .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85em;
+      color: var(--dark);
+      margin-bottom: 5px;
+    }
+
+    .login-box .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border 0.3s;
+    }
+
+    .login-box .form-group input:focus {
+      outline: none;
+      border-color: var(--primary-light);
+    }
+
+    .login-box .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .login-box .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(26, 82, 118, 0.4);
+    }
+
+    .login-box .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .login-box .login-error {
+      color: var(--danger);
+      font-size: 0.85em;
+      margin-top: 10px;
+      min-height: 24px;
+    }
+
+    .login-box .login-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.8em;
+      color: var(--gray);
+    }
+
+    /* ============================================================
+       MAIN APP LAYOUT
+    ============================================================ */
+    .app-container {
+      display: none;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       TOP BAR
+    ============================================================ */
+    .top-bar {
+      background: var(--primary);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .top-bar .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+
+    .top-bar .brand .menu-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .top-bar .user-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .top-bar .user-section .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8em;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .top-bar .user-section .sync-status.online {
+      background: rgba(39, 174, 96, 0.3);
+    }
+
+    .top-bar .user-section .sync-status.offline {
+      background: rgba(231, 76, 60, 0.3);
+    }
+
+    .top-bar .user-section .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .top-bar .user-section .sync-dot.online {
+      background: var(--secondary);
+    }
+
+    .top-bar .user-section .sync-dot.offline {
+      background: var(--danger);
+    }
+
+    .top-bar .user-section .user-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75em;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .top-bar .user-section .btn {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85em;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .top-bar .user-section .btn-outline {
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.5);
+      color: white;
+    }
+
+    .top-bar .user-section .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .top-bar .user-section .btn-danger-sm {
+      background: var(--danger);
+      color: white;
+    }
+
+    .top-bar .user-section .btn-danger-sm:hover {
+      background: #c0392b;
+    }
+
+    /* ============================================================
+       SIDEBAR
+    ============================================================ */
+    .main-layout {
+      display: flex;
+      min-height: calc(100vh - 70px);
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--dark);
+      color: white;
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: var(--transition);
+      height: calc(100vh - 70px);
+      position: sticky;
+      top: 70px;
+    }
+
+    .sidebar .sidebar-section {
+      padding: 10px 20px 5px;
+      font-size: 0.65em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .sidebar .nav-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: var(--transition);
+      border-left: 3px solid transparent;
+      font-size: 0.9em;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .sidebar .nav-item:hover {
+      background: rgba(255,255,255,0.08);
+      color: white;
+    }
+
+    .sidebar .nav-item.active {
+      background: rgba(255,255,255,0.12);
+      border-left-color: var(--secondary);
+      color: white;
+    }
+
+    .sidebar .nav-item .icon {
+      font-size: 1.2em;
+      width: 28px;
+      text-align: center;
+    }
+
+    /* ============================================================
+       CONTENT AREA
+    ============================================================ */
+    .content-area {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      max-height: calc(100vh - 70px);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       CARDS
+    ============================================================ */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--light);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .card-header h2 {
+      color: var(--primary);
+      font-size: 1.2em;
+    }
+
+    .card-header h3 {
+      color: var(--primary);
+      font-size: 1em;
+    }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85em;
+      font-weight: 500;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary-light);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(46, 134, 193, 0.3);
+    }
+
+    .btn-success {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #219a52;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+    }
+
+    .btn-warning:hover {
+      background: #e67e22;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary-light);
+      color: var(--primary-light);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-light);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 0.75em;
+    }
+
+    /* ============================================================
+       STATS GRID
+    ============================================================ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      border-top: 4px solid var(--primary-light);
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .stat-card .stat-number {
+      font-size: 2em;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-card .stat-label {
+      color: var(--gray);
+      font-size: 0.8em;
+      margin-top: 4px;
+    }
+
+    /* ============================================================
+       TABLES
+    ============================================================ */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85em;
+    }
+
+    th {
+      background: var(--primary);
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 8px 14px;
+      border-bottom: 1px solid #eee;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    tr:nth-child(even) {
+      background: #fafbfc;
+    }
+
+    tr:nth-child(even):hover {
+      background: #f0f4f8;
+    }
+
+    /* ============================================================
+       FORMS
+    ============================================================ */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+      color: var(--dark);
+      font-size: 0.85em;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9em;
+      transition: border 0.3s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-light);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    /* ============================================================
+       MODALS
+    ============================================================ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 30px;
+      width: 100%;
+      max-width: 720px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--light);
+    }
+
+    .modal-header h2 {
+      color: var(--primary);
+      font-size: 1.3em;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--gray);
+      padding: 0 8px;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--danger);
+      transform: rotate(90deg);
+    }
+
+    /* ============================================================
+       BADGES
+    ============================================================ */
+    .badge {
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.7em;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .badge-success { background: #d5f5e3; color: #27ae60; }
+    .badge-danger { background: #fadbd8; color: #e74c3c; }
+    .badge-warning { background: #fdebd0; color: #f39c12; }
+    .badge-info { background: #d6eaf8; color: #2e86c1; }
+    .badge-primary { background: #d6eaf8; color: #1a5276; }
+    .badge-purple { background: #e8daef; color: #8e44ad; }
+
+    /* ============================================================
+       NOTIFICATIONS (Toast)
+    ============================================================ */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      padding: 14px 24px;
+      border-radius: 8px;
+      color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      animation: slideIn 0.4s ease;
+      font-size: 0.9em;
+      max-width: 400px;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100%); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .toast.success { background: var(--secondary); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--info); }
+    .toast.warning { background: var(--warning); }
+
+    /* ============================================================
+       CHARTS
+    ============================================================ */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 20px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 280px;
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        z-index: 999;
+        height: calc(100vh - 70px);
+        transition: left 0.3s;
+        top: 70px;
+      }
+
+      .sidebar.show {
+        left: 0;
+      }
+
+      .top-bar .brand .menu-toggle {
+        display: block;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal {
+        padding: 20px;
+        max-width: 100%;
+      }
+
+      .top-bar .user-section .hide-mobile {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .login-box {
+        padding: 30px 20px;
+      }
+    }
+
+    /* ============================================================
+       PRINT
+    ============================================================ */
+    @media print {
+      .sidebar,
+      .top-bar,
+      .btn,
+      .no-print {
+        display: none !important;
+      }
+
+      .content-area {
+        max-height: none;
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        break-inside: avoid;
+      }
+    }
+
+    /* ============================================================
+       SEARCH BOX
+    ============================================================ */
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9em;
+      transition: border 0.3s;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--primary-light);
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+  </style>
 </head>
 <body>
-  <h1>Firebase Login Test</h1>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="testLogin()">Login</button>
-  <div id="result"></div>
 
+  <!-- ============================================================
+       LOGIN PAGE
+  ============================================================ -->
+  <div id="loginPage" class="login-container">
+    <div class="login-box">
+      <div class="logo">
+        <span class="school-icon">🏫</span>
+        <h1>Mara Christian High School</h1>
+        <p>Student Management System <span id="syncStatusText">☁️ Cloud-Synced</span></p>
+      </div>
+
+      <div class="form-group">
+        <label>📧 Email Address</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label>🔒 Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">
+        Sign In
+      </button>
+
+      <div class="login-error" id="loginError"></div>
+
+      <div class="login-footer">
+        <p>Contact administrator for account access</p>
+        <p style="font-size: 0.7em; margin-top: 4px;">All data syncs live across all devices</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MAIN APP
+  ============================================================ -->
+  <div id="appContainer" class="app-container">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="brand">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <span>🏫 Mara Christian High School</span>
+      </div>
+
+      <div class="user-section">
+        <div class="sync-status online" id="syncStatus">
+          <span class="sync-dot online" id="syncDot"></span>
+          <span id="syncLabel">Live</span>
+        </div>
+
+        <span id="currentUserDisplay" style="font-size:0.9em;"></span>
+        <span class="user-badge" id="currentRoleBadge">Admin</span>
+
+        <button class="btn btn-outline btn-sm" onclick="showChangePassword()">🔑 Change Password</button>
+        <button class="btn btn-danger-sm" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- MAIN LAYOUT -->
+    <div class="main-layout">
+
+      <!-- SIDEBAR -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-section">📊 Overview</div>
+        <div class="nav-item active" onclick="showTab('dashboard')" data-tab="dashboard">
+          <span class="icon">📊</span> Dashboard
+        </div>
+
+        <div class="sidebar-section">👩‍🎓 Students</div>
+        <div class="nav-item" onclick="showTab('students')" data-tab="students">
+          <span class="icon">👩‍🎓</span> Student Records
+        </div>
+
+        <div class="sidebar-section">📚 Academics</div>
+        <div class="nav-item" onclick="showTab('grades')" data-tab="grades">
+          <span class="icon">📝</span> Grades
+        </div>
+        <div class="nav-item" onclick="showTab('attendance')" data-tab="attendance">
+          <span class="icon">📋</span> Attendance
+        </div>
+
+        <div class="sidebar-section">⚠️ Discipline</div>
+        <div class="nav-item" onclick="showTab('warnings')" data-tab="warnings">
+          <span class="icon">⚠️</span> Warnings
+        </div>
+        <div class="nav-item" onclick="showTab('suspensions')" data-tab="suspensions">
+          <span class="icon">🚫</span> Suspensions
+        </div>
+
+        <div class="sidebar-section">🏥 Health</div>
+        <div class="nav-item" onclick="showTab('clinic')" data-tab="clinic">
+          <span class="icon">🏥</span> Clinic Visits
+        </div>
+
+        <div class="sidebar-section">👨‍🏫 Staff</div>
+        <div class="nav-item" onclick="showTab('teachers')" data-tab="teachers">
+          <span class="icon">👨‍🏫</span> Teachers
+        </div>
+
+        <div class="sidebar-section">📈 Analytics</div>
+        <div class="nav-item" onclick="showTab('analytics')" data-tab="analytics">
+          <span class="icon">📈</span> Analytics
+        </div>
+
+        <div class="sidebar-section" id="adminSection" style="display:none;">🔧 Admin</div>
+        <div class="nav-item" id="usersNav" style="display:none;" onclick="showTab('users')" data-tab="users">
+          <span class="icon">👥</span> User Management
+        </div>
+        <div class="nav-item" id="auditNav" style="display:none;" onclick="showTab('audit')" data-tab="audit">
+          <span class="icon">🔍</span> Audit Log
+        </div>
+      </div>
+
+      <!-- CONTENT AREA -->
+      <div class="content-area">
+
+        <!-- ============================================================
+             TAB: DASHBOARD
+        ============================================================ -->
+        <div class="tab-content active" id="tab-dashboard">
+          <div class="card">
+            <div class="card-header">
+              <h2>📊 Dashboard Overview</h2>
+              <span style="font-size:0.8em;color:var(--gray);">
+                Last updated: <span id="lastUpdated">Just now</span>
+              </span>
+            </div>
+            <div class="stats-grid" id="dashboardStats"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>🏠 Boarding Status</h3>
+            </div>
+            <div class="stats-grid" id="boardingStats"></div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card-header"><h3>Students Per Class</h3></div>
+              <div class="chart-container"><canvas id="dashClassChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Grade Distribution</h3></div>
+              <div class="chart-container"><canvas id="dashGradeChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Attendance Trend (7 Days)</h3></div>
+              <div class="chart-container"><canvas id="dashAttendanceChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Gender Distribution</h3></div>
+              <div class="chart-container"><canvas id="dashGenderChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: STUDENTS
+        ============================================================ -->
+        <div class="tab-content" id="tab-students">
+          <div class="card">
+            <div class="card-header">
+              <h2>👩‍🎓 Student Records</h2>
+              <button class="btn btn-primary" onclick="showAddStudentModal()">+ Add Student</button>
+            </div>
+
+            <div class="form-row" style="margin-bottom:16px;">
+              <div class="form-group">
+                <label>Search</label>
+                <div class="search-box">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" id="studentSearch" placeholder="Search by name or admission..." oninput="renderStudents()">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Class</label>
+                <select id="studentClassFilter" onchange="renderStudents()">
+                  <option value="">All Classes</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <select id="studentStatusFilter" onchange="renderStudents()">
+                  <option value="">All</option>
+                  <option value="Boarder">Boarders</option>
+                  <option value="Day Scholar">Day Scholars</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Adm No.</th>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Gender</th>
+                    <th>Status</th>
+                    <th>Prefect</th>
+                    <th>Parent/Guardian</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="studentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: GRADES
+        ============================================================ -->
+        <div class="tab-content" id="tab-grades">
+          <div class="card">
+            <div class="card-header">
+              <h2>📝 Student Grades</h2>
+              <button class="btn btn-primary" onclick="showAddGradeModal()">+ Add Grade</button>
+            </div>
+
+            <div class="form-row" style="margin-bottom:16px;">
+              <div class="form-group">
+                <label>Class</label>
+                <select id="gradeClassFilter" onchange="renderGrades()">
+                  <option value="">All Classes</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Subject</label>
+                <select id="gradeSubjectFilter" onchange="renderGrades()">
+                  <option value="">All Subjects</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Term</label>
+                <select id="gradeTermFilter" onchange="renderGrades()">
+                  <option value="">All Terms</option>
+                  <option>Term 1</option>
+                  <option>Term 2</option>
+                  <option>Term 3</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Term</th>
+                    <th>Test 1</th>
+                    <th>Test 2</th>
+                    <th>Exam</th>
+                    <th>Total</th>
+                    <th>Grade</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="gradesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: ATTENDANCE
+        ============================================================ -->
+        <div class="tab-content" id="tab-attendance">
+          <div class="card">
+            <div class="card-header">
+              <h2>📋 Attendance</h2>
+              <button class="btn btn-primary" onclick="showAddAttendanceModal()">+ Mark Attendance</button>
+            </div>
+
+            <div class="form-row" style="margin-bottom:16px;">
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="attendanceDateFilter" onchange="renderAttendance()">
+              </div>
+              <div class="form-group">
+                <label>Class</label>
+                <select id="attendanceClassFilter" onchange="renderAttendance()">
+                  <option value="">All Classes</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Marked By</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: WARNINGS
+        ============================================================ -->
+        <div class="tab-content" id="tab-warnings">
+          <div class="card">
+            <div class="card-header">
+              <h2>⚠️ Warning Letters</h2>
+              <button class="btn btn-primary" onclick="showAddWarningModal()">+ Issue Warning</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Reason</th>
+                    <th>Issued By</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="warningsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: SUSPENSIONS
+        ============================================================ -->
+        <div class="tab-content" id="tab-suspensions">
+          <div class="card">
+            <div class="card-header">
+              <h2>🚫 Suspensions</h2>
+              <button class="btn btn-primary" onclick="showAddSuspensionModal()">+ Add Suspension</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Reason</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="suspensionsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: CLINIC
+        ============================================================ -->
+        <div class="tab-content" id="tab-clinic">
+          <div class="card">
+            <div class="card-header">
+              <h2>🏥 Clinic Visits</h2>
+              <button class="btn btn-primary" onclick="showAddClinicModal()">+ Record Visit</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Doctor/Nurse</th>
+                    <th>Complaint</th>
+                    <th>Condition</th>
+                    <th>Diagnosis</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="clinicTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: TEACHERS
+        ============================================================ -->
+        <div class="tab-content" id="tab-teachers">
+          <div class="card">
+            <div class="card-header">
+              <h2>👨‍🏫 Teachers</h2>
+              <button class="btn btn-primary" onclick="showAddTeacherModal()">+ Add Teacher</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Employee ID</th>
+                    <th>Subjects</th>
+                    <th>Classes</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="teachersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: ANALYTICS
+        ============================================================ -->
+        <div class="tab-content" id="tab-analytics">
+          <div class="card">
+            <div class="card-header">
+              <h2>📈 Analytics & Charts</h2>
+            </div>
+
+            <div class="form-row" style="margin-bottom:16px;">
+              <div class="form-group">
+                <label>Select Student</label>
+                <select id="analyticsStudentSelect" onchange="renderAnalytics()">
+                  <option value="">Select a student...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Select Class</label>
+                <select id="analyticsClassSelect" onchange="renderAnalytics()">
+                  <option value="">Select a class...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card-header"><h3>📊 Student Grades by Subject</h3></div>
+              <div class="chart-container"><canvas id="analyticsStudentChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>📈 Student Grade Trend</h3></div>
+              <div class="chart-container"><canvas id="analyticsTrendChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>📊 Class Average by Subject</h3></div>
+              <div class="chart-container"><canvas id="analyticsClassChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>📊 Student Comparison</h3></div>
+              <div class="chart-container"><canvas id="analyticsComparisonChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: USERS (Admin Only)
+        ============================================================ -->
+        <div class="tab-content" id="tab-users">
+          <div class="card">
+            <div class="card-header">
+              <h2>👥 User Management</h2>
+              <button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Class</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================
+             TAB: AUDIT (Admin Only)
+        ============================================================ -->
+        <div class="tab-content" id="tab-audit">
+          <div class="card">
+            <div class="card-header">
+              <h2>🔍 Audit Log</h2>
+            </div>
+            <div class="form-group" style="max-width:300px;">
+              <label>Filter by User</label>
+              <select id="auditUserFilter" onchange="renderAudit()">
+                <option value="">All Users</option>
+              </select>
+            </div>
+            <div id="auditLogContent"></div>
+          </div>
+        </div>
+
+      </div><!-- end content-area -->
+    </div><!-- end main-layout -->
+  </div><!-- end app-container -->
+
+  <!-- ============================================================
+       MODAL OVERLAY
+  ============================================================ -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Modal</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       CHANGE PASSWORD MODAL
+  ============================================================ -->
+  <div class="modal-overlay" id="changePasswordModal">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h2>🔑 Change Password</h2>
+        <button class="modal-close" onclick="document.getElementById('changePasswordModal').classList.remove('show')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="currentPwd">
+      </div>
+      <div class="form-group">
+        <label>New Password (min 6 chars)</label>
+        <input type="password" id="newPwd">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPwd">
+      </div>
+      <button class="btn btn-primary" onclick="changePassword()" style="width:100%;">Update Password</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TOAST CONTAINER
+  ============================================================ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
   <script type="module">
+    // ============================================================
+    // 🔥 IMPORTS
+    // ============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged,
+      updatePassword,
+      reauthenticateWithCredential,
+      EmailAuthProvider,
+      createUserWithEmailAndPassword,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      addDoc,
+      setDoc,
+      updateDoc,
+      deleteDoc,
+      getDoc,
+      getDocs,
+      onSnapshot,
+      serverTimestamp,
+      query,
+      where,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ⚠️ REPLACE WITH YOUR REAL CONFIG
+    // ============================================================
+    // 🔧 FIREBASE CONFIG - REPLACE WITH YOUR REAL VALUES
+    // ============================================================
     const firebaseConfig = {
-      apiKey: "YOUR_REAL_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+  apiKey: "AIzaSyDH5MhXMp5WCXLdBtsNaVz1bPs13DrOkFw",
+  authDomain: "mara-christian-school.firebaseapp.com",
+  projectId: "mara-christian-school",
+  storageBucket: "mara-christian-school.firebasestorage.app",
+  messagingSenderId: "348620195835",
+  appId: "1:348620195835:web:dba83222f99204cd62ed5e"
+};
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    window.testLogin = async function() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const result = document.getElementById('result');
-      
-      result.textContent = '⏳ Logging in...';
-      
+    // Secondary app for creating users (so admin stays logged in)
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+    const secondaryAuth = getAuth(secondaryApp);
+
+    // ============================================================
+    // 📚 CONSTANTS
+    // ============================================================
+    const CLASSES = [
+      'Grade 7 East', 'Grade 7 West',
+      'Grade 8 East', 'Grade 8 West',
+      'Grade 9 East', 'Grade 9 West',
+      'Grade 10 East', 'Grade 10 West',
+      'Form 3 East', 'Form 3 West',
+      'Form 4 East', 'Form 4 West'
+    ];
+
+    const SUBJECTS = [
+      'Mathematics', 'English', 'Kiswahili',
+      'Science', 'Social Studies', 'CRE',
+      'Agriculture', 'Business Studies',
+      'Computer Studies', 'History', 'Geography'
+    ];
+
+    const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'secretary', 'director'];
+
+    const CONDITIONS = ['New Illness', 'Pre-existing Condition'];
+
+    // ============================================================
+    // 🧠 STATE
+    // ============================================================
+    let currentUser = null;
+    let activeTab = 'dashboard';
+    let unsubscribers = [];
+    let chartInstances = {};
+
+    // Cache
+    let studentsCache = [];
+    let gradesCache = [];
+    let attendanceCache = [];
+    let warningsCache = [];
+    let suspensionsCache = [];
+    let clinicCache = [];
+    let teachersCache = [];
+    let usersCache = [];
+    let auditCache = [];
+
+    // ============================================================
+    // 🔧 UTILITY FUNCTIONS
+    // ============================================================
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
       try {
-        const user = await signInWithEmailAndPassword(auth, email, password);
-        result.textContent = '✅ SUCCESS! Logged in as: ' + user.user.email;
-        result.style.color = 'green';
-      } catch(err) {
-        result.textContent = '❌ ERROR: ' + err.code + ' - ' + err.message;
-        result.style.color = 'red';
-        console.error(err);
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch { return '-'; }
+    }
+
+    function formatTimestamp(ts) {
+      if (!ts) return '-';
+      try {
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleString();
+      } catch { return '-'; }
+    }
+
+    function getLetterGrade(score) {
+      if (score >= 80) return 'A';
+      if (score >= 70) return 'B';
+      if (score >= 60) return 'C';
+      if (score >= 50) return 'D';
+      return 'F';
+    }
+
+    function getGradeColor(score) {
+      if (score >= 80) return '#27ae60';
+      if (score >= 60) return '#f39c12';
+      return '#e74c3c';
+    }
+
+    function getGradeBadge(score) {
+      const grade = getLetterGrade(score);
+      const colors = {
+        'A': 'badge-success',
+        'B': 'badge-info',
+        'C': 'badge-warning',
+        'D': 'badge-danger',
+        'F': 'badge-danger'
+      };
+      return `<span class="badge ${colors[grade]}">${grade}</span>`;
+    }
+
+    function getLevel(cls) {
+      if (!cls) return '';
+      if (cls.includes('Grade 7') || cls.includes('Grade 8') || cls.includes('Grade 9')) {
+        return 'Junior Secondary';
+      }
+      if (cls.includes('Grade 10') || cls.includes('Form 3') || cls.includes('Form 4')) {
+        return 'Senior Secondary';
+      }
+      return '';
+    }
+
+    function getStream(cls) {
+      if (!cls) return '';
+      if (cls.includes('East')) return 'East';
+      if (cls.includes('West')) return 'West';
+      return '';
+    }
+
+    function friendlyAuthError(code) {
+      const map = {
+        'auth/invalid-email': 'Invalid email address format.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/email-already-in-use': 'This email is already registered.',
+        'auth/weak-password': 'Password must be at least 6 characters.',
+        'auth/too-many-requests': 'Too many attempts. Please try again later.',
+        'auth/invalid-credential': 'Invalid email or password.',
+        'auth/api-key-not-valid': 'API key is invalid. Check your Firebase config.'
+      };
+      return map[code] || `Error: ${code}`;
+    }
+
+    function classSelectHtml(selected = '') {
+      let html = '<option value="">All Classes</option>';
+      const groups = {
+        'Junior Secondary': CLASSES.slice(0, 6),
+        'Senior Secondary': CLASSES.slice(6)
+      };
+      for (const [group, classes] of Object.entries(groups)) {
+        html += `<optgroup label="${group}">`;
+        for (const cls of classes) {
+          html += `<option value="${cls}" ${selected === cls ? 'selected' : ''}>${cls}</option>`;
+        }
+        html += '</optgroup>';
+      }
+      return html;
+    }
+
+    // ============================================================
+    // 💬 TOAST NOTIFICATIONS
+    // ============================================================
+    function showToast(message, type = 'success', duration = 4000) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 400);
+      }, duration);
+    }
+
+    // ============================================================
+    // 🔐 AUTH FUNCTIONS
+    // ============================================================
+    window.handleLogin = async function() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+      const errorEl = document.getElementById('loginError');
+
+      errorEl.textContent = '';
+
+      if (!email) { errorEl.textContent = 'Please enter your email'; return; }
+      if (!password) { errorEl.textContent = 'Please enter your password'; return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        errorEl.textContent = friendlyAuthError(err.code);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
       }
     };
+
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+        showToast('Logged out successfully');
+      } catch (err) {
+        showToast('Error logging out', 'error');
+      }
+    };
+
+    // ============================================================
+    // 🔥 AUTH STATE LISTENER
+    // ============================================================
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (!snap.exists()) {
+            await signOut(auth);
+            document.getElementById('loginError').textContent = 'Account not found. Contact admin.';
+            return;
+          }
+
+          currentUser = { uid: user.uid, email: user.email, ...snap.data() };
+
+          // Update login stats
+          await updateDoc(doc(db, 'users', user.uid), {
+            lastLogin: serverTimestamp(),
+            loginCount: (currentUser.loginCount || 0) + 1
+          });
+
+          // Show app
+          document.getElementById('loginPage').style.display = 'none';
+          document.getElementById('appContainer').style.display = 'block';
+
+          document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
+          document.getElementById('currentRoleBadge').textContent = (currentUser.role || '').toUpperCase();
+
+          setupPermissions();
+          startListeners();
+          showTab('dashboard');
+          showToast(`Welcome, ${currentUser.fullName || currentUser.email}!`);
+
+        } catch (err) {
+          console.error('Error loading user profile:', err);
+          document.getElementById('loginError').textContent = 'Error loading profile. Try again.';
+        }
+      } else {
+        currentUser = null;
+        stopListeners();
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
+      }
+    });
+
+    // ============================================================
+    // 🔒 PERMISSIONS
+    // ============================================================
+    function setupPermissions() {
+      const role = currentUser?.role;
+      const isAdmin = role === 'admin';
+
+      document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
+      document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
+    }
+
+    function canEdit() {
+      if (!currentUser) return false;
+      const role = currentUser.role;
+      return ['admin', 'principal', 'teacher', 'nurse', 'secretary'].includes(role);
+    }
+
+    function canDelete() {
+      return currentUser?.role === 'admin';
+    }
+
+    // ============================================================
+    // 📡 FIRESTORE LISTENERS
+    // ============================================================
+    function startListeners() {
+      // Students
+      unsubscribers.push(onSnapshot(collection(db, 'students'), (snap) => {
+        studentsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateSyncStatus(true);
+        refreshCurrentView();
+      }, () => updateSyncStatus(false)));
+
+      // Grades
+      unsubscribers.push(onSnapshot(collection(db, 'grades'), (snap) => {
+        gradesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refreshCurrentView();
+      }));
+
+      // Attendance
+      unsubscribers.push(onSnapshot(collection(db, 'attendance'), (snap) => {
+        attendanceCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refreshCurrentView();
+      }));
+
+      // Warnings
+      unsubscribers.push(onSnapshot(collection(db, 'warnings'), (snap) => {
+        warningsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refreshCurrentView();
+      }));
+
+      // Suspensions
+      unsubscribers.push(onSnapshot(collection(db, 'suspensions'), (snap) => {
+        suspensionsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refreshCurrentView();
+      }));
+
+      // Clinic
+      unsubscribers.push(onSnapshot(collection(db, 'clinic'), (snap) => {
+        clinicCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refreshCurrentView();
+      }));
+
+      // Teachers
+      unsubscribers.push(onSnapshot(collection(db, 'teachers'), (snap) => {
+        teachersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refreshCurrentView();
+      }));
+
+      // Users (admin only)
+      unsubscribers.push(onSnapshot(collection(db, 'users'), (snap) => {
+        usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (activeTab === 'users') renderUsers();
+        populateAuditFilter();
+      }));
+
+      // Audit log
+      unsubscribers.push(onSnapshot(
+        query(collection(db, 'auditLog'), orderBy('time', 'desc'), orderBy('time', 'desc')),
+        (snap) => {
+          auditCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          if (activeTab === 'audit') renderAudit();
+        }
+      ));
+    }
+
+    function stopListeners() {
+      unsubscribers.forEach(u => u());
+      unsubscribers = [];
+    }
+
+    function updateSyncStatus(online) {
+      const status = document.getElementById('syncStatus');
+      const dot = document.getElementById('syncDot');
+      const label = document.getElementById('syncLabel');
+      if (online) {
+        status.className = 'sync-status online';
+        dot.className = 'sync-dot online';
+        label.textContent = 'Live';
+      } else {
+        status.className = 'sync-status offline';
+        dot.className = 'sync-dot offline';
+        label.textContent = 'Offline';
+        showToast('Connection lost. Data will sync when online.', 'warning', 3000);
+      }
+    }
+
+    function refreshCurrentView() {
+      switch (activeTab) {
+        case 'dashboard': renderDashboard(); break;
+        case 'students': renderStudents(); break;
+        case 'grades': renderGrades(); break;
+        case 'attendance': renderAttendance(); break;
+        case 'warnings': renderWarnings(); break;
+        case 'suspensions': renderSuspensions(); break;
+        case 'clinic': renderClinic(); break;
+        case 'teachers': renderTeachers(); break;
+        case 'analytics': renderAnalytics(); break;
+        case 'users': renderUsers(); break;
+        case 'audit': renderAudit(); break;
+      }
+    }
+
+    // ============================================================
+    // 🧭 NAVIGATION
+    // ============================================================
+    window.showTab = function(tabName) {
+      activeTab = tabName;
+
+      // Update tabs
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      const tab = document.getElementById('tab-' + tabName);
+      if (tab) tab.classList.add('active');
+
+      const nav = document.querySelector(`[data-tab="${tabName}"]`);
+      if (nav) nav.classList.add('active');
+
+      // Close sidebar on mobile
+      document.getElementById('sidebar').classList.remove('show');
+
+      // Refresh content
+      refreshCurrentView();
+    };
+
+    window.toggleSidebar = function() {
+      document.getElementById('sidebar').classList.toggle('show');
+    };
+
+    // ============================================================
+    // 🖼️ MODAL FUNCTIONS
+    // ============================================================
+    window.openModal = function(title, html) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = html;
+      document.getElementById('modalOverlay').classList.add('show');
+    };
+
+    window.closeModal = function() {
+      document.getElementById('modalOverlay').classList.remove('show');
+    };
+
+    window.showChangePassword = function() {
+      document.getElementById('changePasswordModal').classList.add('show');
+    };
+
+    window.changePassword = async function() {
+      const current = document.getElementById('currentPwd').value;
+      const newPwd = document.getElementById('newPwd').value;
+      const confirm = document.getElementById('confirmPwd').value;
+
+      if (newPwd.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+      }
+      if (newPwd !== confirm) {
+        showToast('Passwords do not match', 'error');
+        return;
+      }
+
+      try {
+        const cred = EmailAuthProvider.credential(auth.currentUser.email, current);
+        await reauthenticateWithCredential(auth.currentUser, cred);
+        await updatePassword(auth.currentUser, newPwd);
+
+        document.getElementById('changePasswordModal').classList.remove('show');
+        document.getElementById('currentPwd').value = '';
+        document.getElementById('newPwd').value = '';
+        document.getElementById('confirmPwd').value = '';
+        showToast('Password updated successfully!');
+      } catch (err) {
+        showToast(friendlyAuthError(err.code), 'error');
+      }
+    };
+
+    // ============================================================
+    // 📊 DASHBOARD
+    // ============================================================
+    function renderDashboard() {
+      const students = studentsCache;
+      const grades = gradesCache;
+      const attendance = attendanceCache;
+      const warnings = warningsCache;
+      const suspensions = suspensionsCache;
+      const clinic = clinicCache;
+
+      const total = students.length;
+      const male = students.filter(s => s.gender === 'Male').length;
+      const female = students.filter(s => s.gender === 'Female').length;
+      const boarders = students.filter(s => s.status === 'Boarder').length;
+      const dayScholars = students.filter(s => s.status === 'Day Scholar').length;
+
+      const today = new Date().toISOString().split('T')[0];
+      const presentToday = attendance.filter(a => a.date === today && a.status === 'Present').length;
+
+      const avgGrade = grades.length ?
+        Math.round(grades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / grades.length) :
+        0;
+
+      document.getElementById('dashboardStats').innerHTML = `
+        <div class="stat-card"><div class="stat-number">${total}</div><div class="stat-label">👩‍🎓 Total Students</div></div>
+        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${male}</div><div class="stat-label">👦 Boys</div></div>
+        <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${female}</div><div class="stat-label">👧 Girls</div></div>
+        <div class="stat-card" style="border-top-color:#27ae60;"><div class="stat-number">${presentToday}</div><div class="stat-label">✅ Present Today</div></div>
+        <div class="stat-card" style="border-top-color:#2e86c1;"><div class="stat-number">${avgGrade}%</div><div class="stat-label">📊 Average Grade</div></div>
+        <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${warnings.length}</div><div class="stat-label">⚠️ Warnings</div></div>
+        <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${suspensions.length}</div><div class="stat-label">🚫 Suspensions</div></div>
+        <div class="stat-card" style="border-top-color:#8e44ad;"><div class="stat-number">${clinic.length}</div><div class="stat-label">🏥 Clinic Visits</div></div>
+      `;
+
+      document.getElementById('boardingStats').innerHTML = `
+        <div class="stat-card" style="border-top-color:#2980b9;"><div class="stat-number">${boarders}</div><div class="stat-label">🏠 Boarders</div></div>
+        <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${dayScholars}</div><div class="stat-label">🚶 Day Scholars</div></div>
+        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${total ? Math.round(male/total*100) : 0}%</div><div class="stat-label">👦 Boys Ratio</div></div>
+        <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${total ? Math.round(female/total*100) : 0}%</div><div class="stat-label">👧 Girls Ratio</div></div>
+      `;
+
+      // Class chart
+      const classData = {};
+      CLASSES.forEach(c => classData[c] = students.filter(s => s.class === c).length);
+      destroyChart('dashClassChart');
+      chartInstances['dashClassChart'] = new Chart(document.getElementById('dashClassChart'), {
+        type: 'bar',
+        data: {
+          labels: CLASSES,
+          datasets: [{
+            data: CLASSES.map(c => classData[c]),
+            backgroundColor: CLASSES.map(c => c.includes('East') ? '#3498db' : '#e67e22')
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true }, x: { ticks: { maxRotation: 45 } } }
+        }
+      });
+
+      // Grade distribution
+      const gradeDist = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      grades.forEach(g => {
+        const total = (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0);
+        gradeDist[getLetterGrade(total)]++;
+      });
+      destroyChart('dashGradeChart');
+      chartInstances['dashGradeChart'] = new Chart(document.getElementById('dashGradeChart'), {
+        type: 'bar',
+        data: {
+          labels: ['A', 'B', 'C', 'D', 'F'],
+          datasets: [{
+            data: [gradeDist.A, gradeDist.B, gradeDist.C, gradeDist.D, gradeDist.F],
+            backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // Attendance trend (last 7 days)
+      const last7 = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        last7.push(d.toISOString().split('T')[0]);
+      }
+      const attTrend = last7.map(d => attendance.filter(a => a.date === d && a.status === 'Present').length);
+      destroyChart('dashAttendanceChart');
+      chartInstances['dashAttendanceChart'] = new Chart(document.getElementById('dashAttendanceChart'), {
+        type: 'line',
+        data: {
+          labels: last7.map(d => formatDate(d)),
+          datasets: [{
+            data: attTrend,
+            borderColor: '#2e86c1',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            backgroundColor: 'rgba(46, 134, 193, 0.1)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // Gender chart
+      destroyChart('dashGenderChart');
+      chartInstances['dashGenderChart'] = new Chart(document.getElementById('dashGenderChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['👦 Boys', '👧 Girls'],
+          datasets: [{
+            data: [male, female],
+            backgroundColor: ['#3498db', '#e91e8c']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    function destroyChart(id) {
+      if (chartInstances[id]) {
+        chartInstances[id].destroy();
+        delete chartInstances[id];
+      }
+    }
+
+    // ============================================================
+    // 👩‍🎓 STUDENTS
+    // ============================================================
+    window.showAddStudentModal = function(editId) {
+      const student = editId ? studentsCache.find(s => s.id === editId) : null;
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Admission Number *</label>
+            <input type="text" id="s_admNo" value="${student?.admNo || ''}" placeholder="e.g., 2024-001">
+          </div>
+          <div class="form-group">
+            <label>First Name *</label>
+            <input type="text" id="s_firstName" value="${student?.firstName || ''}" placeholder="First name">
+          </div>
+          <div class="form-group">
+            <label>Last Name *</label>
+            <input type="text" id="s_lastName" value="${student?.lastName || ''}" placeholder="Last name">
+          </div>
+          <div class="form-group">
+            <label>Class *</label>
+            <select id="s_class">${classSelectHtml(student?.class || '')}</select>
+          </div>
+          <div class="form-group">
+            <label>Gender *</label>
+            <select id="s_gender">
+              <option value="Male" ${student?.gender === 'Male' ? 'selected' : ''}>Male</option>
+              <option value="Female" ${student?.gender === 'Female' ? 'selected' : ''}>Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" id="s_dob" value="${student?.dob || ''}">
+          </div>
+          <div class="form-group">
+            <label>Status *</label>
+            <select id="s_status">
+              <option value="Boarder" ${student?.status === 'Boarder' ? 'selected' : ''}>Boarder</option>
+              <option value="Day Scholar" ${student?.status === 'Day Scholar' ? 'selected' : ''}>Day Scholar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira">
+          </div>
+          <div class="form-group">
+            <label>Is Prefect?</label>
+            <select id="s_isPrefect">
+              <option value="No" ${student?.isPrefect !== 'Yes' ? 'selected' : ''}>No</option>
+              <option value="Yes" ${student?.isPrefect === 'Yes' ? 'selected' : ''}>Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Parent/Guardian Name</label>
+            <input type="text" id="s_parent" value="${student?.parent || ''}">
+          </div>
+          <div class="form-group">
+            <label>Parent Phone</label>
+            <input type="text" id="s_parentPhone" value="${student?.parentPhone || ''}">
+          </div>
+          <div class="form-group">
+            <label>Parent Email</label>
+            <input type="email" id="s_parentEmail" value="${student?.parentEmail || ''}">
+          </div>
+          <div class="form-group">
+            <label>Health History</label>
+            <textarea id="s_health" rows="2">${student?.health || ''}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="s_notes" rows="2">${student?.notes || ''}</textarea>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveStudent('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Add'} Student
+        </button>
+      `;
+
+      openModal(editId ? 'Edit Student' : 'Add New Student', html);
+    };
+
+    window.saveStudent = async function(editId) {
+      const admNo = document.getElementById('s_admNo').value.trim();
+      const firstName = document.getElementById('s_firstName').value.trim();
+      const lastName = document.getElementById('s_lastName').value.trim();
+
+      if (!admNo || !firstName || !lastName) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const data = {
+        admNo,
+        firstName,
+        lastName,
+        class: document.getElementById('s_class').value,
+        gender: document.getElementById('s_gender').value,
+        dob: document.getElementById('s_dob').value,
+        status: document.getElementById('s_status').value,
+        location: document.getElementById('s_location').value,
+        isPrefect: document.getElementById('s_isPrefect').value,
+        parent: document.getElementById('s_parent').value,
+        parentPhone: document.getElementById('s_parentPhone').value,
+        parentEmail: document.getElementById('s_parentEmail').value,
+        health: document.getElementById('s_health').value,
+        notes: document.getElementById('s_notes').value
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'students', editId), data);
+          await addAuditLog('UPDATE_STUDENT', `Updated ${firstName} ${lastName}`);
+          showToast('Student updated successfully!');
+        } else {
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'students'), data);
+          await addAuditLog('ADD_STUDENT', `Added ${firstName} ${lastName} (${admNo})`);
+          showToast('Student added successfully!');
+        }
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderStudents = function() {
+      const search = document.getElementById('studentSearch').value.toLowerCase();
+      const classFilter = document.getElementById('studentClassFilter').value;
+      const statusFilter = document.getElementById('studentStatusFilter').value;
+
+      // Populate class filter
+      const classSelect = document.getElementById('studentClassFilter');
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = classSelectHtml();
+      }
+
+      let filtered = studentsCache;
+
+      if (search) {
+        filtered = filtered.filter(s =>
+          s.firstName.toLowerCase().includes(search) ||
+          s.lastName.toLowerCase().includes(search) ||
+          (s.admNo || '').toLowerCase().includes(search)
+        );
+      }
+
+      if (classFilter) filtered = filtered.filter(s => s.class === classFilter);
+      if (statusFilter) filtered = filtered.filter(s => s.status === statusFilter);
+
+      document.getElementById('studentTableBody').innerHTML = filtered.map(s => `
+        <tr>
+          <td><strong>${s.admNo}</strong></td>
+          <td>${s.firstName} ${s.lastName}</td>
+          <td>${s.class}</td>
+          <td>${s.gender || '-'}</td>
+          <td><span class="badge ${s.status === 'Boarder' ? 'badge-primary' : 'badge-warning'}">${s.status || '-'}</span></td>
+          <td>${s.isPrefect === 'Yes' ? '⭐ Yes' : '-'}</td>
+          <td>${s.parent || '-'}</td>
+          <td>
+            ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
+            ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Del</button>` : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">No students found</td></tr>';
+    };
+
+    window.deleteStudent = async function(id) {
+      if (!confirm('Delete this student permanently?')) return;
+      try {
+        const student = studentsCache.find(s => s.id === id);
+        await deleteDoc(doc(db, 'students', id));
+        await addAuditLog('DELETE_STUDENT', `Deleted ${student?.firstName} ${student?.lastName}`);
+        showToast('Student deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // 📝 GRADES
+    // ============================================================
+    window.showAddGradeModal = function(editId) {
+      const grade = editId ? gradesCache.find(g => g.id === editId) : null;
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Student *</label>
+            <select id="g_student">
+              ${studentsCache.map(s => `
+                <option value="${s.id}" ${grade?.studentId === s.id ? 'selected' : ''}>
+                  ${s.firstName} ${s.lastName} (${s.class})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject *</label>
+            <select id="g_subject">
+              ${SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Term *</label>
+            <select id="g_term">
+              <option value="Term 1" ${grade?.term === 'Term 1' ? 'selected' : ''}>Term 1</option>
+              <option value="Term 2" ${grade?.term === 'Term 2' ? 'selected' : ''}>Term 2</option>
+              <option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Test 1 (/30)</label>
+            <input type="number" id="g_test1" value="${grade?.test1 || 0}" min="0" max="30">
+          </div>
+          <div class="form-group">
+            <label>Test 2 (/30)</label>
+            <input type="number" id="g_test2" value="${grade?.test2 || 0}" min="0" max="30">
+          </div>
+          <div class="form-group">
+            <label>Exam (/70)</label>
+            <input type="number" id="g_exam" value="${grade?.exam || 0}" min="0" max="70">
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Save'} Grade
+        </button>
+      `;
+
+      openModal(editId ? 'Edit Grade' : 'Add Grade', html);
+    };
+
+    window.saveGrade = async function(editId) {
+      const studentId = document.getElementById('g_student').value;
+      const subject = document.getElementById('g_subject').value;
+      const term = document.getElementById('g_term').value;
+      const test1 = parseInt(document.getElementById('g_test1').value) || 0;
+      const test2 = parseInt(document.getElementById('g_test2').value) || 0;
+      const exam = parseInt(document.getElementById('g_exam').value) || 0;
+
+      if (!studentId || !subject || !term) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const data = { studentId, subject, term, test1, test2, exam };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) {
+          await updateDoc(doc(db, 'grades', editId), data);
+          showToast('Grade updated!');
+        } else {
+          data.recordedBy = currentUser?.email || 'unknown';
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'grades'), data);
+          showToast(`Grade added for ${student?.firstName} ${student?.lastName}`);
+        }
+        await addAuditLog(editId ? 'UPDATE_GRADE' : 'ADD_GRADE', `${subject} - ${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderGrades = function() {
+      const classFilter = document.getElementById('gradeClassFilter').value;
+      const subjectFilter = document.getElementById('gradeSubjectFilter').value;
+      const termFilter = document.getElementById('gradeTermFilter').value;
+
+      // Populate filters
+      const classSelect = document.getElementById('gradeClassFilter');
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = classSelectHtml();
+      }
+
+      const subjectSelect = document.getElementById('gradeSubjectFilter');
+      if (subjectSelect.options.length <= 1) {
+        subjectSelect.innerHTML = '<option value="">All Subjects</option>' +
+          SUBJECTS.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
+
+      let filtered = gradesCache;
+
+      if (classFilter) {
+        filtered = filtered.filter(g => {
+          const s = studentsCache.find(st => st.id === g.studentId);
+          return s && s.class === classFilter;
+        });
+      }
+      if (subjectFilter) filtered = filtered.filter(g => g.subject === subjectFilter);
+      if (termFilter) filtered = filtered.filter(g => g.term === termFilter);
+
+      document.getElementById('gradesTableBody').innerHTML = filtered.map(g => {
+        const student = studentsCache.find(s => s.id === g.studentId);
+        const total = (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0);
+        return `
+          <tr>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${g.subject}</td>
+            <td>${g.term}</td>
+            <td>${g.test1 || 0}</td>
+            <td>${g.test2 || 0}</td>
+            <td>${g.exam || 0}</td>
+            <td><strong>${total}</strong></td>
+            <td>${getGradeBadge(total)}</td>
+            <td>
+              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>` : ''}
+              ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No grades found</td></tr>';
+    };
+
+    window.deleteGrade = async function(id) {
+      if (!confirm('Delete this grade record?')) return;
+      try {
+        await deleteDoc(doc(db, 'grades', id));
+        await addAuditLog('DELETE_GRADE', 'Deleted grade record');
+        showToast('Grade deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // 📋 ATTENDANCE
+    // ============================================================
+    window.showAddAttendanceModal = function() {
+      const today = new Date().toISOString().split('T')[0];
+
+      let html = `
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="attDate" value="${today}">
+        </div>
+        <div class="form-group">
+          <label>Class</label>
+          <select id="attClassFilter" onchange="filterAttendanceStudents()">
+            <option value="">All Classes</option>
+            ${CLASSES.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div style="max-height:400px;overflow-y:auto;">
+          ${studentsCache.map(s => `
+            <div class="att-student" data-class="${s.class}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #eee;flex-wrap:wrap;">
+              <span style="flex:1;min-width:120px;font-size:0.85em;">${s.firstName} ${s.lastName} <span style="color:#999;font-size:0.8em;">(${s.class})</span></span>
+              <select id="att_${s.id}" style="width:100px;padding:4px;" onchange="toggleAttendanceReason('${s.id}')">
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Late">Late</option>
+                <option value="Excused">Excused</option>
+              </select>
+              <input type="text" id="attReason_${s.id}" placeholder="Reason" style="width:150px;padding:4px;font-size:0.8em;display:none;">
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-success" onclick="saveAttendance()" style="width:100%;margin-top:16px;">
+          💾 Save Attendance
+        </button>
+      `;
+
+      openModal('📋 Mark Attendance', html);
+
+      // Store the class filter function globally
+      window.filterAttendanceStudents = function() {
+        const filter = document.getElementById('attClassFilter').value;
+        document.querySelectorAll('.att-student').forEach(el => {
+          el.style.display = (!filter || el.dataset.class === filter) ? 'flex' : 'none';
+        });
+      };
+
+      window.toggleAttendanceReason = function(studentId) {
+        const sel = document.getElementById('att_' + studentId);
+        const reason = document.getElementById('attReason_' + studentId);
+        reason.style.display = sel.value === 'Absent' ? 'inline-block' : 'none';
+      };
+    };
+
+    window.saveAttendance = async function() {
+      const date = document.getElementById('attDate').value;
+      if (!date) {
+        showToast('Please select a date', 'error');
+        return;
+      }
+
+      const classFilter = document.getElementById('attClassFilter').value;
+      let count = 0;
+
+      try {
+        const promises = [];
+        studentsCache.forEach(s => {
+          if (classFilter && s.class !== classFilter) return;
+          const sel = document.getElementById('att_' + s.id);
+          if (!sel) return;
+          const reasonEl = document.getElementById('attReason_' + s.id);
+          const status = sel.value;
+          const reason = status === 'Absent' ? (reasonEl?.value || '') : '';
+          const id = `${s.id}_${date}`;
+          promises.push(setDoc(doc(db, 'attendance', id), {
+            studentId: s.id,
+            date,
+            status,
+            reason,
+            markedBy: currentUser?.email || 'unknown'
+          }));
+          count++;
+        });
+
+        await Promise.all(promises);
+        await addAuditLog('ADD_ATTENDANCE', `Marked ${count} students on ${date}`);
+        showToast(`✅ Attendance saved for ${count} students`);
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderAttendance = function() {
+      const date = document.getElementById('attendanceDateFilter').value;
+      const classFilter = document.getElementById('attendanceClassFilter').value;
+
+      // Populate filters
+      const classSelect = document.getElementById('attendanceClassFilter');
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = classSelectHtml();
+      }
+
+      // Set default date
+      if (!date) {
+        document.getElementById('attendanceDateFilter').value = new Date().toISOString().split('T')[0];
+      }
+
+      let filtered = attendanceCache;
+      const currentDate = document.getElementById('attendanceDateFilter').value;
+      if (currentDate) filtered = filtered.filter(a => a.date === currentDate);
+      if (classFilter) {
+        filtered = filtered.filter(a => {
+          const s = studentsCache.find(st => st.id === a.studentId);
+          return s && s.class === classFilter;
+        });
+      }
+
+      document.getElementById('attendanceTableBody').innerHTML = filtered.map(a => {
+        const student = studentsCache.find(s => s.id === a.studentId);
+        return `
+          <tr>
+            <td>${formatDate(a.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td><span class="badge ${a.status === 'Present' ? 'badge-success' : a.status === 'Absent' ? 'badge-danger' : 'badge-warning'}">${a.status}</span></td>
+            <td>${a.reason || '-'}</td>
+            <td>${a.markedBy || '-'}</td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No attendance records for this date</td></tr>';
+    };
+
+    // ============================================================
+    // ⚠️ WARNINGS
+    // ============================================================
+    window.showAddWarningModal = function(editId) {
+      const warning = editId ? warningsCache.find(w => w.id === editId) : null;
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Student *</label>
+            <select id="w_student">
+              ${studentsCache.map(s => `
+                <option value="${s.id}" ${warning?.studentId === s.id ? 'selected' : ''}>
+                  ${s.firstName} ${s.lastName} (${s.class})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" id="w_date" value="${warning?.date || new Date().toISOString().split('T')[0]}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Reason *</label>
+          <textarea id="w_reason" rows="3">${warning?.reason || ''}</textarea>
+        </div>
+        <button class="btn btn-success" onclick="saveWarning('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Issue'} Warning
+        </button>
+      `;
+
+      openModal(editId ? 'Edit Warning' : 'Issue Warning', html);
+    };
+
+    window.saveWarning = async function(editId) {
+      const studentId = document.getElementById('w_student').value;
+      const date = document.getElementById('w_date').value;
+      const reason = document.getElementById('w_reason').value.trim();
+
+      if (!studentId || !date || !reason) {
+        showToast('Please fill all fields', 'error');
+        return;
+      }
+
+      const data = { studentId, date, reason };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) {
+          await updateDoc(doc(db, 'warnings', editId), data);
+          showToast('Warning updated');
+        } else {
+          data.issuedBy = currentUser?.fullName || currentUser?.email || 'unknown';
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'warnings'), data);
+          showToast(`Warning issued to ${student?.firstName} ${student?.lastName}`);
+        }
+        await addAuditLog(editId ? 'UPDATE_WARNING' : 'ADD_WARNING', `${student?.firstName} ${student?.lastName} - ${reason}`);
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderWarnings = function() {
+      document.getElementById('warningsTableBody').innerHTML = warningsCache.map(w => {
+        const student = studentsCache.find(s => s.id === w.studentId);
+        return `
+          <tr>
+            <td>${formatDate(w.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${w.reason}</td>
+            <td>${w.issuedBy || '-'}</td>
+            <td>
+              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
+              ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteWarning('${w.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No warnings found</td></tr>';
+    };
+
+    window.deleteWarning = async function(id) {
+      if (!confirm('Delete this warning?')) return;
+      try {
+        await deleteDoc(doc(db, 'warnings', id));
+        await addAuditLog('DELETE_WARNING', 'Deleted warning');
+        showToast('Warning deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // 🚫 SUSPENSIONS
+    // ============================================================
+    window.showAddSuspensionModal = function(editId) {
+      const suspension = editId ? suspensionsCache.find(s => s.id === editId) : null;
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Student *</label>
+            <select id="su_student">
+              ${studentsCache.map(s => `
+                <option value="${s.id}" ${suspension?.studentId === s.id ? 'selected' : ''}>
+                  ${s.firstName} ${s.lastName} (${s.class})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" id="su_date" value="${suspension?.date || new Date().toISOString().split('T')[0]}">
+          </div>
+          <div class="form-group">
+            <label>Duration *</label>
+            <input type="text" id="su_duration" value="${suspension?.duration || ''}" placeholder="e.g., 3 days">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="su_status">
+              <option value="Active" ${suspension?.status === 'Active' ? 'selected' : ''}>Active</option>
+              <option value="Completed" ${suspension?.status === 'Completed' ? 'selected' : ''}>Completed</option>
+              <option value="Appealed" ${suspension?.status === 'Appealed' ? 'selected' : ''}>Appealed</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Reason *</label>
+          <textarea id="su_reason" rows="3">${suspension?.reason || ''}</textarea>
+        </div>
+        <button class="btn btn-success" onclick="saveSuspension('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Add'} Suspension
+        </button>
+      `;
+
+      openModal(editId ? 'Edit Suspension' : 'Add Suspension', html);
+    };
+
+    window.saveSuspension = async function(editId) {
+      const studentId = document.getElementById('su_student').value;
+      const date = document.getElementById('su_date').value;
+      const duration = document.getElementById('su_duration').value.trim();
+      const status = document.getElementById('su_status').value;
+      const reason = document.getElementById('su_reason').value.trim();
+
+      if (!studentId || !date || !duration || !reason) {
+        showToast('Please fill all fields', 'error');
+        return;
+      }
+
+      const data = { studentId, date, duration, status, reason };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) {
+          await updateDoc(doc(db, 'suspensions', editId), data);
+          showToast('Suspension updated');
+        } else {
+          data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown';
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'suspensions'), data);
+          showToast(`Suspension added for ${student?.firstName} ${student?.lastName}`);
+        }
+        await addAuditLog(editId ? 'UPDATE_SUSPENSION' : 'ADD_SUSPENSION', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderSuspensions = function() {
+      document.getElementById('suspensionsTableBody').innerHTML = suspensionsCache.map(s => {
+        const student = studentsCache.find(st => st.id === s.studentId);
+        return `
+          <tr>
+            <td>${formatDate(s.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${s.reason}</td>
+            <td>${s.duration}</td>
+            <td><span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></td>
+            <td>
+              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddSuspensionModal('${s.id}')">Edit</button>` : ''}
+              ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteSuspension('${s.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No suspensions found</td></tr>';
+    };
+
+    window.deleteSuspension = async function(id) {
+      if (!confirm('Delete this suspension?')) return;
+      try {
+        await deleteDoc(doc(db, 'suspensions', id));
+        await addAuditLog('DELETE_SUSPENSION', 'Deleted suspension');
+        showToast('Suspension deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // 🏥 CLINIC
+    // ============================================================
+    window.showAddClinicModal = function(editId) {
+      const visit = editId ? clinicCache.find(c => c.id === editId) : null;
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Student *</label>
+            <select id="c_student">
+              ${studentsCache.map(s => `
+                <option value="${s.id}" ${visit?.studentId === s.id ? 'selected' : ''}>
+                  ${s.firstName} ${s.lastName} (${s.class})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" id="c_date" value="${visit?.date || new Date().toISOString().split('T')[0]}">
+          </div>
+          <div class="form-group">
+            <label>Doctor/Nurse *</label>
+            <input type="text" id="c_doctor" value="${visit?.doctor || ''}" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label>Condition Type *</label>
+            <select id="c_condition">
+              <option value="">Select...</option>
+              ${CONDITIONS.map(c => `
+                <option value="${c}" ${visit?.condition === c ? 'selected' : ''}>${c}</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Complaint *</label>
+          <textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Diagnosis</label>
+          <textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Treatment / Medication</label>
+          <input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg">
+        </div>
+        <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Save'} Visit
+        </button>
+      `;
+
+      openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
+    };
+
+    window.saveClinic = async function(editId) {
+      const studentId = document.getElementById('c_student').value;
+      const date = document.getElementById('c_date').value;
+      const doctor = document.getElementById('c_doctor').value.trim();
+      const condition = document.getElementById('c_condition').value;
+      const complaint = document.getElementById('c_complaint').value.trim();
+      const diagnosis = document.getElementById('c_diagnosis').value.trim();
+      const medication = document.getElementById('c_medication').value.trim();
+
+      if (!studentId || !date || !doctor || !condition || !complaint) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) {
+          await updateDoc(doc(db, 'clinic', editId), data);
+          showToast('Visit updated');
+        } else {
+          data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown';
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'clinic'), data);
+          showToast(`Visit recorded for ${student?.firstName} ${student?.lastName}`);
+        }
+        await addAuditLog(editId ? 'UPDATE_CLINIC' : 'ADD_CLINIC', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderClinic = function() {
+      document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
+        const student = studentsCache.find(s => s.id === c.studentId);
+        return `
+          <tr>
+            <td>${formatDate(c.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${c.doctor || '-'}</td>
+            <td>${c.complaint || '-'}</td>
+            <td><span class="badge ${c.condition === 'Pre-existing Condition' ? 'badge-warning' : 'badge-info'}">${c.condition || '-'}</span></td>
+            <td>${c.diagnosis || '-'}</td>
+            <td>
+              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
+              ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+    };
+
+    window.deleteClinic = async function(id) {
+      if (!confirm('Delete this clinic visit?')) return;
+      try {
+        await deleteDoc(doc(db, 'clinic', id));
+        await addAuditLog('DELETE_CLINIC', 'Deleted clinic visit');
+        showToast('Visit deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // 👨‍🏫 TEACHERS
+    // ============================================================
+    window.showAddTeacherModal = function(editId) {
+      const teacher = editId ? teachersCache.find(t => t.id === editId) : null;
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="t_name" value="${teacher?.name || ''}" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label>Employee ID *</label>
+            <input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., TCH-001">
+          </div>
+          <div class="form-group">
+            <label>TSC Number</label>
+            <input type="text" id="t_tsc" value="${teacher?.tsc || ''}">
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" id="t_phone" value="${teacher?.phone || ''}">
+          </div>
+          <div class="form-group">
+            <label>Subjects</label>
+            <select id="t_subjects" multiple style="height:100px;">
+              ${SUBJECTS.map(s => `
+                <option value="${s}" ${teacher?.subjects?.includes(s) ? 'selected' : ''}>${s}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Classes</label>
+            <select id="t_classes" multiple style="height:100px;">
+              ${CLASSES.map(c => `
+                <option value="${c}" ${teacher?.classes?.includes(c) ? 'selected' : ''}>${c}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="t_status">
+              <option value="Active" ${teacher?.status === 'Active' ? 'selected' : ''}>Active</option>
+              <option value="Inactive" ${teacher?.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveTeacher('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Add'} Teacher
+        </button>
+      `;
+
+      openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
+    };
+
+    window.saveTeacher = async function(editId) {
+      const name = document.getElementById('t_name').value.trim();
+      const empId = document.getElementById('t_empId').value.trim();
+
+      if (!name || !empId) {
+        showToast('Name and Employee ID are required', 'error');
+        return;
+      }
+
+      const subjects = Array.from(document.getElementById('t_subjects').selectedOptions).map(o => o.value);
+      const classes = Array.from(document.getElementById('t_classes').selectedOptions).map(o => o.value);
+
+      const data = {
+        name,
+        empId,
+        tsc: document.getElementById('t_tsc').value.trim(),
+        phone: document.getElementById('t_phone').value.trim(),
+        subjects,
+        classes,
+        status: document.getElementById('t_status').value
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'teachers', editId), data);
+          showToast('Teacher updated');
+        } else {
+          await addDoc(collection(db, 'teachers'), data);
+          showToast(`Teacher ${name} added`);
+        }
+        await addAuditLog(editId ? 'UPDATE_TEACHER' : 'ADD_TEACHER', name);
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderTeachers = function() {
+      document.getElementById('teachersTableBody').innerHTML = teachersCache.map(t => `
+        <tr>
+          <td><strong>${t.name}</strong></td>
+          <td>${t.empId}</td>
+          <td>${(t.subjects || []).map(s => `<span class="badge badge-info">${s}</span>`).join(' ') || '-'}</td>
+          <td>${(t.classes || []).join(', ') || '-'}</td>
+          <td><span class="badge ${t.status === 'Active' ? 'badge-success' : 'badge-danger'}">${t.status}</span></td>
+          <td>
+            ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddTeacherModal('${t.id}')">Edit</button>` : ''}
+            ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Del</button>` : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No teachers found</td></tr>';
+    };
+
+    window.deleteTeacher = async function(id) {
+      if (!confirm('Delete this teacher?')) return;
+      try {
+        const teacher = teachersCache.find(t => t.id === id);
+        await deleteDoc(doc(db, 'teachers', id));
+        await addAuditLog('DELETE_TEACHER', teacher?.name || 'Unknown');
+        showToast('Teacher deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // 📈 ANALYTICS
+    // ============================================================
+    function renderAnalytics() {
+      // Populate student dropdown
+      const studentSelect = document.getElementById('analyticsStudentSelect');
+      if (studentSelect.options.length <= 1) {
+        const current = studentSelect.value;
+        studentSelect.innerHTML = '<option value="">Select a student...</option>' +
+          studentsCache.map(s =>
+            `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`
+          ).join('');
+        if (current) studentSelect.value = current;
+      }
+
+      // Populate class dropdown
+      const classSelect = document.getElementById('analyticsClassSelect');
+      if (classSelect.options.length <= 1) {
+        const current = classSelect.value;
+        classSelect.innerHTML = '<option value="">Select a class...</option>' +
+          CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (current) classSelect.value = current;
+      }
+
+      // Render student charts
+      const studentId = document.getElementById('analyticsStudentSelect').value;
+      if (studentId) {
+        renderStudentAnalytics(studentId);
+      }
+
+      // Render class charts
+      const className = document.getElementById('analyticsClassSelect').value;
+      if (className) {
+        renderClassAnalytics(className);
+      }
+    }
+
+    function renderStudentAnalytics(studentId) {
+      const grades = gradesCache.filter(g => g.studentId === studentId);
+
+      // Subject chart
+      const subjectData = {};
+      grades.forEach(g => {
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push((g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+      });
+
+      const subjects = Object.keys(subjectData);
+      const averages = subjects.map(s =>
+        Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length)
+      );
+
+      destroyChart('analyticsStudentChart');
+      if (subjects.length) {
+        chartInstances['analyticsStudentChart'] = new Chart(document.getElementById('analyticsStudentChart'), {
+          type: 'bar',
+          data: {
+            labels: subjects,
+            datasets: [{
+              data: averages,
+              backgroundColor: averages.map(getGradeColor)
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100 } }
+          }
+        });
+      }
+
+      // Trend chart
+      const terms = ['Term 1', 'Term 2', 'Term 3'];
+      const termAverages = terms.map(term => {
+        const tg = grades.filter(g => g.term === term);
+        if (!tg.length) return null;
+        return Math.round(tg.reduce((sum, g) =>
+          sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / tg.length);
+      });
+
+      const validTerms = terms.filter((_, i) => termAverages[i] !== null);
+      const validAverages = termAverages.filter(v => v !== null);
+
+      destroyChart('analyticsTrendChart');
+      if (validTerms.length) {
+        chartInstances['analyticsTrendChart'] = new Chart(document.getElementById('analyticsTrendChart'), {
+          type: 'line',
+          data: {
+            labels: validTerms,
+            datasets: [{
+              data: validAverages,
+              borderColor: '#2e86c1',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 6,
+              pointBackgroundColor: validAverages.map(getGradeColor),
+              backgroundColor: 'rgba(46, 134, 193, 0.1)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 100 } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+    }
+
+    function renderClassAnalytics(className) {
+      const students = studentsCache.filter(s => s.class === className);
+      const studentIds = students.map(s => s.id);
+      const grades = gradesCache.filter(g => studentIds.includes(g.studentId));
+
+      // Class subject averages
+      const subjectData = {};
+      grades.forEach(g => {
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push((g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+      });
+
+      const subjects = Object.keys(subjectData);
+      const averages = subjects.map(s =>
+        Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length)
+      );
+
+      destroyChart('analyticsClassChart');
+      if (subjects.length) {
+        chartInstances['analyticsClassChart'] = new Chart(document.getElementById('analyticsClassChart'), {
+          type: 'bar',
+          data: {
+            labels: subjects,
+            datasets: [{
+              data: averages,
+              backgroundColor: averages.map(getGradeColor)
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100 } }
+          }
+        });
+      }
+
+      // Student comparison
+      const studentAverages = students.map(s => {
+        const sg = grades.filter(g => g.studentId === s.id);
+        if (!sg.length) return 0;
+        return Math.round(sg.reduce((sum, g) =>
+          sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / sg.length);
+      });
+
+      destroyChart('analyticsComparisonChart');
+      if (students.length) {
+        chartInstances['analyticsComparisonChart'] = new Chart(document.getElementById('analyticsComparisonChart'), {
+          type: 'bar',
+          data: {
+            labels: students.map(s => s.firstName),
+            datasets: [{
+              data: studentAverages,
+              backgroundColor: studentAverages.map(getGradeColor)
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100 } }
+          }
+        });
+      }
+    }
+
+    // ============================================================
+    // 👥 USER MANAGEMENT (Admin Only)
+    // ============================================================
+    window.showAddUserModal = function(editId) {
+      const user = editId ? usersCache.find(u => u.id === editId) : null;
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="u_email" value="${user?.email || ''}" ${user ? 'readonly' : ''}>
+          </div>
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="u_name" value="${user?.fullName || ''}">
+          </div>
+          ${!user ? `
+            <div class="form-group">
+              <label>Password * (min 6 chars)</label>
+              <input type="text" id="u_password" placeholder="Enter temporary password">
+            </div>
+          ` : ''}
+          <div class="form-group">
+            <label>Role *</label>
+            <select id="u_role">
+              ${ROLES.map(r => `
+                <option value="${r}" ${user?.role === r ? 'selected' : ''}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Class (for teachers)</label>
+            <select id="u_class">
+              <option value="">None</option>
+              ${CLASSES.map(c => `
+                <option value="${c}" ${user?.class === c ? 'selected' : ''}>${c}</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveUser('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Create'} User
+        </button>
+      `;
+
+      openModal(editId ? 'Edit User' : 'Add User', html);
+    };
+
+    window.saveUser = async function(editId) {
+      const email = document.getElementById('u_email').value.trim();
+      const name = document.getElementById('u_name').value.trim();
+      const role = document.getElementById('u_role').value;
+      const classValue = document.getElementById('u_class').value;
+
+      if (!email || !name || !role) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      try {
+        if (editId) {
+          // Update existing user
+          await updateDoc(doc(db, 'users', editId), {
+            fullName: name,
+            role: role,
+            class: classValue
+          });
+          await addAuditLog('UPDATE_USER', `${name} (${role})`);
+          showToast('User updated');
+        } else {
+          // Create new user
+          const password = document.getElementById('u_password').value;
+          if (!password || password.length < 6) {
+            showToast('Password must be at least 6 characters', 'error');
+            return;
+          }
+
+          const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+          await setDoc(doc(db, 'users', cred.user.uid), {
+            email,
+            fullName: name,
+            role,
+            class: classValue,
+            createdAt: serverTimestamp(),
+            loginCount: 0
+          });
+          await signOut(secondaryAuth);
+          await addAuditLog('ADD_USER', `${name} (${role})`);
+          showToast(`User ${email} created successfully`);
+        }
+        closeModal();
+      } catch (err) {
+        showToast(friendlyAuthError(err.code) || err.message, 'error');
+      }
+    };
+
+    window.renderUsers = function() {
+      document.getElementById('usersTableBody').innerHTML = usersCache.map(u => `
+        <tr>
+          <td>${u.email || u.id}</td>
+          <td>${u.fullName || '-'}</td>
+          <td><span class="badge badge-primary">${u.role || 'user'}</span></td>
+          <td>${u.class || '-'}</td>
+          <td>${formatTimestamp(u.lastLogin)}</td>
+          <td>
+            <button class="btn btn-primary btn-sm" onclick="showAddUserModal('${u.id}')">Edit</button>
+            ${u.id !== currentUser?.uid ? `
+              <button class="btn btn-warning btn-sm" onclick="resetUserPassword('${u.id}')">Reset</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Del</button>
+            ` : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No users found</td></tr>';
+    };
+
+    window.resetUserPassword = async function(userId) {
+      const user = usersCache.find(u => u.id === userId);
+      if (!user || !user.email) {
+        showToast('User has no email address', 'error');
+        return;
+      }
+
+      if (!confirm(`Send password reset email to ${user.email}?`)) return;
+
+      try {
+        await sendPasswordResetEmail(auth, user.email);
+        await addAuditLog('RESET_PASSWORD', user.email);
+        showToast(`Reset email sent to ${user.email}`);
+      } catch (err) {
+        showToast(friendlyAuthError(err.code) || 'Error sending reset email', 'error');
+      }
+    };
+
+    window.deleteUser = async function(userId) {
+      if (!confirm('Delete this user permanently?')) return;
+      try {
+        const user = usersCache.find(u => u.id === userId);
+        await deleteDoc(doc(db, 'users', userId));
+        await addAuditLog('DELETE_USER', user?.email || userId);
+        showToast('User deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // 🔍 AUDIT LOG (Admin Only)
+    // ============================================================
+    function populateAuditFilter() {
+      const select = document.getElementById('auditUserFilter');
+      if (!select) return;
+
+      const current = select.value;
+      const users = [...new Set(auditCache.map(a => a.user).filter(Boolean))];
+      select.innerHTML = '<option value="">All Users</option>' +
+        users.map(u => `<option value="${u}">${u}</option>`).join('');
+
+      if (current && users.includes(current)) select.value = current;
+    }
+
+    function renderAudit() {
+      const filter = document.getElementById('auditUserFilter').value;
+      let logs = auditCache;
+
+      if (filter) logs = logs.filter(a => a.user === filter);
+
+      document.getElementById('auditLogContent').innerHTML = logs.slice(0, 100).map(a => `
+        <div class="log-entry" style="padding:10px 14px;border-left:3px solid var(--primary-light);margin-bottom:8px;background:#f8f9fa;border-radius:0 6px 6px 0;">
+          <strong>${a.user || 'system'}</strong>
+          <span class="badge badge-info">${a.role || 'user'}</span>
+          — <strong>${a.action}</strong>: ${a.details || ''}
+          <div style="color:#999;font-size:0.8em;">${formatTimestamp(a.time)}</div>
+        </div>
+      `).join('') || '<div style="text-align:center;color:#999;padding:20px;">No audit logs found</div>';
+    }
+
+    // ============================================================
+    // 📝 AUDIT LOG HELPER
+    // ============================================================
+    async function addAuditLog(action, details) {
+      try {
+        await addDoc(collection(db, 'auditLog'), {
+          user: currentUser?.email || 'system',
+          role: currentUser?.role || 'system',
+          action,
+          details: details || '',
+          time: serverTimestamp()
+        });
+      } catch (err) {
+        console.warn('Failed to write audit log:', err);
+      }
+    }
+
+    // ============================================================
+    // 🚀 INITIALIZATION
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default dates
+      const today = new Date().toISOString().split('T')[0];
+      const dateInputs = ['attendanceDateFilter'];
+      dateInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = today;
+      });
+
+      // Enter key for login
+      document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') window.handleLogin();
+      });
+
+      document.getElementById('loginEmail').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+      });
+
+      console.log('🚀 Mara Christian High School Management System');
+      console.log('📚 Version 2.0.0 - Cloud Synced');
+      console.log('💡 Made with ❤️ for education');
+    });
+
   </script>
 </body>
 </html>
