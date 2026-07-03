@@ -168,7 +168,15 @@
     .btn-outline:hover { background: var(--primary-light); color: white; }
     .btn-sm { padding: 4px 12px; font-size: 0.75em; }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .share-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-print { background: #34495e; color: white; }
+    .btn-print:hover { background: #2c3e50; }
+    .btn-share { background: #3498db; color: white; }
+    .btn-share:hover { background: #2980b9; }
+    .btn-pdf { background: #e74c3c; color: white; }
+    .btn-pdf:hover { background: #c0392b; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
     .stat-card { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); text-align: center; border-top: 4px solid var(--primary-light); transition: var(--transition); }
     .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
     .stat-card .stat-number { font-size: 2em; font-weight: 700; color: var(--primary); }
@@ -224,6 +232,18 @@
     .rank-1 { background: #f9e79f !important; font-weight: bold; }
     .rank-2 { background: #fdebd0 !important; }
     .rank-3 { background: #d5f5e3 !important; }
+
+    /* Print Styles */
+    @media print {
+      .sidebar, .top-bar, .btn, .no-print, .menu-toggle, .toast-container { display: none !important; }
+      .content-area { max-height: none !important; padding: 20px !important; overflow: visible !important; }
+      .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+      .tab-content { display: block !important; }
+      .tab-content:not(.active) { display: none !important; }
+      .print-header { display: block !important; text-align: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 3px double var(--primary); }
+      .print-header h1 { color: var(--primary); font-size: 24px; }
+      .print-header p { color: #666; font-size: 14px; }
+    }
 
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
@@ -347,7 +367,14 @@
         <!-- STUDENTS -->
         <div class="tab-content" id="tab-students">
           <div class="card">
-            <div class="card-header"><h2>👩‍🎓 Student Records</h2><button class="btn btn-primary" id="addStudentBtn" onclick="showAddStudentModal()">+ Add Student</button></div>
+            <div class="card-header">
+              <h2>👩‍🎓 Student Records</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printAllStudents()">🖨️ Print All</button>
+                <button class="btn btn-share btn-sm" onclick="shareCurrentView()">📤 Share</button>
+                <button class="btn btn-primary" id="addStudentBtn" onclick="showAddStudentModal()">+ Add Student</button>
+              </div>
+            </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Search</label><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="studentSearch" placeholder="Search by name or admission..." oninput="renderStudents()"></div></div>
               <div class="form-group"><label>Class</label><select id="studentClassFilter" onchange="renderStudents()"><option value="">All Classes</option></select></div>
@@ -407,7 +434,13 @@
         <!-- CLASS PERFORMANCE -->
         <div class="tab-content" id="tab-classPerformance">
           <div class="card">
-            <div class="card-header"><h2>📈 Class Performance Analytics</h2></div>
+            <div class="card-header">
+              <h2>📈 Class Performance Analytics</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printCurrentClass()">🖨️ Print Class Report</button>
+                <button class="btn btn-share btn-sm" onclick="shareCurrentClass()">📤 Share Class</button>
+              </div>
+            </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Select Class</label><select id="performanceClassSelect" onchange="renderClassPerformance()"><option value="">Select a class...</option></select></div>
               <div class="form-group"><label>Select Term</label><select id="performanceTermSelect" onchange="renderClassPerformance()"><option value="">All Terms</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
@@ -765,7 +798,7 @@
     });
 
     // ============================================================
-    // 🔒 PERMISSIONS - COMPLETE
+    // 🔒 PERMISSIONS
     // ============================================================
 
     function setupPermissions() {
@@ -787,57 +820,44 @@
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
-      // === ADD STUDENT - Admin, Secretary ONLY ===
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
 
-      // === EDIT SPONSORSHIP - Admin, Director ONLY ===
       const editSponsorshipBtn = document.getElementById('editSponsorshipBtn');
       if (editSponsorshipBtn) editSponsorshipBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
 
-      // === ADD GRADE - Admin, Principal, Teacher, Secretary ===
       const addGradeBtn = document.getElementById('addGradeBtn');
       if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
-      // === ADD ATTENDANCE - Admin, Principal, Teacher, Secretary ===
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
       if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
-      // === ADD WARNING - Admin, Principal ONLY ===
       const addWarningBtn = document.getElementById('addWarningBtn');
       if (addWarningBtn) addWarningBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // === ADD SUSPENSION - Admin, Principal ONLY ===
       const addSuspensionBtn = document.getElementById('addSuspensionBtn');
       if (addSuspensionBtn) addSuspensionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // === ADD EXPULSION - Admin, Principal ONLY ===
       const addExpulsionBtn = document.getElementById('addExpulsionBtn');
       if (addExpulsionBtn) addExpulsionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // === ADD CLINIC - Admin, Nurse, Doctor ===
       const addClinicBtn = document.getElementById('addClinicBtn');
       if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isNurse || isDoctor) ? 'inline-block' : 'none';
 
-      // === ADD TEACHER - Only Admin ===
       const addTeacherBtn = document.getElementById('addTeacherBtn');
       if (addTeacherBtn) addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
 
-      // === ADD TEACHER ATTENDANCE - Admin, Secretary ONLY ===
       const addTeacherAttBtn = document.getElementById('addTeacherAttBtn');
       if (addTeacherAttBtn) addTeacherAttBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
 
-      // === ADD PREFECT - Admin, Principal ONLY (Teacher CANNOT) ===
       const addPrefectBtn = document.getElementById('addPrefectBtn');
       if (addPrefectBtn) addPrefectBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // === TEACHER ATTENDANCE TAB - Hide from Teacher ===
       const teacherAttNav = document.getElementById('teacherAttNav');
       if (teacherAttNav) {
         teacherAttNav.style.display = (isAdmin || isPrincipal || isSecretary || isDirector || isTeacher) ? 'flex' : 'none';
       }
 
-      // === PREFECT TAB - Show for all but edit restricted ===
       const prefectNav = document.getElementById('prefectNav');
       if (prefectNav) {
         prefectNav.style.display = (isAdmin || isPrincipal || isSecretary || isTeacher || isDirector) ? 'flex' : 'none';
@@ -1293,6 +1313,8 @@
             <td>
               ${canEditStudents ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
               ${canDeleteStudents ? `<button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Del</button>` : ''}
+              <button class="btn btn-print btn-sm" onclick="printStudentReport('${s.id}')">🖨️</button>
+              <button class="btn btn-share btn-sm" onclick="shareStudentLink('${s.id}')">📤</button>
             </td>
           </tr>
         `;
@@ -1310,7 +1332,7 @@
     };
 
     // ============================================================
-    // 💰 SPONSORSHIP - Admin & Director ONLY
+    // 💰 SPONSORSHIP
     // ============================================================
 
     window.showEditSponsorshipModal = function() {
@@ -1935,7 +1957,7 @@
     };
 
     // ============================================================
-    // ⭐ PREFECTS - Admin & Principal ONLY can add/edit/delete
+    // ⭐ PREFECTS
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
@@ -2145,7 +2167,7 @@
     };
 
     // ============================================================
-    // 📅 TEACHER ATTENDANCE - Teacher can ONLY see their own
+    // 📅 TEACHER ATTENDANCE
     // ============================================================
 
     window.showTeacherAttendanceModal = function() {
@@ -2225,7 +2247,6 @@
 
       const filterSelect = document.getElementById('teacherAttFilter');
       if (filterSelect.options.length <= 1) {
-        // If user is a teacher, only show their own attendance
         if (currentUser?.role === 'teacher') {
           const teacher = teachersCache.find(t => t.email === currentUser.email || t.name === currentUser.fullName);
           if (teacher) {
@@ -2245,7 +2266,6 @@
       let filtered = teacherAttCache;
       if (date) filtered = filtered.filter(a => a.date === date);
       
-      // If teacher, only show their own records
       if (currentUser?.role === 'teacher') {
         const teacher = teachersCache.find(t => t.email === currentUser.email || t.name === currentUser.fullName);
         if (teacher) {
@@ -2385,6 +2405,429 @@
         });
       }
     }
+
+    // ============================================================
+    // 🖨️ PRINT & SHARE FUNCTIONS
+    // ============================================================
+
+    window.printStudentReport = function(studentId) {
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) { showToast('Student not found', 'error'); return; }
+
+      const grades = gradesCache.filter(g => g.studentId === studentId);
+      const attendance = attendanceCache.filter(a => a.studentId === studentId);
+      const warnings = warningsCache.filter(w => w.studentId === studentId);
+      const suspensions = suspensionsCache.filter(s => s.studentId === studentId);
+      const clinic = clinicCache.filter(c => c.studentId === studentId);
+
+      const totalAtt = attendance.length;
+      const presentAtt = attendance.filter(a => a.status === 'Present').length;
+      const attPercent = totalAtt ? Math.round((presentAtt / totalAtt) * 100) : 0;
+
+      const subjectScores = {};
+      grades.forEach(g => {
+        const total = (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0);
+        if (!subjectScores[g.subject]) subjectScores[g.subject] = [];
+        subjectScores[g.subject].push(total);
+      });
+
+      const subjectAverages = {};
+      Object.keys(subjectScores).forEach(sub => {
+        const scores = subjectScores[sub];
+        subjectAverages[sub] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      });
+
+      const overallAvg = grades.length ? 
+        Math.round(grades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / grades.length) : 0;
+
+      const printWindow = window.open('', '_blank', 'width=900,height=700');
+      if (!printWindow) {
+        showToast('Please allow popups to print', 'warning');
+        return;
+      }
+
+      const prefect = prefectsCache.find(p => p.studentId === studentId);
+      const isPrefect = student.isPrefect === 'Yes' || prefect;
+      const prefectRole = prefect?.role || student.prefectRole || '-';
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Student Report - ${student.firstName} ${student.lastName}</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 900px; margin: 0 auto; }
+          .header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #1a5276; margin-bottom: 20px; }
+          .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
+          .header h2 { color: #2e86c1; margin: 5px 0; font-size: 18px; font-weight: normal; }
+          .header p { color: #666; font-size: 14px; margin: 5px 0; }
+          .student-info { display: flex; gap: 30px; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; }
+          .student-info .label { font-weight: 600; color: #555; }
+          .student-info .value { color: #333; }
+          .section { margin: 20px 0; }
+          .section-title { color: #1a5276; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 15px; }
+          table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+          th { background: #1a5276; color: white; padding: 8px 12px; text-align: left; }
+          td { padding: 6px 12px; border-bottom: 1px solid #eee; }
+          tr:nth-child(even) { background: #fafbfc; }
+          .badge { padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block; }
+          .badge-success { background: #d5f5e3; color: #27ae60; }
+          .badge-danger { background: #fadbd8; color: #e74c3c; }
+          .badge-warning { background: #fdebd0; color: #f39c12; }
+          .grade-A { color: #27ae60; font-weight: bold; }
+          .grade-B { color: #2ecc71; font-weight: bold; }
+          .grade-C { color: #f39c12; font-weight: bold; }
+          .grade-D { color: #e67e22; font-weight: bold; }
+          .grade-F { color: #e74c3c; font-weight: bold; }
+          .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin: 15px 0; }
+          .summary-item { text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #2e86c1; }
+          .summary-item .number { font-size: 24px; font-weight: 700; color: #1a5276; }
+          .summary-item .label { font-size: 12px; color: #888; }
+          .footer { text-align: center; font-size: 12px; color: #999; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; }
+          .print-date { color: #999; font-size: 12px; }
+          @media print { body { padding: 20px; } }
+        </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🏫 Mara Christian High School</h1>
+            <h2>Student Academic Report</h2>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+          </div>
+          <div class="student-info">
+            <div style="flex:2;">
+              <p><span class="label">Name:</span> <span class="value">${student.firstName} ${student.lastName}</span></p>
+              <p><span class="label">Admission No:</span> <span class="value">${student.admNo}</span></p>
+              <p><span class="label">Class:</span> <span class="value">${student.class}</span></p>
+              <p><span class="label">Gender:</span> <span class="value">${student.gender || '-'}</span></p>
+              <p><span class="label">Status:</span> <span class="value">${student.status || '-'}</span></p>
+              <p><span class="label">Sponsorship:</span> <span class="value">${student.sponsorshipType || 'Self Sponsored'}${student.sponsorName ? ' (' + student.sponsorName + ')' : ''}</span></p>
+            </div>
+            <div style="flex:1;">
+              <p><span class="label">Prefect:</span> <span class="value">${isPrefect ? '✅ Yes' : 'No'}</span></p>
+              ${isPrefect ? `<p><span class="label">Prefect Role:</span> <span class="value">${prefectRole}</span></p>` : ''}
+              <p><span class="label">Overall Average:</span> <span class="value" style="font-size:20px;font-weight:700;color:${getGradeColor(overallAvg)};">${overallAvg}%</span></p>
+              <p><span class="label">Overall Grade:</span> <span class="value">${getGradeBadge(overallAvg)}</span></p>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-title">📊 Performance Summary</div>
+            <div class="summary-grid">
+              <div class="summary-item"><div class="number">${overallAvg}%</div><div class="label">Average Score</div></div>
+              <div class="summary-item"><div class="number">${grades.length}</div><div class="label">Subjects Taken</div></div>
+              <div class="summary-item"><div class="number">${totalAtt}</div><div class="label">Attendance Days</div></div>
+              <div class="summary-item"><div class="number">${attPercent}%</div><div class="label">Attendance Rate</div></div>
+              <div class="summary-item"><div class="number">${warnings.length}</div><div class="label">⚠️ Warnings</div></div>
+              <div class="summary-item"><div class="number">${suspensions.length}</div><div class="label">🚫 Suspensions</div></div>
+              <div class="summary-item"><div class="number">${clinic.length}</div><div class="label">🏥 Clinic Visits</div></div>
+            </div>
+          </div>
+          ${Object.keys(subjectAverages).length ? `
+          <div class="section">
+            <div class="section-title">📝 Subject Grades</div>
+            <table>
+              <thead><tr><th>Subject</th><th>Average Score</th><th>Grade</th></tr></thead>
+              <tbody>
+                ${Object.keys(subjectAverages).map(sub => {
+                  const avg = subjectAverages[sub];
+                  return `<tr><td>${sub}</td><td>${avg}%</td><td class="grade-${getLetterGrade(avg)}">${getLetterGrade(avg)}</td></tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          ${grades.length ? `
+          <div class="section">
+            <div class="section-title">📋 Detailed Grades</div>
+            <table>
+              <thead><tr><th>Subject</th><th>Term</th><th>Test 1</th><th>Test 2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
+              <tbody>
+                ${grades.map(g => {
+                  const total = (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0);
+                  return `<tr><td>${g.subject}</td><td>${g.term}</td><td>${g.test1 || 0}</td><td>${g.test2 || 0}</td><td>${g.exam || 0}</td><td><strong>${total}</strong></td><td class="grade-${getLetterGrade(total)}">${getLetterGrade(total)}</td></tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          ${attendance.length ? `
+          <div class="section">
+            <div class="section-title">📋 Attendance Record</div>
+            <table>
+              <thead><tr><th>Date</th><th>Status</th><th>Reason</th></tr></thead>
+              <tbody>
+                ${attendance.slice(-30).reverse().map(a => `<tr><td>${formatDate(a.date)}</td><td><span class="badge ${a.status === 'Present' ? 'badge-success' : a.status === 'Absent' ? 'badge-danger' : 'badge-warning'}">${a.status}</span></td><td>${a.reason || '-'}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          ${warnings.length ? `
+          <div class="section">
+            <div class="section-title">⚠️ Warnings</div>
+            <table>
+              <thead><tr><th>Date</th><th>Reason</th><th>Issued By</th></tr></thead>
+              <tbody>
+                ${warnings.map(w => `<tr><td>${formatDate(w.date)}</td><td>${w.reason}</td><td>${w.issuedBy || '-'}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          ${suspensions.length ? `
+          <div class="section">
+            <div class="section-title">🚫 Suspensions</div>
+            <table>
+              <thead><tr><th>Date</th><th>Reason</th><th>Duration</th><th>Status</th></tr></thead>
+              <tbody>
+                ${suspensions.map(s => `<tr><td>${formatDate(s.date)}</td><td>${s.reason}</td><td>${s.duration}</td><td><span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          ${clinic.length ? `
+          <div class="section">
+            <div class="section-title">🏥 Clinic Visits</div>
+            <table>
+              <thead><tr><th>Date</th><th>Doctor/Nurse</th><th>Complaint</th><th>Diagnosis</th></tr></thead>
+              <tbody>
+                ${clinic.slice(-10).reverse().map(c => `<tr><td>${formatDate(c.date)}</td><td>${c.doctor || '-'}</td><td>${c.complaint || '-'}</td><td>${c.diagnosis || '-'}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          <div class="footer">
+            <p>This is a system-generated report. For any corrections, please contact the administration.</p>
+            <p class="print-date">Printed on: ${new Date().toLocaleString()}</p>
+          </div>
+          <script>
+            window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
+
+    window.printAllStudents = function() {
+      const students = studentsCache;
+      if (!students.length) { showToast('No students to print', 'warning'); return; }
+
+      const printWindow = window.open('', '_blank', 'width=1000,height=700');
+      if (!printWindow) {
+        showToast('Please allow popups to print', 'warning');
+        return;
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Student Roster</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 1100px; margin: 0 auto; }
+          .header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #1a5276; margin-bottom: 20px; }
+          .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
+          .header p { color: #666; font-size: 14px; margin: 5px 0; }
+          table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+          th { background: #1a5276; color: white; padding: 8px 10px; text-align: left; }
+          td { padding: 6px 10px; border-bottom: 1px solid #eee; }
+          tr:nth-child(even) { background: #fafbfc; }
+          .badge { padding: 2px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; display: inline-block; }
+          .badge-success { background: #d5f5e3; color: #27ae60; }
+          .badge-danger { background: #fadbd8; color: #e74c3c; }
+          .footer { text-align: center; font-size: 12px; color: #999; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; }
+          @media print { body { padding: 20px; } }
+        </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🏫 Mara Christian High School</h1>
+            <h2>Student Roster</h2>
+            <p>Generated: ${new Date().toLocaleString()} | Total Students: ${students.length}</p>
+          </div>
+          <table>
+            <thead><tr><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Sponsorship</th><th>Prefect</th></tr></thead>
+            <tbody>
+              ${students.map(s => {
+                const prefect = prefectsCache.find(p => p.studentId === s.id);
+                const isPrefect = s.isPrefect === 'Yes' || prefect;
+                return `<tr><td>${s.admNo}</td><td>${s.firstName} ${s.lastName}</td><td>${s.class}</td><td>${s.gender || '-'}</td><td>${s.status || '-'}</td><td>${s.sponsorshipType || 'Self Sponsored'}</td><td>${isPrefect ? '⭐ Yes' : '-'}</td></tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+          <div class="footer">
+            <p>This is a system-generated student roster.</p>
+            <p class="print-date">Printed on: ${new Date().toLocaleString()}</p>
+          </div>
+          <script>
+            window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
+
+    window.printCurrentClass = function() {
+      const className = document.getElementById('performanceClassSelect').value;
+      if (!className) { showToast('Please select a class', 'warning'); return; }
+      printClassReport(className);
+    };
+
+    window.printClassReport = function(className) {
+      const students = studentsCache.filter(s => s.class === className);
+      if (!students.length) { showToast('No students in this class', 'warning'); return; }
+
+      const studentIds = students.map(s => s.id);
+      const grades = gradesCache.filter(g => studentIds.includes(g.studentId));
+
+      const subjectData = {};
+      grades.forEach(g => {
+        const total = (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0);
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push(total);
+      });
+
+      const subjectAverages = {};
+      Object.keys(subjectData).forEach(sub => {
+        const scores = subjectData[sub];
+        subjectAverages[sub] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      });
+
+      const studentAverages = students.map(s => {
+        const sg = grades.filter(g => g.studentId === s.id);
+        const avg = sg.length ? Math.round(sg.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / sg.length) : 0;
+        return { ...s, avg };
+      });
+
+      const sortedStudents = [...studentAverages].sort((a, b) => b.avg - a.avg);
+      const classAvg = studentAverages.reduce((sum, s) => sum + s.avg, 0) / studentAverages.length;
+
+      const printWindow = window.open('', '_blank', 'width=1000,height=700');
+      if (!printWindow) {
+        showToast('Please allow popups to print', 'warning');
+        return;
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Class Report - ${className}</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 1100px; margin: 0 auto; }
+          .header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #1a5276; margin-bottom: 20px; }
+          .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
+          .header h2 { color: #2e86c1; margin: 5px 0; font-size: 18px; font-weight: normal; }
+          .header p { color: #666; font-size: 14px; margin: 5px 0; }
+          .class-info { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+          .class-info .item { text-align: center; }
+          .class-info .number { font-size: 22px; font-weight: 700; color: #1a5276; }
+          .class-info .label { font-size: 12px; color: #888; }
+          .section { margin: 20px 0; }
+          .section-title { color: #1a5276; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 15px; }
+          table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+          th { background: #1a5276; color: white; padding: 8px 12px; text-align: left; }
+          td { padding: 6px 12px; border-bottom: 1px solid #eee; }
+          tr:nth-child(even) { background: #fafbfc; }
+          .rank-1 { background: #f9e79f !important; }
+          .rank-2 { background: #fdebd0 !important; }
+          .rank-3 { background: #d5f5e3 !important; }
+          .grade-A { color: #27ae60; font-weight: bold; }
+          .grade-B { color: #2ecc71; font-weight: bold; }
+          .grade-C { color: #f39c12; font-weight: bold; }
+          .grade-D { color: #e67e22; font-weight: bold; }
+          .grade-F { color: #e74c3c; font-weight: bold; }
+          .footer { text-align: center; font-size: 12px; color: #999; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; }
+          .subject-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 15px 0; }
+          .subject-item { text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #2e86c1; }
+          .subject-item .name { font-size: 12px; color: #888; }
+          .subject-item .score { font-size: 18px; font-weight: 700; }
+          @media print { body { padding: 20px; } }
+        </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🏫 Mara Christian High School</h1>
+            <h2>Class Performance Report - ${className}</h2>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+          </div>
+          <div class="class-info">
+            <div class="item"><div class="number">${students.length}</div><div class="label">Total Students</div></div>
+            <div class="item"><div class="number">${classAvg.toFixed(1)}%</div><div class="label">Class Average</div></div>
+            <div class="item"><div class="number">${Object.keys(subjectAverages).length}</div><div class="label">Subjects</div></div>
+            <div class="item"><div class="number">${grades.length}</div><div class="label">Total Grades</div></div>
+          </div>
+          ${Object.keys(subjectAverages).length ? `
+          <div class="section">
+            <div class="section-title">📊 Subject Averages</div>
+            <div class="subject-grid">
+              ${Object.keys(subjectAverages).map(sub => `<div class="subject-item"><div class="name">${sub}</div><div class="score" style="color:${getGradeColor(subjectAverages[sub])}">${subjectAverages[sub]}%</div></div>`).join('')}
+            </div>
+          </div>
+          ` : ''}
+          <div class="section">
+            <div class="section-title">🏆 Student Rankings</div>
+            <table>
+              <thead><tr><th>Rank</th><th>Adm No.</th><th>Name</th><th>Average</th><th>Grade</th></tr></thead>
+              <tbody>
+                ${sortedStudents.map((s, index) => `<tr class="${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}"><td>${index + 1}</td><td>${s.admNo}</td><td>${s.firstName} ${s.lastName}</td><td><strong>${s.avg}%</strong></td><td class="grade-${getLetterGrade(s.avg)}">${getLetterGrade(s.avg)}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="footer">
+            <p>This is a system-generated class performance report.</p>
+            <p class="print-date">Printed on: ${new Date().toLocaleString()}</p>
+          </div>
+          <script>
+            window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
+
+    window.shareStudentLink = function(studentId) {
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) { showToast('Student not found', 'error'); return; }
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'student');
+      url.searchParams.set('id', studentId);
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString())
+          .then(() => showToast('📋 Student link copied to clipboard!'))
+          .catch(() => { prompt('Copy this link to share:', url.toString()); });
+      } else {
+        prompt('Copy this link to share:', url.toString());
+      }
+    };
+
+    window.shareCurrentClass = function() {
+      const className = document.getElementById('performanceClassSelect').value;
+      if (!className) { showToast('Please select a class', 'warning'); return; }
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'class');
+      url.searchParams.set('class', className);
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString())
+          .then(() => showToast('📋 Class link copied to clipboard!'))
+          .catch(() => { prompt('Copy this link to share:', url.toString()); });
+      } else {
+        prompt('Copy this link to share:', url.toString());
+      }
+    };
+
+    window.shareCurrentView = function() {
+      const url = new URL(window.location.href);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString())
+          .then(() => showToast('📋 Page link copied to clipboard!'))
+          .catch(() => { prompt('Copy this link to share:', url.toString()); });
+      } else {
+        prompt('Copy this link to share:', url.toString());
+      }
+    };
 
     // ============================================================
     // 👥 USER MANAGEMENT
