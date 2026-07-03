@@ -257,7 +257,6 @@
       .top-bar .user-section .hide-mobile { display: none; }
     }
     @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } .login-box { padding: 30px 20px; } }
-    @media print { .sidebar, .top-bar, .btn, .no-print { display: none !important; } .content-area { max-height: none; padding: 0; } .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; } }
 
     .search-box { position: relative; }
     .search-box input { width: 100%; padding: 10px 16px 10px 40px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.9em; transition: border 0.3s; }
@@ -562,10 +561,28 @@
             </div>
           </div>
           <div class="charts-grid">
-            <div class="card"><div class="card-header"><h3>📊 Student Grades by Subject</h3></div><div class="chart-container"><canvas id="analyticsStudentChart"></canvas></div></div>
-            <div class="card"><div class="card-header"><h3>📈 Student Grade Trend</h3></div><div class="chart-container"><canvas id="analyticsTrendChart"></canvas></div></div>
-            <div class="card"><div class="card-header"><h3>📊 Class Average by Subject</h3></div><div class="chart-container"><canvas id="analyticsClassChart"></canvas></div></div>
-            <div class="card"><div class="card-header"><h3>📊 Student Comparison</h3></div><div class="chart-container"><canvas id="analyticsComparisonChart"></canvas></div></div>
+            <div class="card">
+              <div class="card-header"><h3>📊 Student Grades by Subject</h3></div>
+              <div class="chart-container"><canvas id="analyticsStudentChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>📈 Student Grade Trend</h3></div>
+              <div class="chart-container"><canvas id="analyticsTrendChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>📊 Student Attendance Trend</h3></div>
+              <div id="analyticsAttendanceSummary"></div>
+              <div id="analyticsAttendanceContainer" style="height:200px;"></div>
+              <div id="analyticsAttendanceLegend"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>📊 Class Average by Subject</h3></div>
+              <div class="chart-container"><canvas id="analyticsClassChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>📊 Student Comparison</h3></div>
+              <div class="chart-container"><canvas id="analyticsComparisonChart"></canvas></div>
+            </div>
           </div>
         </div>
 
@@ -2303,7 +2320,7 @@
     };
 
     // ============================================================
-    // 📈 ANALYTICS
+    // 📈 ANALYTICS - WITH ATTENDANCE GRAPH
     // ============================================================
 
     function renderAnalytics() {
@@ -2324,10 +2341,124 @@
       }
 
       const studentId = document.getElementById('analyticsStudentSelect').value;
-      if (studentId) renderStudentAnalytics(studentId);
+      if (studentId) {
+        renderStudentAnalytics(studentId);
+        renderStudentAttendanceAnalytics(studentId);
+      }
 
       const className = document.getElementById('analyticsClassSelect').value;
-      if (className) renderClassAnalytics(className);
+      if (className) {
+        renderClassAnalytics(className);
+      }
+    }
+
+    function renderStudentAttendanceAnalytics(studentId) {
+      if (!studentId) return;
+      
+      const attendance = attendanceCache.filter(a => a.studentId === studentId);
+      const student = studentsCache.find(s => s.id === studentId);
+      
+      const summaryContainer = document.getElementById('analyticsAttendanceSummary');
+      const container = document.getElementById('analyticsAttendanceContainer');
+      const legendContainer = document.getElementById('analyticsAttendanceLegend');
+      
+      if (!attendance.length) {
+        if (summaryContainer) summaryContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No attendance records found for this student</div>';
+        if (container) container.innerHTML = '';
+        if (legendContainer) legendContainer.innerHTML = '';
+        return;
+      }
+
+      const sorted = [...attendance].sort((a, b) => a.date.localeCompare(b.date));
+      const displayData = sorted.slice(-30);
+      
+      const total = attendance.length;
+      const present = attendance.filter(a => a.status === 'Present').length;
+      const absent = attendance.filter(a => a.status === 'Absent').length;
+      const late = attendance.filter(a => a.status === 'Late').length;
+      const excused = attendance.filter(a => a.status === 'Excused').length;
+      
+      const presentPercent = Math.round((present / total) * 100);
+      const absentPercent = Math.round((absent / total) * 100);
+      const latePercent = Math.round((late / total) * 100);
+      const excusedPercent = Math.round((excused / total) * 100);
+
+      const statusColors = { 'Present': '#27ae60', 'Absent': '#e74c3c', 'Late': '#f39c12', 'Excused': '#3498db' };
+      const statusEmojis = { 'Present': '✅', 'Absent': '❌', 'Late': '⏰', 'Excused': '📝' };
+
+      if (summaryContainer) {
+        summaryContainer.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:15px;padding:15px;background:#f8f9fa;border-radius:8px;">
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#27ae60;">${presentPercent}%</div><div style="font-size:12px;color:#888;">✅ Present</div><div style="font-size:16px;font-weight:600;color:#27ae60;">${present}/${total}</div></div>
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#e74c3c;">${absentPercent}%</div><div style="font-size:12px;color:#888;">❌ Absent</div><div style="font-size:16px;font-weight:600;color:#e74c3c;">${absent}/${total}</div></div>
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#f39c12;">${latePercent}%</div><div style="font-size:12px;color:#888;">⏰ Late</div><div style="font-size:16px;font-weight:600;color:#f39c12;">${late}/${total}</div></div>
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#3498db;">${excusedPercent}%</div><div style="font-size:12px;color:#888;">📝 Excused</div><div style="font-size:16px;font-weight:600;color:#3498db;">${excused}/${total}</div></div>
+          </div>
+        `;
+      }
+
+      const labels = displayData.map(d => formatDate(d.date));
+      const statuses = displayData.map(d => d.status);
+      const colors = displayData.map(d => statusColors[d.status] || '#95a5a6');
+      const emojis = displayData.map(d => statusEmojis[d.status] || '📅');
+
+      const canvasId = 'analyticsAttendanceChart';
+      if (container) {
+        container.innerHTML = `<canvas id="${canvasId}" style="height:200px;"></canvas>`;
+        const canvas = document.getElementById(canvasId);
+        
+        if (canvas) {
+          if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+            delete chartInstances[canvasId];
+          }
+
+          chartInstances[canvasId] = new Chart(canvas, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                data: statuses.map(() => 1),
+                backgroundColor: colors,
+                borderColor: colors.map(c => c),
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 0.6
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const index = context.dataIndex;
+                      return `${emojis[index]} ${statuses[index]} - ${labels[index]}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: { beginAtZero: true, max: 1.5, grid: { display: false }, ticks: { display: false } },
+                x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 30, font: { size: 9 } } }
+              }
+            }
+          });
+        }
+      }
+
+      if (legendContainer) {
+        legendContainer.innerHTML = `
+          <div style="display:flex;justify-content:center;gap:15px;flex-wrap:wrap;margin-top:10px;font-size:12px;">
+            <span><span style="display:inline-block;width:12px;height:12px;background:#27ae60;border-radius:3px;"></span> Present ✅</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#e74c3c;border-radius:3px;"></span> Absent ❌</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#f39c12;border-radius:3px;"></span> Late ⏰</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#3498db;border-radius:3px;"></span> Excused 📝</span>
+          </div>
+        `;
+      }
     }
 
     function renderStudentAnalytics(studentId) {
@@ -2949,7 +3080,7 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 7.0.0 - Cloud Synced');
+      console.log('📚 Version 8.0.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
     });
   </script>
