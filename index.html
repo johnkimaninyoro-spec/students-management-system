@@ -221,6 +221,8 @@
     .badge-primary { background: #d6eaf8; color: #1a5276; }
     .badge-purple { background: #e8daef; color: #8e44ad; }
     .badge-gold { background: #f9e79f; color: #8e6b00; }
+    .badge-pink { background: #fce4ec; color: #c2185b; }
+    .badge-blue { background: #e3f2fd; color: #0d47a1; }
 
     .toast-container { position: fixed; top: 80px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
     .toast { padding: 14px 24px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.4s ease; font-size: 0.9em; max-width: 400px; }
@@ -237,6 +239,10 @@
     .rank-1 { background: #f9e79f !important; font-weight: bold; }
     .rank-2 { background: #fdebd0 !important; }
     .rank-3 { background: #d5f5e3 !important; }
+
+    .dorm-badge { padding: 2px 10px; border-radius: 20px; font-size: 0.7em; font-weight: 600; display: inline-block; }
+    .dorm-boys { background: #e3f2fd; color: #0d47a1; }
+    .dorm-girls { background: #fce4ec; color: #c2185b; }
 
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
@@ -625,7 +631,9 @@
             </div>
             <div class="table-container">
               <table>
-                <thead><tr><th>Name</th><th>Employee ID</th><th>Subjects</th><th>Classes</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead>
+                  <tr><th>Name</th><th>Employee ID</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr>
+                </thead>
                 <tbody id="teachersTableBody"></tbody>
               </table>
             </div>
@@ -773,6 +781,8 @@
       'Chapel/Spiritual', 'Environment', 'Class Prefect'
     ];
     const PREFECT_ROLES = ['Head Prefect', 'Deputy Head Prefect', 'Class Prefect', 'Assistant Class Prefect'];
+    const DORM_ROLES = ['None', 'Class Teacher', 'Dorm Matron', 'Dorm Patron'];
+    const DORMS = ['None', 'Boys Dorm', 'Girls Dorm'];
 
     let currentUser = null;
     let activeTab = 'dashboard';
@@ -939,47 +949,36 @@
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
-      // Add Student - Admin, Secretary ONLY
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
 
-      // Edit Sponsorship - Admin, Director ONLY
       const editSponsorshipBtn = document.getElementById('editSponsorshipBtn');
       if (editSponsorshipBtn) editSponsorshipBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
 
-      // Add Grade - Admin, Principal, Teacher, Secretary
       const addGradeBtn = document.getElementById('addGradeBtn');
       if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Attendance - Admin, Principal, Teacher, Secretary
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
       if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Warning - Admin, Principal ONLY
       const addWarningBtn = document.getElementById('addWarningBtn');
       if (addWarningBtn) addWarningBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // Add Suspension - Admin, Principal ONLY
       const addSuspensionBtn = document.getElementById('addSuspensionBtn');
       if (addSuspensionBtn) addSuspensionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // Add Expulsion - Admin, Principal ONLY
       const addExpulsionBtn = document.getElementById('addExpulsionBtn');
       if (addExpulsionBtn) addExpulsionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // Add Clinic - Admin, Nurse, Doctor
       const addClinicBtn = document.getElementById('addClinicBtn');
       if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isNurse || isDoctor) ? 'inline-block' : 'none';
 
-      // Add Teacher - Only Admin
       const addTeacherBtn = document.getElementById('addTeacherBtn');
       if (addTeacherBtn) addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
 
-      // Add Teacher Attendance - Admin, Secretary ONLY
       const addTeacherAttBtn = document.getElementById('addTeacherAttBtn');
       if (addTeacherAttBtn) addTeacherAttBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Prefect - Admin, Principal ONLY
       const addPrefectBtn = document.getElementById('addPrefectBtn');
       if (addPrefectBtn) addPrefectBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
@@ -1239,6 +1238,9 @@
       const sponsoredTotal = sponsoredBoys + sponsoredGirls;
 
       const prefectCount = students.filter(s => s.isPrefect === 'Yes').length;
+      const classTeachers = teachersCache.filter(t => t.dormRole === 'Class Teacher').length;
+      const dormMatrons = teachersCache.filter(t => t.dormRole === 'Dorm Matron').length;
+      const dormPatrons = teachersCache.filter(t => t.dormRole === 'Dorm Patron').length;
 
       const today = new Date().toISOString().split('T')[0];
       const presentToday = attendance.filter(a => a.date === today && a.status === 'Present').length;
@@ -1259,6 +1261,9 @@
         <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${sponsoredBoys}</div><div class="stat-label">👦 Sponsored Boys</div></div>
         <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${sponsoredGirls}</div><div class="stat-label">👧 Sponsored Girls</div></div>
         <div class="stat-card" style="border-top-color:#9b59b6;"><div class="stat-number">${prefectCount}</div><div class="stat-label">⭐ Prefects</div></div>
+        <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${classTeachers}</div><div class="stat-label">👨‍🏫 Class Teachers</div></div>
+        <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${dormMatrons}</div><div class="stat-label">👩 Dorm Matrons</div></div>
+        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${dormPatrons}</div><div class="stat-label">👨 Dorm Patrons</div></div>
       `;
 
       document.getElementById('boardingStats').innerHTML = `
@@ -1307,7 +1312,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS - Updated with Prefect Info
+    // 👩‍🎓 STUDENTS
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -1392,7 +1397,6 @@
       const canDeleteStudents = canDeleteSpecific('students');
 
       document.getElementById('studentTableBody').innerHTML = filtered.map(s => {
-        // Find prefect info
         const prefect = prefectsCache.find(p => p.studentId === s.id);
         const isPrefect = s.isPrefect === 'Yes' || prefect;
         const prefectRole = prefect?.role || s.prefectRole || '-';
@@ -1709,11 +1713,8 @@
         return;
       }
 
-      // Get students in this class
       const students = studentsCache.filter(s => s.class === className);
       const studentIds = students.map(s => s.id);
-
-      // Get grades for these students
       let grades = gradesCache.filter(g => studentIds.includes(g.studentId));
       if (term) grades = grades.filter(g => g.term === term);
 
@@ -1722,7 +1723,6 @@
         return;
       }
 
-      // Calculate subject averages
       const subjectData = {};
       grades.forEach(g => {
         if (!subjectData[g.subject]) subjectData[g.subject] = [];
@@ -1731,16 +1731,55 @@
       const subjects = Object.keys(subjectData);
       const averages = subjects.map(s => Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length));
 
-      // Subject Chart
       destroyChart('perfSubjectChart');
       chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
         type: 'bar',
+        data: { labels: subjects, datasets: [{ data: averages, backgroundColor: averages.map(getGradeColor) }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+
+      const studentAverages = students.map(s => {
+        const sg = grades.filter(g => g.studentId === s.id);
+        if (!sg.length) return { student: s, avg: 0, passes: 0, fails: 0, total: 0 };
+        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        const passes = scores.filter(s => isPass(s)).length;
+        const fails = scores.filter(s => !isPass(s)).length;
+        return { student: s, avg, passes, fails, total: scores.length };
+      });
+
+      const sorted = [...studentAverages].sort((a, b) => b.avg - a.avg);
+
+      const gradeDist = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      sorted.forEach(s => {
+        const grade = getLetterGrade(s.avg);
+        gradeDist[grade]++;
+      });
+
+      destroyChart('perfGradeChart');
+      chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
+        type: 'bar',
+        data: { labels: ['A', 'B', 'C', 'D', 'F'], datasets: [{ data: [gradeDist.A, gradeDist.B, gradeDist.C, gradeDist.D, gradeDist.F], backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+
+      const passCount = sorted.filter(s => s.avg >= 50).length;
+      const failCount = sorted.filter(s => s.avg < 50).length;
+
+      destroyChart('perfPassFailChart');
+      chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
+        type: 'doughnut',
+        data: { labels: ['✅ Pass', '❌ Fail'], datasets: [{ data: [passCount, failCount], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      // Student Performance Chart
+      destroyChart('perfStudentChart');
+      chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
+        type: 'bar',
         data: {
-          labels: subjects,
-          datasets: [{
-            data: averages,
-            backgroundColor: averages.map(getGradeColor)
-          }]
+          labels: sorted.map(s => s.student.firstName),
+          datasets: [{ data: sorted.map(s => s.avg), backgroundColor: sorted.map(s => getGradeColor(s.avg)) }]
         },
         options: {
           responsive: true,
@@ -1750,8 +1789,844 @@
         }
       });
 
-      // Student averages
+      document.getElementById('perfRankingsBody').innerHTML = sorted.map((s, index) => `
+        <tr class="${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}">
+          <td>${index + 1}</td>
+          <td>${s.student.firstName} ${s.student.lastName}</td>
+          <td><strong>${s.avg}%</strong></td>
+          <td>${getGradeBadge(s.avg)}</td>
+          <td>${s.passes}</td>
+          <td>${s.fails}</td>
+        </tr>
+      `).join('');
+    };
+
+    // ============================================================
+    // ⚠️ WARNINGS
+    // ============================================================
+
+    window.showAddWarningModal = function(editId) {
+      if (!canAdd('warnings')) { showToast('Only Admin and Principal can issue warnings', 'error'); return; }
+      const warning = editId ? warningsCache.find(w => w.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="w_student">${studentsCache.map(s => `<option value="${s.id}" ${warning?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="w_date" value="${warning?.date || new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="w_reason" rows="3">${warning?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveWarning('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Issue'} Warning</button>
+      `;
+      openModal(editId ? 'Edit Warning' : 'Issue Warning', html);
+    };
+
+    window.saveWarning = async function(editId) {
+      const studentId = document.getElementById('w_student').value;
+      const date = document.getElementById('w_date').value;
+      const reason = document.getElementById('w_reason').value.trim();
+      if (!studentId || !date || !reason) { showToast('Please fill all fields', 'error'); return; }
+      const data = { studentId, date, reason };
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'warnings', editId), data); showToast('Warning updated'); }
+        else { data.issuedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'warnings'), data); showToast(`Warning issued to ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_WARNING' : 'ADD_WARNING', `${student?.firstName} ${student?.lastName} - ${reason}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderWarnings = function() {
+      const canEditWarnings = canEdit('warnings');
+      const canDeleteWarnings = canDeleteSpecific('warnings');
+      document.getElementById('warningsTableBody').innerHTML = warningsCache.map(w => {
+        const student = studentsCache.find(s => s.id === w.studentId);
+        return `
+          <tr>
+            <td>${formatDate(w.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${w.reason}</td>
+            <td>${w.issuedBy || '-'}</td>
+            <td>
+              ${canEditWarnings ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
+              ${canDeleteWarnings ? `<button class="btn btn-danger btn-sm" onclick="deleteWarning('${w.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No warnings found</td></tr>';
+    };
+
+    window.deleteWarning = async function(id) {
+      if (!confirm('Delete this warning?')) return;
+      try { await deleteDoc(doc(db, 'warnings', id)); await addAuditLog('DELETE_WARNING', 'Deleted warning'); showToast('Warning deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 🚫 SUSPENSIONS
+    // ============================================================
+
+    window.showAddSuspensionModal = function(editId) {
+      if (!canAdd('suspensions')) { showToast('Only Admin and Principal can add suspensions', 'error'); return; }
+      const suspension = editId ? suspensionsCache.find(s => s.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="su_student">${studentsCache.map(s => `<option value="${s.id}" ${suspension?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="su_date" value="${suspension?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Duration *</label><input type="text" id="su_duration" value="${suspension?.duration || ''}" placeholder="e.g., 3 days"></div>
+          <div class="form-group"><label>Status</label>
+            <select id="su_status"><option value="Active" ${suspension?.status === 'Active' ? 'selected' : ''}>Active</option><option value="Completed" ${suspension?.status === 'Completed' ? 'selected' : ''}>Completed</option><option value="Appealed" ${suspension?.status === 'Appealed' ? 'selected' : ''}>Appealed</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="su_reason" rows="3">${suspension?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveSuspension('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Suspension</button>
+      `;
+      openModal(editId ? 'Edit Suspension' : 'Add Suspension', html);
+    };
+
+    window.saveSuspension = async function(editId) {
+      const studentId = document.getElementById('su_student').value;
+      const date = document.getElementById('su_date').value;
+      const duration = document.getElementById('su_duration').value.trim();
+      const status = document.getElementById('su_status').value;
+      const reason = document.getElementById('su_reason').value.trim();
+      if (!studentId || !date || !duration || !reason) { showToast('Please fill all fields', 'error'); return; }
+      const data = { studentId, date, duration, status, reason };
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'suspensions', editId), data); showToast('Suspension updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'suspensions'), data); showToast(`Suspension added for ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_SUSPENSION' : 'ADD_SUSPENSION', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderSuspensions = function() {
+      const canEditSuspensions = canEdit('suspensions');
+      const canDeleteSuspensions = canDeleteSpecific('suspensions');
+      document.getElementById('suspensionsTableBody').innerHTML = suspensionsCache.map(s => {
+        const student = studentsCache.find(st => st.id === s.studentId);
+        return `
+          <tr>
+            <td>${formatDate(s.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${s.reason}</td>
+            <td>${s.duration}</td>
+            <td><span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></td>
+            <td>
+              ${canEditSuspensions ? `<button class="btn btn-primary btn-sm" onclick="showAddSuspensionModal('${s.id}')">Edit</button>` : ''}
+              ${canDeleteSuspensions ? `<button class="btn btn-danger btn-sm" onclick="deleteSuspension('${s.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No suspensions found</td></tr>';
+    };
+
+    window.deleteSuspension = async function(id) {
+      if (!confirm('Delete this suspension?')) return;
+      try { await deleteDoc(doc(db, 'suspensions', id)); await addAuditLog('DELETE_SUSPENSION', 'Deleted suspension'); showToast('Suspension deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // ❌ EXPULSIONS
+    // ============================================================
+
+    window.showAddExpulsionModal = function(editId) {
+      if (!canAdd('expulsions')) { showToast('Only Admin and Principal can record expulsions', 'error'); return; }
+      const expulsion = editId ? expulsionsCache.find(e => e.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="e_student">${studentsCache.map(s => `<option value="${s.id}" ${expulsion?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="e_date" value="${expulsion?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Approved By</label><input type="text" id="e_approvedBy" value="${expulsion?.approvedBy || ''}"></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="e_reason" rows="3">${expulsion?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveExpulsion('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Record'} Expulsion</button>
+      `;
+      openModal(editId ? 'Edit Expulsion' : 'Record Expulsion', html);
+    };
+
+    window.saveExpulsion = async function(editId) {
+      const studentId = document.getElementById('e_student').value;
+      const date = document.getElementById('e_date').value;
+      const approvedBy = document.getElementById('e_approvedBy').value.trim();
+      const reason = document.getElementById('e_reason').value.trim();
+      if (!studentId || !date || !reason) { showToast('Please fill all required fields', 'error'); return; }
+      const data = { studentId, date, approvedBy, reason };
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'expulsions', editId), data); showToast('Expulsion updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'expulsions'), data); showToast(`Expulsion recorded for ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_EXPULSION' : 'ADD_EXPULSION', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderExpulsions = function() {
+      const canEditExpulsions = canEdit('expulsions');
+      const canDeleteExpulsions = canDeleteSpecific('expulsions');
+      document.getElementById('expulsionsTableBody').innerHTML = expulsionsCache.map(e => {
+        const student = studentsCache.find(s => s.id === e.studentId);
+        return `
+          <tr>
+            <td>${formatDate(e.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${e.reason}</td>
+            <td>${e.approvedBy || '-'}</td>
+            <td>
+              ${canEditExpulsions ? `<button class="btn btn-primary btn-sm" onclick="showAddExpulsionModal('${e.id}')">Edit</button>` : ''}
+              ${canDeleteExpulsions ? `<button class="btn btn-danger btn-sm" onclick="deleteExpulsion('${e.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No expulsions found</td></tr>';
+    };
+
+    window.deleteExpulsion = async function(id) {
+      if (!confirm('Delete this expulsion record?')) return;
+      try { await deleteDoc(doc(db, 'expulsions', id)); await addAuditLog('DELETE_EXPULSION', 'Deleted expulsion'); showToast('Expulsion deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 🏥 CLINIC
+    // ============================================================
+
+    window.showAddClinicModal = function(editId) {
+      if (!canAdd('clinic')) { showToast('Only Doctor and Nurse can record clinic visits', 'error'); return; }
+      const visit = editId ? clinicCache.find(c => c.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="c_student">${studentsCache.map(s => `<option value="${s.id}" ${visit?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="c_date" value="${visit?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Doctor/Nurse *</label><input type="text" id="c_doctor" value="${visit?.doctor || ''}" placeholder="Full name"></div>
+          <div class="form-group"><label>Condition Type *</label>
+            <select id="c_condition"><option value="">Select...</option>${CONDITIONS.map(c => `<option value="${c}" ${visit?.condition === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          </div>
+        </div>
+        <div class="form-group"><label>Complaint *</label><textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea></div>
+        <div class="form-group"><label>Diagnosis</label><textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea></div>
+        <div class="form-group"><label>Treatment / Medication</label><input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg"></div>
+        <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
+      `;
+      openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
+    };
+
+    window.saveClinic = async function(editId) {
+      const studentId = document.getElementById('c_student').value;
+      const date = document.getElementById('c_date').value;
+      const doctor = document.getElementById('c_doctor').value.trim();
+      const condition = document.getElementById('c_condition').value;
+      const complaint = document.getElementById('c_complaint').value.trim();
+      const diagnosis = document.getElementById('c_diagnosis').value.trim();
+      const medication = document.getElementById('c_medication').value.trim();
+
+      if (!studentId || !date || !doctor || !condition || !complaint) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'clinic', editId), data); showToast('Visit updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'clinic'), data); showToast(`Visit recorded for ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_CLINIC' : 'ADD_CLINIC', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderClinic = function() {
+      const canEditClinic = canEdit('clinic');
+      const canDeleteClinic = canDeleteSpecific('clinic');
+
+      document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
+        const student = studentsCache.find(s => s.id === c.studentId);
+        return `
+          <tr>
+            <td>${formatDate(c.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${c.doctor || '-'}</td>
+            <td>${c.complaint || '-'}</td>
+            <td><span class="badge ${c.condition === 'Pre-existing Condition' ? 'badge-warning' : 'badge-info'}">${c.condition || '-'}</span></td>
+            <td>${c.diagnosis || '-'}</td>
+            <td>${c.medication || '-'}</td>
+            <td>
+              ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
+              ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+    };
+
+    window.deleteClinic = async function(id) {
+      if (!confirm('Delete this clinic visit?')) return;
+      try { await deleteDoc(doc(db, 'clinic', id)); await addAuditLog('DELETE_CLINIC', 'Deleted clinic visit'); showToast('Visit deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // ⭐ PREFECTS
+    // ============================================================
+
+    window.showAddPrefectModal = function(editId) {
+      if (!canAdd('prefects')) { showToast('Only Admin and Principal can add prefects', 'error'); return; }
+      const prefect = editId ? prefectsCache.find(p => p.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="p_student">${studentsCache.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Prefect Role *</label>
+            <select id="p_role">
+              ${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Department *</label>
+            <select id="p_department">${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${prefect?.department === d ? 'selected' : ''}>${d}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Assigned Date</label><input type="date" id="p_date" value="${prefect?.date || new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="p_notes" rows="2">${prefect?.notes || ''}</textarea></div>
+        <button class="btn btn-success" onclick="savePrefect('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Prefect</button>
+      `;
+      openModal(editId ? 'Edit Prefect' : 'Add Prefect Role', html);
+    };
+
+    window.savePrefect = async function(editId) {
+      const studentId = document.getElementById('p_student').value;
+      const role = document.getElementById('p_role').value;
+      const department = document.getElementById('p_department').value;
+      const date = document.getElementById('p_date').value;
+      const notes = document.getElementById('p_notes').value.trim();
+
+      if (!studentId || !role || !department) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, role, department, date, notes };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'prefects', editId), data); showToast('Prefect updated'); }
+        else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'prefects'), data); showToast(`Prefect role assigned to ${student?.firstName} ${student?.lastName}`); }
+        await updateDoc(doc(db, 'students', studentId), { isPrefect: 'Yes', prefectRole: role, prefectDepartment: department });
+        await addAuditLog(editId ? 'UPDATE_PREFECT' : 'ADD_PREFECT', `${student?.firstName} ${student?.lastName} - ${role}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderPrefects = function() {
+      const deptFilter = document.getElementById('prefectDeptFilter').value;
+      let filtered = prefectsCache;
+      if (deptFilter) filtered = filtered.filter(p => p.department === deptFilter);
+
+      const canEditPrefects = canEdit('prefects');
+      const canDeletePrefects = canDeleteSpecific('prefects');
+
+      document.getElementById('prefectsTableBody').innerHTML = filtered.map(p => {
+        const student = studentsCache.find(s => s.id === p.studentId);
+        return `
+          <tr>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td><span class="badge badge-gold">${p.role}</span></td>
+            <td>${p.department}</td>
+            <td>${formatDate(p.date)}</td>
+            <td>
+              ${canEditPrefects ? `<button class="btn btn-primary btn-sm" onclick="showAddPrefectModal('${p.id}')">Edit</button>` : ''}
+              ${canDeletePrefects ? `<button class="btn btn-danger btn-sm" onclick="deletePrefect('${p.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No prefects found</td></tr>';
+    };
+
+    window.deletePrefect = async function(id) {
+      if (!confirm('Remove this prefect role?')) return;
+      try {
+        const prefect = prefectsCache.find(p => p.id === id);
+        await deleteDoc(doc(db, 'prefects', id));
+        if (prefect?.studentId) {
+          const student = studentsCache.find(s => s.id === prefect.studentId);
+          if (student) await updateDoc(doc(db, 'students', prefect.studentId), { isPrefect: 'No', prefectRole: '', prefectDepartment: '' });
+        }
+        await addAuditLog('DELETE_PREFECT', 'Removed prefect role');
+        showToast('Prefect role removed');
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 👨‍🏫 TEACHERS - Updated with Class Teacher & Dorm Roles
+    // ============================================================
+
+    window.showAddTeacherModal = function(editId) {
+      if (!canAdd('teachers')) { showToast('You do not have permission to add teachers', 'error'); return; }
+      const teacher = editId ? teachersCache.find(t => t.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="t_name" value="${teacher?.name || ''}" placeholder="Full name"></div>
+          <div class="form-group"><label>Employee ID *</label><input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., TCH-001"></div>
+          <div class="form-group"><label>TSC Number</label><input type="text" id="t_tsc" value="${teacher?.tsc || ''}"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="t_phone" value="${teacher?.phone || ''}"></div>
+          <div class="form-group"><label>Subjects</label>
+            <select id="t_subjects" multiple style="height:100px;">${SUBJECTS.map(s => `<option value="${s}" ${teacher?.subjects?.includes(s) ? 'selected' : ''}>${s}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Classes</label>
+            <select id="t_classes" multiple style="height:100px;">${CLASSES.map(c => `<option value="${c}" ${teacher?.classes?.includes(c) ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Class Teacher *</label>
+            <select id="t_classTeacher">
+              <option value="">Not a Class Teacher</option>
+              ${CLASSES.map(c => `<option value="${c}" ${teacher?.classTeacher === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Dorm Role *</label>
+            <select id="t_dormRole" onchange="toggleDormSelect()">
+              <option value="None" ${teacher?.dormRole === 'None' ? 'selected' : ''}>None</option>
+              <option value="Dorm Matron" ${teacher?.dormRole === 'Dorm Matron' ? 'selected' : ''}>Dorm Matron</option>
+              <option value="Dorm Patron" ${teacher?.dormRole === 'Dorm Patron' ? 'selected' : ''}>Dorm Patron</option>
+            </select>
+          </div>
+          <div class="form-group" id="dormSelectGroup" style="display:${teacher?.dormRole && teacher?.dormRole !== 'None' ? 'block' : 'none'}">
+            <label>Dorm *</label>
+            <select id="t_dorm">
+              <option value="">Select Dorm</option>
+              <option value="Boys Dorm" ${teacher?.dorm === 'Boys Dorm' ? 'selected' : ''}>Boys Dorm</option>
+              <option value="Girls Dorm" ${teacher?.dorm === 'Girls Dorm' ? 'selected' : ''}>Girls Dorm</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="t_status"><option value="Active" ${teacher?.status === 'Active' ? 'selected' : ''}>Active</option><option value="Inactive" ${teacher?.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveTeacher('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Teacher</button>
+      `;
+
+      openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
+
+      // Store toggle function globally
+      window.toggleDormSelect = function() {
+        const dormRole = document.getElementById('t_dormRole').value;
+        const dormGroup = document.getElementById('dormSelectGroup');
+        dormGroup.style.display = (dormRole !== 'None') ? 'block' : 'none';
+      };
+    };
+
+    window.saveTeacher = async function(editId) {
+      const name = document.getElementById('t_name').value.trim();
+      const empId = document.getElementById('t_empId').value.trim();
+      if (!name || !empId) { showToast('Name and Employee ID are required', 'error'); return; }
+      
+      const subjects = Array.from(document.getElementById('t_subjects').selectedOptions).map(o => o.value);
+      const classes = Array.from(document.getElementById('t_classes').selectedOptions).map(o => o.value);
+      const classTeacher = document.getElementById('t_classTeacher').value;
+      const dormRole = document.getElementById('t_dormRole').value;
+      const dorm = document.getElementById('t_dorm')?.value || '';
+      
+      const data = { 
+        name, empId, 
+        tsc: document.getElementById('t_tsc').value.trim(), 
+        phone: document.getElementById('t_phone').value.trim(), 
+        subjects, classes,
+        classTeacher: classTeacher || '',
+        dormRole: dormRole || 'None',
+        dorm: dorm || '',
+        status: document.getElementById('t_status').value 
+      };
+      
+      try {
+        if (editId) { await updateDoc(doc(db, 'teachers', editId), data); showToast('Teacher updated'); }
+        else { await addDoc(collection(db, 'teachers'), data); showToast(`Teacher ${name} added`); }
+        await addAuditLog(editId ? 'UPDATE_TEACHER' : 'ADD_TEACHER', name);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderTeachers = function() {
+      const canEditTeachers = canEdit('teachers');
+      const canDeleteTeachers = canDeleteSpecific('teachers');
+      
+      document.getElementById('teachersTableBody').innerHTML = teachersCache.map(t => {
+        const classTeacher = t.classTeacher ? `<span class="badge badge-info">${t.classTeacher}</span>` : '-';
+        const dormBadge = t.dormRole === 'Dorm Matron' ? 
+          `<span class="badge badge-pink">👩 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
+          t.dormRole === 'Dorm Patron' ?
+          `<span class="badge badge-blue">👨 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
+          '-';
+        const dormDisplay = t.dormRole !== 'None' ? dormBadge : '-';
+        
+        return `
+          <tr>
+            <td><strong>${t.name}</strong></td>
+            <td>${t.empId}</td>
+            <td>${(t.subjects || []).map(s => `<span class="badge badge-info">${s}</span>`).join(' ') || '-'}</td>
+            <td>${(t.classes || []).join(', ') || '-'}</td>
+            <td>${classTeacher}</td>
+            <td>${t.dormRole !== 'None' ? t.dormRole : '-'}</td>
+            <td>${t.dormRole !== 'None' ? t.dorm || '-' : '-'}</td>
+            <td><span class="badge ${t.status === 'Active' ? 'badge-success' : 'badge-danger'}">${t.status}</span></td>
+            <td>
+              ${canEditTeachers ? `<button class="btn btn-primary btn-sm" onclick="showAddTeacherModal('${t.id}')">Edit</button>` : ''}
+              ${canDeleteTeachers ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No teachers found</td></tr>';
+    };
+
+    window.deleteTeacher = async function(id) {
+      if (!confirm('Delete this teacher?')) return;
+      try { const teacher = teachersCache.find(t => t.id === id); await deleteDoc(doc(db, 'teachers', id)); await addAuditLog('DELETE_TEACHER', teacher?.name || 'Unknown'); showToast('Teacher deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 📅 TEACHER ATTENDANCE
+    // ============================================================
+
+    window.showTeacherAttendanceModal = function() {
+      if (!canAdd('teacherAttendance')) { showToast('Only Admin and Secretary can mark teacher attendance', 'error'); return; }
+      const today = new Date().toISOString().split('T')[0];
+      const activeTeachers = teachersCache.filter(t => t.status === 'Active');
+
+      if (!activeTeachers.length) { showToast('No active teachers found', 'error'); return; }
+
+      let html = `
+        <div class="form-group"><label>Date</label><input type="date" id="ta_date" value="${today}"></div>
+        ${activeTeachers.map(t => `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee;flex-wrap:wrap;">
+            <span style="flex:1;min-width:150px;font-size:0.85em;">${t.name}</span>
+            <select id="ta_status_${t.id}" style="width:100px;padding:4px;" onchange="toggleTeacherReason('${t.id}')">
+              <option value="Present">Present</option>
+              <option value="Absent">Absent</option>
+              <option value="Late">Late</option>
+              <option value="Leave">On Leave</option>
+            </select>
+            <input type="text" id="ta_reason_${t.id}" placeholder="Reason" style="width:150px;padding:4px;font-size:0.8em;display:none;">
+            <input type="number" id="ta_lessons_${t.id}" placeholder="Lessons Today" style="width:100px;padding:4px;font-size:0.8em;" min="0" max="8" value="0">
+          </div>
+        `).join('')}
+        <div class="form-group" style="margin-top:10px;"><label>Lessons Per Week (Default)</label><input type="number" id="ta_lessons_week" value="30" min="0" max="40"></div>
+        <button class="btn btn-success" onclick="saveTeacherAttendance()" style="width:100%;margin-top:16px;">💾 Save Teacher Attendance</button>
+      `;
+
+      openModal('📅 Teacher Attendance', html);
+
+      window.toggleTeacherReason = function(teacherId) {
+        const sel = document.getElementById('ta_status_' + teacherId);
+        const reason = document.getElementById('ta_reason_' + teacherId);
+        reason.style.display = (sel.value === 'Absent' || sel.value === 'Leave') ? 'inline-block' : 'none';
+      };
+    };
+
+    window.saveTeacherAttendance = async function() {
+      const date = document.getElementById('ta_date').value;
+      if (!date) { showToast('Please select a date', 'error'); return; }
+
+      const lessonsWeek = parseInt(document.getElementById('ta_lessons_week').value) || 30;
+      const activeTeachers = teachersCache.filter(t => t.status === 'Active');
+
+      try {
+        const promises = [];
+        activeTeachers.forEach(t => {
+          const statusEl = document.getElementById('ta_status_' + t.id);
+          if (!statusEl) return;
+          const reasonEl = document.getElementById('ta_reason_' + t.id);
+          const lessonsEl = document.getElementById('ta_lessons_' + t.id);
+          const status = statusEl.value;
+          const reason = (status === 'Absent' || status === 'Leave') ? (reasonEl?.value || '') : '';
+          const lessonsToday = parseInt(lessonsEl?.value) || 0;
+          const id = `${t.id}_${date}`;
+          promises.push(setDoc(doc(db, 'teacherAttendance', id), {
+            teacherId: t.id,
+            date,
+            status,
+            reason,
+            lessonsToday,
+            lessonsWeek,
+            markedBy: currentUser?.fullName || currentUser?.email || 'unknown'
+          }));
+        });
+
+        await Promise.all(promises);
+        await addAuditLog('TEACHER_ATTENDANCE', `Marked ${activeTeachers.length} teachers on ${date}`);
+        showToast(`✅ Teacher attendance saved for ${activeTeachers.length} teachers`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderTeacherAttendance = function() {
+      const date = document.getElementById('teacherAttDate').value;
+      const teacherFilter = document.getElementById('teacherAttFilter').value;
+
+      const filterSelect = document.getElementById('teacherAttFilter');
+      if (filterSelect.options.length <= 1) {
+        filterSelect.innerHTML = '<option value="">All Teachers</option>' +
+          teachersCache.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+      }
+
+      if (!date) document.getElementById('teacherAttDate').value = new Date().toISOString().split('T')[0];
+
+      let filtered = teacherAttCache;
+      if (date) filtered = filtered.filter(a => a.date === date);
+      if (teacherFilter) filtered = filtered.filter(a => a.teacherId === teacherFilter);
+
+      const canDeleteTA = canDeleteSpecific('teacherAttendance');
+
+      document.getElementById('teacherAttendanceBody').innerHTML = filtered.map(a => {
+        const teacher = teachersCache.find(t => t.id === a.teacherId);
+        return `
+          <tr>
+            <td>${formatDate(a.date)}</td>
+            <td>${teacher?.name || 'Unknown'}</td>
+            <td><span class="badge ${a.status === 'Present' ? 'badge-success' : a.status === 'Absent' ? 'badge-danger' : a.status === 'Late' ? 'badge-warning' : 'badge-info'}">${a.status}</span></td>
+            <td>${a.reason || '-'}</td>
+            <td>${a.lessonsToday || 0}</td>
+            <td>${a.lessonsWeek || 30}</td>
+            <td>${a.markedBy || '-'}</td>
+            <td>
+              ${canDeleteTA ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacherAttendance('${a.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">No teacher attendance records found</td></tr>';
+    };
+
+    window.deleteTeacherAttendance = async function(id) {
+      if (!confirm('Delete this teacher attendance record?')) return;
+      try { await deleteDoc(doc(db, 'teacherAttendance', id)); await addAuditLog('DELETE_TEACHER_ATTENDANCE', 'Deleted teacher attendance record'); showToast('Record deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 📈 ANALYTICS
+    // ============================================================
+
+    function renderAnalytics() {
+      const studentSelect = document.getElementById('analyticsStudentSelect');
+      if (studentSelect.options.length <= 1) {
+        const current = studentSelect.value;
+        studentSelect.innerHTML = '<option value="">Select a student...</option>' +
+          studentsCache.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('');
+        if (current) studentSelect.value = current;
+      }
+
+      const classSelect = document.getElementById('analyticsClassSelect');
+      if (classSelect.options.length <= 1) {
+        const current = classSelect.value;
+        classSelect.innerHTML = '<option value="">Select a class...</option>' +
+          CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (current) classSelect.value = current;
+      }
+
+      const studentId = document.getElementById('analyticsStudentSelect').value;
+      if (studentId) renderStudentAnalytics(studentId);
+
+      const className = document.getElementById('analyticsClassSelect').value;
+      if (className) renderClassAnalytics(className);
+    }
+
+    function renderStudentAnalytics(studentId) {
+      const grades = gradesCache.filter(g => g.studentId === studentId);
+      const subjectData = {};
+      grades.forEach(g => {
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push((g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+      });
+      const subjects = Object.keys(subjectData);
+      const averages = subjects.map(s => Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length));
+
+      destroyChart('analyticsStudentChart');
+      if (subjects.length) {
+        chartInstances['analyticsStudentChart'] = new Chart(document.getElementById('analyticsStudentChart'), {
+          type: 'bar',
+          data: { labels: subjects, datasets: [{ data: averages, backgroundColor: averages.map(getGradeColor) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+
+      const terms = ['Term 1', 'Term 2', 'Term 3'];
+      const termAverages = terms.map(term => {
+        const tg = grades.filter(g => g.term === term);
+        if (!tg.length) return null;
+        return Math.round(tg.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / tg.length);
+      });
+      const validTerms = terms.filter((_, i) => termAverages[i] !== null);
+      const validAverages = termAverages.filter(v => v !== null);
+
+      destroyChart('analyticsTrendChart');
+      if (validTerms.length) {
+        chartInstances['analyticsTrendChart'] = new Chart(document.getElementById('analyticsTrendChart'), {
+          type: 'line',
+          data: { labels: validTerms, datasets: [{ data: validAverages, borderColor: '#2e86c1', fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: validAverages.map(getGradeColor), backgroundColor: 'rgba(46, 134, 193, 0.1)' }] },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+        });
+      }
+    }
+
+    function renderClassAnalytics(className) {
+      const students = studentsCache.filter(s => s.class === className);
+      const studentIds = students.map(s => s.id);
+      const grades = gradesCache.filter(g => studentIds.includes(g.studentId));
+
+      const subjectData = {};
+      grades.forEach(g => {
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push((g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+      });
+      const subjects = Object.keys(subjectData);
+      const averages = subjects.map(s => Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length));
+
+      destroyChart('analyticsClassChart');
+      if (subjects.length) {
+        chartInstances['analyticsClassChart'] = new Chart(document.getElementById('analyticsClassChart'), {
+          type: 'bar',
+          data: { labels: subjects, datasets: [{ data: averages, backgroundColor: averages.map(getGradeColor) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+
       const studentAverages = students.map(s => {
         const sg = grades.filter(g => g.studentId === s.id);
-        if (!sg.length) return { student: s, avg: 0, passes: 0, fails: 0, total: 0 };
-        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0
+        if (!sg.length) return 0;
+        return Math.round(sg.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / sg.length);
+      });
+
+      destroyChart('analyticsComparisonChart');
+      if (students.length) {
+        chartInstances['analyticsComparisonChart'] = new Chart(document.getElementById('analyticsComparisonChart'), {
+          type: 'bar',
+          data: { labels: students.map(s => s.firstName), datasets: [{ data: studentAverages, backgroundColor: studentAverages.map(getGradeColor) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+    }
+
+    // ============================================================
+    // 👥 USER MANAGEMENT (Admin Only)
+    // ============================================================
+
+    window.showAddUserModal = function(editId) {
+      if (!canAdd('users')) { showToast('You do not have permission to manage users', 'error'); return; }
+      const user = editId ? usersCache.find(u => u.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Email *</label><input type="email" id="u_email" value="${user?.email || ''}" ${user ? 'readonly' : ''}></div>
+          <div class="form-group"><label>Full Name *</label><input type="text" id="u_name" value="${user?.fullName || ''}"></div>
+          ${!user ? `<div class="form-group"><label>Password * (min 6 chars)</label><input type="text" id="u_password" placeholder="Enter temporary password"></div>` : ''}
+          <div class="form-group"><label>Role *</label>
+            <select id="u_role">${ROLES.map(r => `<option value="${r}" ${user?.role === r ? 'selected' : ''}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Class (for teachers)</label>
+            <select id="u_class"><option value="">None</option>${CLASSES.map(c => `<option value="${c}" ${user?.class === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveUser('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Create'} User</button>
+      `;
+      openModal(editId ? 'Edit User' : 'Add User', html);
+    };
+
+    window.saveUser = async function(editId) {
+      const email = document.getElementById('u_email').value.trim();
+      const name = document.getElementById('u_name').value.trim();
+      const role = document.getElementById('u_role').value;
+      const classValue = document.getElementById('u_class').value;
+      if (!email || !name || !role) { showToast('Please fill all required fields', 'error'); return; }
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'users', editId), { fullName: name, role, class: classValue });
+          await addAuditLog('UPDATE_USER', `${name} (${role})`);
+          showToast('User updated');
+        } else {
+          const password = document.getElementById('u_password').value;
+          if (!password || password.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+          const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+          await setDoc(doc(db, 'users', cred.user.uid), { email, fullName: name, role, class: classValue, createdAt: serverTimestamp(), loginCount: 0 });
+          await signOut(secondaryAuth);
+          await addAuditLog('ADD_USER', `${name} (${role})`);
+          showToast(`User ${email} created successfully`);
+        }
+        closeModal();
+      } catch (err) { showToast(friendlyAuthError(err.code) || err.message, 'error'); }
+    };
+
+    window.renderUsers = function() {
+      document.getElementById('usersTableBody').innerHTML = usersCache.map(u => `
+        <tr>
+          <td>${u.email || u.id}</td>
+          <td>${u.fullName || '-'}</td>
+          <td><span class="badge badge-primary">${u.role || 'user'}</span></td>
+          <td>${u.class || '-'}</td>
+          <td>${formatTimestamp(u.lastLogin)}</td>
+          <td>
+            <button class="btn btn-primary btn-sm" onclick="showAddUserModal('${u.id}')">Edit</button>
+            ${u.id !== currentUser?.uid ? `<button class="btn btn-warning btn-sm" onclick="resetUserPassword('${u.id}')">Reset</button><button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Del</button>` : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No users found</td></tr>';
+    };
+
+    window.resetUserPassword = async function(userId) {
+      const user = usersCache.find(u => u.id === userId);
+      if (!user || !user.email) { showToast('User has no email address', 'error'); return; }
+      if (!confirm(`Send password reset email to ${user.email}?`)) return;
+      try { await sendPasswordResetEmail(auth, user.email); await addAuditLog('RESET_PASSWORD', user.email); showToast(`Reset email sent to ${user.email}`); } catch (err) { showToast(friendlyAuthError(err.code) || 'Error sending reset email', 'error'); }
+    };
+
+    window.deleteUser = async function(userId) {
+      if (!confirm('Delete this user permanently?')) return;
+      try { const user = usersCache.find(u => u.id === userId); await deleteDoc(doc(db, 'users', userId)); await addAuditLog('DELETE_USER', user?.email || userId); showToast('User deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 🔍 AUDIT LOG (Admin Only)
+    // ============================================================
+
+    function populateAuditFilter() {
+      const select = document.getElementById('auditUserFilter');
+      if (!select) return;
+      const current = select.value;
+      const users = [...new Set(auditCache.map(a => a.user).filter(Boolean))];
+      select.innerHTML = '<option value="">All Users</option>' + users.map(u => `<option value="${u}">${u}</option>`).join('');
+      if (current && users.includes(current)) select.value = current;
+    }
+
+    function renderAudit() {
+      const filter = document.getElementById('auditUserFilter').value;
+      let logs = auditCache;
+      if (filter) logs = logs.filter(a => a.user === filter);
+      document.getElementById('auditLogContent').innerHTML = logs.slice(0, 100).map(a => `
+        <div class="log-entry" style="padding:10px 14px;border-left:3px solid var(--primary-light);margin-bottom:8px;background:#f8f9fa;border-radius:0 6px 6px 0;">
+          <strong>${a.user || 'system'}</strong>
+          <span class="badge badge-info">${a.role || 'user'}</span>
+          — <strong>${a.action}</strong>: ${a.details || ''}
+          <div style="color:#999;font-size:0.8em;">${formatTimestamp(a.time)}</div>
+        </div>
+      `).join('') || '<div style="text-align:center;color:#999;padding:20px;">No audit logs found</div>';
+    }
+
+    async function addAuditLog(action, details) {
+      try { await addDoc(collection(db, 'auditLog'), { user: currentUser?.email || 'system', role: currentUser?.role || 'system', action, details: details || '', time: serverTimestamp() }); } catch (err) { console.warn('Failed to write audit log:', err); }
+    }
+
+    // ============================================================
+    // 🚀 INITIALIZATION
+    // ============================================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInputs = ['attendanceDateFilter', 'teacherAttDate'];
+      dateInputs.forEach(id => { const el = document.getElementById(id); if (el && !el.value) el.value = today; });
+
+      document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') window.handleLogin(); });
+      document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+
+      console.log('🚀 Mara Christian High School Management System');
+      console.log('📚 Version 6.0.0 - Cloud Synced');
+      console.log('💡 Made with ❤️ for education');
+    });
+  </script>
+</body>
+</html>
