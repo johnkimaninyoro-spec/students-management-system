@@ -31,6 +31,145 @@
 
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: var(--dark); line-height: 1.6; }
 
+    /* ============================================================
+       SCHOOL LOGO STYLES
+    ============================================================ */
+    .school-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: white;
+    }
+
+    .school-logo img {
+      height: 40px;
+      width: auto;
+      border-radius: 4px;
+    }
+
+    .school-logo .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .school-logo .logo-text .school-name {
+      font-size: 1em;
+      font-weight: 700;
+    }
+
+    .school-logo .logo-text .motto {
+      font-size: 0.6em;
+      opacity: 0.8;
+      letter-spacing: 1px;
+    }
+
+    /* Login page logo */
+    .login-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .login-logo img {
+      max-height: 80px;
+      width: auto;
+      margin-bottom: 10px;
+    }
+
+    .login-logo .motto-text {
+      font-size: 0.8em;
+      color: var(--gray);
+      letter-spacing: 2px;
+    }
+
+    /* ============================================================
+       PRINT WATERMARK
+    ============================================================ */
+    .print-watermark {
+      display: none;
+    }
+
+    @media print {
+      .print-watermark {
+        display: block;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        opacity: 0.08;
+        pointer-events: none;
+        z-index: 9999;
+        max-width: 400px;
+        max-height: 400px;
+      }
+      
+      .print-watermark img {
+        width: 100%;
+        height: auto;
+      }
+
+      .print-header-logo {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #1a5276;
+      }
+
+      .print-header-logo img {
+        height: 50px;
+        width: auto;
+      }
+
+      .print-header-logo .print-school-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a5276;
+      }
+
+      .print-header-logo .print-motto {
+        font-size: 12px;
+        color: #666;
+        letter-spacing: 1px;
+      }
+
+      .sidebar, .top-bar, .btn, .no-print, .menu-toggle, .toast-container { display: none !important; }
+      .content-area { max-height: none !important; padding: 20px !important; overflow: visible !important; }
+      .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+      .tab-content { display: block !important; }
+      .tab-content:not(.active) { display: none !important; }
+    }
+
+    .print-header-logo {
+      display: none;
+    }
+
+    /* ============================================================
+       RESPONSIVE LOGO
+    ============================================================ */
+    @media (max-width: 768px) {
+      .school-logo img {
+        height: 30px;
+      }
+      .school-logo .logo-text .school-name {
+        font-size: 0.8em;
+      }
+      .school-logo .logo-text .motto {
+        font-size: 0.5em;
+      }
+      .login-logo img {
+        max-height: 60px;
+      }
+    }
+
+    /* ============================================================
+       REST OF STYLES
+    ============================================================ */
     .hidden { display: none !important; }
     .text-center { text-align: center; }
     .text-muted { color: var(--gray); }
@@ -78,10 +217,6 @@
 
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-    .login-box .logo { text-align: center; margin-bottom: 30px; }
-    .login-box .logo h1 { color: var(--primary); font-size: 1.8em; font-weight: 700; }
-    .login-box .logo p { color: var(--gray); font-size: 0.9em; }
-    .login-box .logo .school-icon { font-size: 3em; display: block; margin-bottom: 10px; }
     .login-box .form-group { margin-bottom: 18px; }
     .login-box .form-group label { display: block; font-weight: 600; font-size: 0.85em; color: var(--dark); margin-bottom: 5px; }
     .login-box .form-group input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: border 0.3s; }
@@ -109,7 +244,7 @@
       gap: 10px;
     }
 
-    .top-bar .brand { display: flex; align-items: center; gap: 12px; font-size: 1.1em; font-weight: 600; }
+    .top-bar .brand { display: flex; align-items: center; gap: 12px; }
     .top-bar .brand .menu-toggle { background: none; border: none; color: white; font-size: 24px; cursor: pointer; display: none; }
     .top-bar .user-section { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
     .top-bar .user-section .sync-status { display: flex; align-items: center; gap: 6px; font-size: 0.8em; padding: 4px 12px; border-radius: 20px; background: rgba(255,255,255,0.15); }
@@ -233,18 +368,6 @@
     .rank-2 { background: #fdebd0 !important; }
     .rank-3 { background: #d5f5e3 !important; }
 
-    /* Print Styles */
-    @media print {
-      .sidebar, .top-bar, .btn, .no-print, .menu-toggle, .toast-container { display: none !important; }
-      .content-area { max-height: none !important; padding: 20px !important; overflow: visible !important; }
-      .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid !important; page-break-inside: avoid !important; }
-      .tab-content { display: block !important; }
-      .tab-content:not(.active) { display: none !important; }
-      .print-header { display: block !important; text-align: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 3px double var(--primary); }
-      .print-header h1 { color: var(--primary); font-size: 24px; }
-      .print-header p { color: #666; font-size: 14px; }
-    }
-
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -280px; z-index: 999; height: calc(100vh - 70px); transition: left 0.3s; top: 70px; }
@@ -266,15 +389,20 @@
 </head>
 <body>
 
+  <!-- ============================================================
+       PRINT WATERMARK (hidden, only shows on print)
+  ============================================================ -->
+  <div class="print-watermark" id="printWatermark">
+  <img src="https://raw.githubusercontent.com/YOUR-USERNAME/student-management-system/main/MCHS%20Logo.png" alt="School Logo Watermark">
+</div>
+
   <!-- LOGIN PAGE -->
   <div id="loginPage" class="login-container">
     <div class="login-box">
-      <div class="logo">
-        <span class="school-icon">🏫</span>
-        <h1>Mara Christian High School</h1>
-        <p>Student Management System <span id="syncStatusText">☁️ Cloud-Synced</span></p>
-      </div>
-      <div class="form-group">
+     <div class="login-logo">
+  <img src="https://raw.githubusercontent.com/YOUR-USERNAME/student-management-system/main/MCHS%20Logo.png" alt="MCHS Logo">
+  <span class="motto-text">Educating For Eternity</span>
+</div>      <div class="form-group">
         <label>📧 Email Address</label>
         <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="username">
       </div>
@@ -296,8 +424,13 @@
     <div class="top-bar">
       <div class="brand">
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-        <span>🏫 Mara Christian High School</span>
-      </div>
+        <a href="#" class="school-logo" onclick="showTab('dashboard'); return false;">
+  <img src="https://raw.githubusercontent.com/YOUR-USERNAME/student-management-system/main/MCHS%20Logo.png" alt="MCHS Logo">
+  <div class="logo-text">
+    <span class="school-name">Mara Christian High School</span>
+    <span class="motto">Educating For Eternity</span>
+  </div>
+</a>      </div>
       <div class="user-section">
         <div class="sync-status online" id="syncStatus">
           <span class="sync-dot online" id="syncDot"></span>
@@ -424,8 +557,10 @@
               <div class="form-group"><label>Class</label><select id="attendanceClassFilter" onchange="renderAttendance()"><option value="">All Classes</option></select></div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th><th>Reason</th><th>Marked By</th></tr></thead>
-              <tbody id="attendanceTableBody"></tbody></table>
+              <table>
+                <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th><th>Reason</th><th>Marked By</th><th>Actions</th></tr></thead>
+                <tbody id="attendanceTableBody"></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -498,8 +633,10 @@
           <div class="card">
             <div class="card-header"><h2>🏥 Clinic Visits</h2><button class="btn btn-primary" id="addClinicBtn" onclick="showAddClinicModal()">+ Record Visit</button></div>
             <div class="table-container">
-              <table><thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Actions</th></tr></thead>
-              <tbody id="clinicTableBody"></tbody></table>
+              <table>
+                <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
+                <tbody id="clinicTableBody"></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -561,28 +698,11 @@
             </div>
           </div>
           <div class="charts-grid">
-            <div class="card">
-              <div class="card-header"><h3>📊 Student Grades by Subject</h3></div>
-              <div class="chart-container"><canvas id="analyticsStudentChart"></canvas></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h3>📈 Student Grade Trend</h3></div>
-              <div class="chart-container"><canvas id="analyticsTrendChart"></canvas></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h3>📊 Student Attendance Trend</h3></div>
-              <div id="analyticsAttendanceSummary"></div>
-              <div id="analyticsAttendanceContainer" style="height:200px;"></div>
-              <div id="analyticsAttendanceLegend"></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h3>📊 Class Average by Subject</h3></div>
-              <div class="chart-container"><canvas id="analyticsClassChart"></canvas></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h3>📊 Student Comparison</h3></div>
-              <div class="chart-container"><canvas id="analyticsComparisonChart"></canvas></div>
-            </div>
+            <div class="card"><div class="card-header"><h3>📊 Student Grades by Subject</h3></div><div class="chart-container"><canvas id="analyticsStudentChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h3>📈 Student Grade Trend</h3></div><div class="chart-container"><canvas id="analyticsTrendChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h3>📊 Student Attendance Trend</h3></div><div id="analyticsAttendanceSummary"></div><div id="analyticsAttendanceContainer" style="height:200px;"></div><div id="analyticsAttendanceLegend"></div></div>
+            <div class="card"><div class="card-header"><h3>📊 Class Average by Subject</h3></div><div class="chart-container"><canvas id="analyticsClassChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h3>📊 Student Comparison</h3></div><div class="chart-container"><canvas id="analyticsComparisonChart"></canvas></div></div>
           </div>
         </div>
 
@@ -948,7 +1068,11 @@
       if (!currentUser) return false;
       const role = currentUser.role;
       if (role === 'director') return false;
-      return role === 'admin';
+      
+      // Admin can delete everything, including attendance
+      if (role === 'admin') return true;
+      
+      return false;
     }
 
     function canView(tab) {
@@ -1520,63 +1644,57 @@
     };
 
     // ============================================================
-    // 📋 STUDENT ATTENDANCE
+    // 📋 STUDENT ATTENDANCE - Admin can edit/delete
     // ============================================================
 
-    window.showAddAttendanceModal = function() {
+    window.showAddAttendanceModal = function(editId) {
       if (!canAdd('attendance')) { showToast('You do not have permission to mark attendance', 'error'); return; }
+      
+      const existing = editId ? attendanceCache.find(a => a.id === editId) : null;
       const today = new Date().toISOString().split('T')[0];
+      
       let html = `
-        <div class="form-group"><label>Date</label><input type="date" id="attDate" value="${today}"></div>
-        <div class="form-group"><label>Class</label>
-          <select id="attClassFilter" onchange="filterAttendanceStudents()"><option value="">All Classes</option>${CLASSES.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+        <div class="form-group"><label>Date</label><input type="date" id="attDate" value="${existing?.date || today}"></div>
+        <div class="form-group"><label>Student *</label>
+          <select id="attStudent">
+            ${studentsCache.map(s => `<option value="${s.id}" ${existing?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+          </select>
         </div>
-        <div style="max-height:400px;overflow-y:auto;">
-          ${studentsCache.map(s => `
-            <div class="att-student" data-class="${s.class}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #eee;flex-wrap:wrap;">
-              <span style="flex:1;min-width:120px;font-size:0.85em;">${s.firstName} ${s.lastName} <span style="color:#999;font-size:0.8em;">(${s.class})</span></span>
-              <select id="att_${s.id}" style="width:100px;padding:4px;" onchange="toggleAttendanceReason('${s.id}')">
-                <option value="Present">Present</option><option value="Absent">Absent</option><option value="Late">Late</option><option value="Excused">Excused</option>
-              </select>
-              <input type="text" id="attReason_${s.id}" placeholder="Reason" style="width:150px;padding:4px;font-size:0.8em;display:none;">
-            </div>
-          `).join('')}
+        <div class="form-group"><label>Status *</label>
+          <select id="attStatus">
+            <option value="Present" ${existing?.status === 'Present' ? 'selected' : ''}>Present</option>
+            <option value="Absent" ${existing?.status === 'Absent' ? 'selected' : ''}>Absent</option>
+            <option value="Late" ${existing?.status === 'Late' ? 'selected' : ''}>Late</option>
+            <option value="Excused" ${existing?.status === 'Excused' ? 'selected' : ''}>Excused</option>
+          </select>
         </div>
-        <button class="btn btn-success" onclick="saveAttendance()" style="width:100%;margin-top:16px;">💾 Save Attendance</button>
+        <div class="form-group"><label>Reason</label><input type="text" id="attReason" value="${existing?.reason || ''}" placeholder="Reason for absence"></div>
+        <button class="btn btn-success" onclick="saveAttendance('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Attendance</button>
       `;
-      openModal('📋 Mark Attendance', html);
-      window.filterAttendanceStudents = function() {
-        const filter = document.getElementById('attClassFilter').value;
-        document.querySelectorAll('.att-student').forEach(el => { el.style.display = (!filter || el.dataset.class === filter) ? 'flex' : 'none'; });
-      };
-      window.toggleAttendanceReason = function(studentId) {
-        const sel = document.getElementById('att_' + studentId);
-        const reason = document.getElementById('attReason_' + studentId);
-        reason.style.display = sel.value === 'Absent' ? 'inline-block' : 'none';
-      };
+      openModal(editId ? 'Edit Attendance' : 'Mark Attendance', html);
     };
 
-    window.saveAttendance = async function() {
+    window.saveAttendance = async function(editId) {
       const date = document.getElementById('attDate').value;
-      if (!date) { showToast('Please select a date', 'error'); return; }
-      const classFilter = document.getElementById('attClassFilter').value;
-      let count = 0;
+      const studentId = document.getElementById('attStudent').value;
+      const status = document.getElementById('attStatus').value;
+      const reason = document.getElementById('attReason').value.trim();
+
+      if (!date || !studentId || !status) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, date, status, reason, markedBy: currentUser?.email || 'unknown' };
+
       try {
-        const promises = [];
-        studentsCache.forEach(s => {
-          if (classFilter && s.class !== classFilter) return;
-          const sel = document.getElementById('att_' + s.id);
-          if (!sel) return;
-          const reasonEl = document.getElementById('attReason_' + s.id);
-          const status = sel.value;
-          const reason = status === 'Absent' ? (reasonEl?.value || '') : '';
-          const id = `${s.id}_${date}`;
-          promises.push(setDoc(doc(db, 'attendance', id), { studentId: s.id, date, status, reason, markedBy: currentUser?.email || 'unknown' }));
-          count++;
-        });
-        await Promise.all(promises);
-        await addAuditLog('ADD_ATTENDANCE', `Marked ${count} students on ${date}`);
-        showToast(`✅ Attendance saved for ${count} students`);
+        if (editId) {
+          await updateDoc(doc(db, 'attendance', editId), data);
+          await addAuditLog('UPDATE_ATTENDANCE', `Updated attendance for ${studentsCache.find(s => s.id === studentId)?.firstName || ''}`);
+          showToast('Attendance updated!');
+        } else {
+          const id = `${studentId}_${date}`;
+          await setDoc(doc(db, 'attendance', id), data);
+          await addAuditLog('ADD_ATTENDANCE', `Marked attendance for ${studentsCache.find(s => s.id === studentId)?.firstName || ''}`);
+          showToast('Attendance saved!');
+        }
         closeModal();
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
@@ -1595,6 +1713,9 @@
       if (currentDate) filtered = filtered.filter(a => a.date === currentDate);
       if (classFilter) filtered = filtered.filter(a => { const s = studentsCache.find(st => st.id === a.studentId); return s && s.class === classFilter; });
 
+      const canEditAtt = canEdit('attendance') || canDeleteSpecific('attendance');
+      const canDeleteAtt = canDeleteSpecific('attendance');
+
       document.getElementById('attendanceTableBody').innerHTML = filtered.map(a => {
         const student = studentsCache.find(s => s.id === a.studentId);
         return `
@@ -1605,9 +1726,23 @@
             <td><span class="badge ${a.status === 'Present' ? 'badge-success' : a.status === 'Absent' ? 'badge-danger' : 'badge-warning'}">${a.status}</span></td>
             <td>${a.reason || '-'}</td>
             <td>${a.markedBy || '-'}</td>
+            <td>
+              ${canEditAtt ? `<button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal('${a.id}')">Edit</button>` : ''}
+              ${canDeleteAtt ? `<button class="btn btn-danger btn-sm" onclick="deleteAttendance('${a.id}')">Del</button>` : ''}
+            </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No attendance records for this date</td></tr>';
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No attendance records for this date</td></tr>';
+    };
+
+    window.deleteAttendance = async function(id) {
+      if (!canDeleteSpecific('attendance')) { showToast('You do not have permission to delete attendance', 'error'); return; }
+      if (!confirm('Delete this attendance record permanently?')) return;
+      try {
+        await deleteDoc(doc(db, 'attendance', id));
+        await addAuditLog('DELETE_ATTENDANCE', 'Deleted attendance record');
+        showToast('Attendance record deleted');
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
     // ============================================================
@@ -1897,18 +2032,19 @@
     };
 
     // ============================================================
-    // 🏥 CLINIC
+    // 🏥 CLINIC - With Follow-Up
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
       if (!canAdd('clinic')) { showToast('Only Doctor and Nurse can record clinic visits', 'error'); return; }
       const visit = editId ? clinicCache.find(c => c.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
       const html = `
         <div class="form-grid">
           <div class="form-group"><label>Student *</label>
             <select id="c_student">${studentsCache.map(s => `<option value="${s.id}" ${visit?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
           </div>
-          <div class="form-group"><label>Date *</label><input type="date" id="c_date" value="${visit?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Date *</label><input type="date" id="c_date" value="${visit?.date || today}"></div>
           <div class="form-group"><label>Doctor/Nurse *</label><input type="text" id="c_doctor" value="${visit?.doctor || ''}" placeholder="Full name"></div>
           <div class="form-group"><label>Condition Type *</label>
             <select id="c_condition"><option value="">Select...</option>${CONDITIONS.map(c => `<option value="${c}" ${visit?.condition === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
@@ -1917,9 +2053,26 @@
         <div class="form-group"><label>Complaint *</label><textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea></div>
         <div class="form-group"><label>Diagnosis</label><textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea></div>
         <div class="form-group"><label>Treatment / Medication</label><input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg"></div>
+        <div class="form-grid">
+          <div class="form-group"><label>Need Follow-Up?</label>
+            <select id="c_followUp" onchange="toggleFollowUpDate()">
+              <option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option>
+              <option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option>
+            </select>
+          </div>
+          <div class="form-group" id="followUpDateGroup" style="display:${visit?.followUp === 'Yes' ? 'block' : 'none'}">
+            <label>Follow-Up Date</label>
+            <input type="date" id="c_followUpDate" value="${visit?.followUpDate || ''}">
+          </div>
+        </div>
         <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
       `;
       openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
+      
+      window.toggleFollowUpDate = function() {
+        const val = document.getElementById('c_followUp').value;
+        document.getElementById('followUpDateGroup').style.display = val === 'Yes' ? 'block' : 'none';
+      };
     };
 
     window.saveClinic = async function(editId) {
@@ -1930,10 +2083,12 @@
       const complaint = document.getElementById('c_complaint').value.trim();
       const diagnosis = document.getElementById('c_diagnosis').value.trim();
       const medication = document.getElementById('c_medication').value.trim();
+      const followUp = document.getElementById('c_followUp').value;
+      const followUpDate = document.getElementById('c_followUpDate').value;
 
       if (!studentId || !date || !doctor || !condition || !complaint) { showToast('Please fill all required fields', 'error'); return; }
 
-      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication };
+      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication, followUp, followUpDate: followUp === 'Yes' ? followUpDate : '' };
 
       try {
         const student = studentsCache.find(s => s.id === studentId);
@@ -1950,6 +2105,10 @@
 
       document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
         const student = studentsCache.find(s => s.id === c.studentId);
+        const followUpBadge = c.followUp === 'Yes' ? 
+          `<span class="badge badge-warning">📅 ${c.followUpDate ? formatDate(c.followUpDate) : 'Scheduled'}</span>` : 
+          '<span class="badge badge-success">✅ No</span>';
+        
         return `
           <tr>
             <td>${formatDate(c.date)}</td>
@@ -1959,13 +2118,15 @@
             <td><span class="badge ${c.condition === 'Pre-existing Condition' ? 'badge-warning' : 'badge-info'}">${c.condition || '-'}</span></td>
             <td>${c.diagnosis || '-'}</td>
             <td>${c.medication || '-'}</td>
+            <td>${followUpBadge}</td>
+            <td>${c.followUp === 'Yes' ? formatDate(c.followUpDate) : '-'}</td>
             <td>
               ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
               ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
     };
 
     window.deleteClinic = async function(id) {
@@ -2320,7 +2481,7 @@
     };
 
     // ============================================================
-    // 📈 ANALYTICS - WITH ATTENDANCE GRAPH
+    // 📈 ANALYTICS
     // ============================================================
 
     function renderAnalytics() {
@@ -2356,7 +2517,6 @@
       if (!studentId) return;
       
       const attendance = attendanceCache.filter(a => a.studentId === studentId);
-      const student = studentsCache.find(s => s.id === studentId);
       
       const summaryContainer = document.getElementById('analyticsAttendanceSummary');
       const container = document.getElementById('analyticsAttendanceContainer');
@@ -2538,7 +2698,7 @@
     }
 
     // ============================================================
-    // 🖨️ PRINT & SHARE FUNCTIONS
+    // 🖨️ PRINT FUNCTIONS
     // ============================================================
 
     window.printStudentReport = function(studentId) {
@@ -2587,6 +2747,10 @@
         <head><title>Student Report - ${student.firstName} ${student.lastName}</title>
         <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 900px; margin: 0 auto; }
+          .print-header-logo { display: flex !important; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #1a5276; }
+          .print-header-logo img { height: 50px; width: auto; }
+          .print-header-logo .print-school-name { font-size: 20px; font-weight: 700; color: #1a5276; }
+          .print-header-logo .print-motto { font-size: 12px; color: #666; letter-spacing: 1px; }
           .header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #1a5276; margin-bottom: 20px; }
           .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
           .header h2 { color: #2e86c1; margin: 5px 0; font-size: 18px; font-weight: normal; }
@@ -2619,8 +2783,14 @@
         </style>
         </head>
         <body>
+          <div class="print-header-logo">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='50'%3E%3Ctext x='50%25' y='50%25' font-size='20' text-anchor='middle' dominant-baseline='middle' font-weight='bold' fill='%231a5276'%3EMCHS%3C/text%3E%3C/svg%3E" alt="MCHS Logo">
+            <div>
+              <div class="print-school-name">Mara Christian High School</div>
+              <div class="print-motto">Educating For Eternity</div>
+            </div>
+          </div>
           <div class="header">
-            <h1>🏫 Mara Christian High School</h1>
             <h2>Student Academic Report</h2>
             <p>Generated: ${new Date().toLocaleString()}</p>
           </div>
@@ -2753,6 +2923,10 @@
         <head><title>Student Roster</title>
         <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 1100px; margin: 0 auto; }
+          .print-header-logo { display: flex !important; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #1a5276; }
+          .print-header-logo img { height: 50px; width: auto; }
+          .print-header-logo .print-school-name { font-size: 20px; font-weight: 700; color: #1a5276; }
+          .print-header-logo .print-motto { font-size: 12px; color: #666; letter-spacing: 1px; }
           .header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #1a5276; margin-bottom: 20px; }
           .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
           .header p { color: #666; font-size: 14px; margin: 5px 0; }
@@ -2768,9 +2942,15 @@
         </style>
         </head>
         <body>
+          <div class="print-header-logo">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='50'%3E%3Ctext x='50%25' y='50%25' font-size='20' text-anchor='middle' dominant-baseline='middle' font-weight='bold' fill='%231a5276'%3EMCHS%3C/text%3E%3C/svg%3E" alt="MCHS Logo">
+            <div>
+              <div class="print-school-name">Mara Christian High School</div>
+              <div class="print-motto">Educating For Eternity</div>
+            </div>
+          </div>
           <div class="header">
-            <h1>🏫 Mara Christian High School</h1>
-            <h2>Student Roster</h2>
+            <h1>Student Roster</h1>
             <p>Generated: ${new Date().toLocaleString()} | Total Students: ${students.length}</p>
           </div>
           <table>
@@ -2843,6 +3023,10 @@
         <head><title>Class Report - ${className}</title>
         <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 1100px; margin: 0 auto; }
+          .print-header-logo { display: flex !important; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #1a5276; }
+          .print-header-logo img { height: 50px; width: auto; }
+          .print-header-logo .print-school-name { font-size: 20px; font-weight: 700; color: #1a5276; }
+          .print-header-logo .print-motto { font-size: 12px; color: #666; letter-spacing: 1px; }
           .header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #1a5276; margin-bottom: 20px; }
           .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
           .header h2 { color: #2e86c1; margin: 5px 0; font-size: 18px; font-weight: normal; }
@@ -2874,9 +3058,15 @@
         </style>
         </head>
         <body>
+          <div class="print-header-logo">
+  <img src="https://raw.githubusercontent.com/YOUR-USERNAME/student-management-system/main/MCHS%20Logo.png" alt="MCHS Logo">
+  <div>
+    <div class="print-school-name">Mara Christian High School</div>
+    <div class="print-motto">Educating For Eternity</div>
+  </div>
+</div>
           <div class="header">
-            <h1>🏫 Mara Christian High School</h1>
-            <h2>Class Performance Report - ${className}</h2>
+            <h1>Class Performance Report - ${className}</h1>
             <p>Generated: ${new Date().toLocaleString()}</p>
           </div>
           <div class="class-info">
@@ -2913,51 +3103,6 @@
         </html>
       `);
       printWindow.document.close();
-    };
-
-    window.shareStudentLink = function(studentId) {
-      const student = studentsCache.find(s => s.id === studentId);
-      if (!student) { showToast('Student not found', 'error'); return; }
-
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', 'student');
-      url.searchParams.set('id', studentId);
-
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url.toString())
-          .then(() => showToast('📋 Student link copied to clipboard!'))
-          .catch(() => { prompt('Copy this link to share:', url.toString()); });
-      } else {
-        prompt('Copy this link to share:', url.toString());
-      }
-    };
-
-    window.shareCurrentClass = function() {
-      const className = document.getElementById('performanceClassSelect').value;
-      if (!className) { showToast('Please select a class', 'warning'); return; }
-
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', 'class');
-      url.searchParams.set('class', className);
-
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url.toString())
-          .then(() => showToast('📋 Class link copied to clipboard!'))
-          .catch(() => { prompt('Copy this link to share:', url.toString()); });
-      } else {
-        prompt('Copy this link to share:', url.toString());
-      }
-    };
-
-    window.shareCurrentView = function() {
-      const url = new URL(window.location.href);
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url.toString())
-          .then(() => showToast('📋 Page link copied to clipboard!'))
-          .catch(() => { prompt('Copy this link to share:', url.toString()); });
-      } else {
-        prompt('Copy this link to share:', url.toString());
-      }
     };
 
     // ============================================================
