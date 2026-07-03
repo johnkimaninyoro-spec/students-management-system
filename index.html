@@ -1731,24 +1731,161 @@
     // 🔒 PERMISSIONS
     // ============================================================
     function setupPermissions() {
-      const role = currentUser?.role;
-      const isAdmin = role === 'admin';
+  const role = currentUser?.role;
+  const isAdmin = role === 'admin';
+  const isPrincipal = role === 'principal';
+  const isNurse = role === 'nurse';
+  const isSecretary = role === 'secretary';
+  const isTeacher = role === 'teacher';
 
-      document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
-      document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
-      document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
-    }
+  // Admin sections
+  document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
-    function canEdit() {
-      if (!currentUser) return false;
-      const role = currentUser.role;
-      return ['admin', 'principal', 'teacher', 'nurse', 'secretary'].includes(role);
-    }
+  // Add Clinic button - ONLY Admin and Nurse
+  const addClinicBtn = document.getElementById('addClinicBtn');
+  if (addClinicBtn) {
+    addClinicBtn.style.display = (isAdmin || isNurse) ? 'inline-block' : 'none';
+  }
 
-    function canDelete() {
-      return currentUser?.role === 'admin';
-    }
+  // Add Student button - Admin, Principal, Secretary
+  const addStudentBtn = document.getElementById('addStudentBtn');
+  if (addStudentBtn) {
+    addStudentBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
+  }
 
+  // Add Grade button - Admin, Principal, Teacher, Secretary
+  const addGradeBtn = document.getElementById('addGradeBtn');
+  if (addGradeBtn) {
+    addGradeBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Attendance button - Admin, Principal, Teacher, Secretary
+  const addAttendanceBtn = document.getElementById('addAttendanceBtn');
+  if (addAttendanceBtn) {
+    addAttendanceBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Warning button - Admin, Principal, Secretary
+  const addWarningBtn = document.getElementById('addWarningBtn');
+  if (addWarningBtn) {
+    addWarningBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Suspension button - Admin, Principal, Secretary
+  const addSuspensionBtn = document.getElementById('addSuspensionBtn');
+  if (addSuspensionBtn) {
+    addSuspensionBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Teacher button - Only Admin
+  const addTeacherBtn = document.getElementById('addTeacherBtn');
+  if (addTeacherBtn) {
+    addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
+  }
+}
+
+function setupPermissions() {
+  const role = currentUser?.role;
+  const isAdmin = role === 'admin';
+  const isPrincipal = role === 'principal';
+  const isNurse = role === 'nurse';
+  const isSecretary = role === 'secretary';
+  const isTeacher = role === 'teacher';
+
+  // Admin sections
+  document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
+
+  // Add Clinic button - ONLY Admin and Nurse
+  const addClinicBtn = document.getElementById('addClinicBtn');
+  if (addClinicBtn) {
+    addClinicBtn.style.display = (isAdmin || isNurse) ? 'inline-block' : 'none';
+  }
+
+  // Add Student button - Admin, Principal, Secretary
+  const addStudentBtn = document.getElementById('addStudentBtn');
+  if (addStudentBtn) {
+    addStudentBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Grade button - Admin, Principal, Teacher, Secretary
+  const addGradeBtn = document.getElementById('addGradeBtn');
+  if (addGradeBtn) {
+    addGradeBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Attendance button - Admin, Principal, Teacher, Secretary
+  const addAttendanceBtn = document.getElementById('addAttendanceBtn');
+  if (addAttendanceBtn) {
+    addAttendanceBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Warning button - Admin, Principal, Secretary
+  const addWarningBtn = document.getElementById('addWarningBtn');
+  if (addWarningBtn) {
+    addWarningBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Suspension button - Admin, Principal, Secretary
+  const addSuspensionBtn = document.getElementById('addSuspensionBtn');
+  if (addSuspensionBtn) {
+    addSuspensionBtn.style.display = (isAdmin || isPrincipal || isSecretary) ? 'inline-block' : 'none';
+  }
+
+  // Add Teacher button - Only Admin
+  const addTeacherBtn = document.getElementById('addTeacherBtn');
+  if (addTeacherBtn) {
+    addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
+  }
+}
+
+function canEdit(tab) {
+  if (!currentUser) return false;
+  const role = currentUser.role;
+  
+  // Admin can edit everything
+  if (role === 'admin') return true;
+  
+  // Principal permissions - CANNOT edit clinic or attendance
+  if (role === 'principal') {
+    const editTabs = ['grades', 'warnings', 'suspensions', 'expulsions', 'classRegister', 'students'];
+    return editTabs.includes(tab);
+  }
+  
+  // Teacher permissions
+  if (role === 'teacher') {
+    return ['grades', 'attendance', 'classRegister'].includes(tab);
+  }
+  
+  // Nurse permissions - ONLY clinic
+  if (role === 'nurse') {
+    return tab === 'clinic';
+  }
+  
+  // Secretary can edit everything except admin stuff
+  if (role === 'secretary') {
+    const noEdit = ['users', 'audit', 'teachers'];
+    return !noEdit.includes(tab);
+  }
+  
+  // Director - view only
+  if (role === 'director') {
+    return false;
+  }
+  
+  return false;
+}
+
+function canDelete() {
+  if (!currentUser) return false;
+  const role = currentUser.role;
+  
+  // Only admin can delete ANYTHING
+  return role === 'admin';
+}
     // ============================================================
     // 📡 FIRESTORE LISTENERS
     // ============================================================
@@ -2226,7 +2363,7 @@
           <td>${s.isPrefect === 'Yes' ? '⭐ Yes' : '-'}</td>
           <td>${s.parent || '-'}</td>
           <td>
-            ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
+            ${canEdit('students') ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
             ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Del</button>` : ''}
           </td>
         </tr>
@@ -2374,8 +2511,7 @@
             <td><strong>${total}</strong></td>
             <td>${getGradeBadge(total)}</td>
             <td>
-              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>` : ''}
-              ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>` : ''}
+             ${canEdit('grades') ? `<button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>` : ''}              ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
@@ -2602,7 +2738,7 @@
             <td>${w.reason}</td>
             <td>${w.issuedBy || '-'}</td>
             <td>
-              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
+              ${canEdit('warnings') ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
               ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteWarning('${w.id}')">Del</button>` : ''}
             </td>
           </tr>
@@ -2712,7 +2848,7 @@
             <td>${s.duration}</td>
             <td><span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></td>
             <td>
-              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddSuspensionModal('${s.id}')">Edit</button>` : ''}
+             ${canEdit('suspensions') ? `<button class="btn btn-primary btn-sm" onclick="showAddSuspensionModal('${s.id}')">Edit</button>` : ''}
               ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteSuspension('${s.id}')">Del</button>` : ''}
             </td>
           </tr>
@@ -2942,7 +3078,7 @@
           <td>${(t.classes || []).join(', ') || '-'}</td>
           <td><span class="badge ${t.status === 'Active' ? 'badge-success' : 'badge-danger'}">${t.status}</span></td>
           <td>
-            ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddTeacherModal('${t.id}')">Edit</button>` : ''}
+           ${canEdit('teachers') ? `<button class="btn btn-primary btn-sm" onclick="showAddTeacherModal('${t.id}')">Edit</button>` : ''}
             ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Del</button>` : ''}
           </td>
         </tr>
