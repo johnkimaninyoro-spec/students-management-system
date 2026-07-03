@@ -2821,37 +2821,25 @@
       }
     };
 
-    window.renderClinic = function() {
-      document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
-        const student = studentsCache.find(s => s.id === c.studentId);
-        return `
-          <tr>
-            <td>${formatDate(c.date)}</td>
-            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
-            <td>${c.doctor || '-'}</td>
-            <td>${c.complaint || '-'}</td>
-            <td><span class="badge ${c.condition === 'Pre-existing Condition' ? 'badge-warning' : 'badge-info'}">${c.condition || '-'}</span></td>
-            <td>${c.diagnosis || '-'}</td>
-            <td>
-              ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
-              ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
-            </td>
-          </tr>
-        `;
-      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
-    };
-
-    window.deleteClinic = async function(id) {
-      if (!confirm('Delete this clinic visit?')) return;
-      try {
-        await deleteDoc(doc(db, 'clinic', id));
-        await addAuditLog('DELETE_CLINIC', 'Deleted clinic visit');
-        showToast('Visit deleted');
-      } catch (err) {
-        showToast('Error: ' + err.message, 'error');
-      }
-    };
-
+   window.renderClinic = function() {
+  document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
+    const student = studentsCache.find(s => s.id === c.studentId);
+    return `
+      <tr>
+        <td>${formatDate(c.date)}</td>
+        <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+        <td>${c.doctor || '-'}</td>
+        <td>${c.complaint || '-'}</td>
+        <td><span class="badge ${c.condition === 'Pre-existing Condition' ? 'badge-warning' : 'badge-info'}">${c.condition || '-'}</span></td>
+        <td>${c.diagnosis || '-'}</td>
+        <td>
+          ${canEdit('clinic') ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
+          ${canDelete() ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+};
     // ============================================================
     // 👨‍🏫 TEACHERS
     // ============================================================
