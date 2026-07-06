@@ -684,7 +684,7 @@
             <div class="table-container">
               <table>
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
-                <tbody id="clinicTableBody"></tbody></table>
+                <tbody id="clinicTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -870,11 +870,14 @@
     ];
 
     // ============================================================
-    // 📚 SUBJECTS - INCLUDING BIOLOGY, CHEMISTRY, PHYSICS
+    // 📚 SUBJECTS - FULL LIST WITH KSL, CA, COSE MATHS
     // ============================================================
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
       'Biology', 'Chemistry', 'Physics',
+      'KSL', // Kenya Sign Language
+      'Creative Arts & Sports (CA)',
+      'Cose Maths',
       'Science', 'Social Studies',
       'CRE', 'Agriculture', 'Business Studies',
       'Computer Studies', 'History', 'Geography'
@@ -1833,7 +1836,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES - WITH BIOLOGY, CHEMISTRY, PHYSICS
+    // 📝 GRADES - WITH ALL SUBJECTS
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -1963,7 +1966,7 @@
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHERS - WITH BIOLOGY, CHEMISTRY, PHYSICS
+    // 👨‍🏫 TEACHERS - WITH ALL SUBJECTS
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -2516,7 +2519,8 @@
             <select id="c_student">${studentsCache.map(s => `<option value="${s.id}" ${visit?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
           </div>
           <div class="form-group"><label>Date *</label><input type="date" id="c_date" value="${visit?.date || today}"></div>
-          <div class="form-group"><label>Doctor/Nurse *</label><input type="text" id="c_doctor" value="${visit?.doctor || ''}" placeholder="Full name"></div>
+          <div class="form-group"><label>Doctor/Nurse *</label><input type="text" id="c_doctor" value="${visit?.doctor || ''}" placeholder="Full name">
+          </div>
           <div class="form-group"><label>Condition Type *</label>
             <select id="c_condition"><option value="">Select...</option>${CONDITIONS.map(c => `<option value="${c}" ${visit?.condition === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
           </div>
