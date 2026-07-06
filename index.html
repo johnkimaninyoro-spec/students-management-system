@@ -398,6 +398,7 @@
     .badge-gold { background: #f9e79f; color: #8e6b00; }
     .badge-pink { background: #fce4ec; color: #c2185b; }
     .badge-blue { background: #e3f2fd; color: #0d47a1; }
+    .badge-nova { background: #8e44ad; color: #fff; }
 
     .toast-container { position: fixed; top: 80px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
     .toast { padding: 14px 24px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.4s ease; font-size: 0.9em; max-width: 400px; }
@@ -562,7 +563,7 @@
             <div class="table-container">
               <table>
                 <thead>
-                  <tr><th>Photo</th><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Sponsorship</th><th>Prefect</th><th>Role</th><th>Department</th><th>Parent/Guardian</th><th>Actions</th></tr>
+                  <tr><th>Photo</th><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Dorm</th><th>Sponsorship</th><th>Prefect</th><th>Role</th><th>Department</th><th>Parent/Guardian</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="studentTableBody"></tbody>
               </table>
@@ -684,7 +685,7 @@
             <div class="table-container">
               <table>
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
-                <tbody id="clinicTableBody"></tbody>
+                <tbody id="clinicTableBody"></tbody></table>
               </table>
             </div>
           </div>
@@ -870,7 +871,7 @@
     ];
 
     // ============================================================
-    // 📚 SUBJECTS - FULL LIST WITH KSL, CA, COSE MATHS
+    // 📚 SUBJECTS - COMPLETE LIST
     // ============================================================
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
@@ -881,6 +882,18 @@
       'Science', 'Social Studies',
       'CRE', 'Agriculture', 'Business Studies',
       'Computer Studies', 'History', 'Geography'
+    ];
+
+    // ============================================================
+    // 🏠 DORMS - WITH NOVA RESIDENCE & UPSTAIRS/DOWNSTAIRS
+    // ============================================================
+    const DORMS = [
+      'Boys Dorm (Upstairs)',
+      'Boys Dorm (Downstairs)',
+      'Girls Dorm (Upstairs)',
+      'Girls Dorm (Downstairs)',
+      'Nova Residence (Boys)',
+      'Nova Residence (Girls)'
     ];
 
     const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director'];
@@ -956,6 +969,22 @@
         html += `<optgroup label="${group}">`;
         for (const cls of classes) {
           html += `<option value="${cls}" ${selected === cls ? 'selected' : ''}>${cls}</option>`;
+        }
+        html += '</optgroup>';
+      }
+      return html;
+    }
+
+    function dormSelectHtml(selected = '') {
+      let html = '<option value="">None</option>';
+      const groups = {
+        'Boys Dorms': ['Boys Dorm (Upstairs)', 'Boys Dorm (Downstairs)', 'Nova Residence (Boys)'],
+        'Girls Dorms': ['Girls Dorm (Upstairs)', 'Girls Dorm (Downstairs)', 'Nova Residence (Girls)']
+      };
+      for (const [group, dorms] of Object.entries(groups)) {
+        html += `<optgroup label="${group}">`;
+        for (const dorm of dorms) {
+          html += `<option value="${dorm}" ${selected === dorm ? 'selected' : ''}>${dorm}</option>`;
         }
         html += '</optgroup>';
       }
@@ -1375,6 +1404,14 @@
       const dormMatrons = teachersCache.filter(t => t.dormRole === 'Dorm Matron').length;
       const dormPatrons = teachersCache.filter(t => t.dormRole === 'Dorm Patron').length;
 
+      // Dorm counts
+      const boysUpstairs = students.filter(s => s.dorm === 'Boys Dorm (Upstairs)').length;
+      const boysDownstairs = students.filter(s => s.dorm === 'Boys Dorm (Downstairs)').length;
+      const girlsUpstairs = students.filter(s => s.dorm === 'Girls Dorm (Upstairs)').length;
+      const girlsDownstairs = students.filter(s => s.dorm === 'Girls Dorm (Downstairs)').length;
+      const novaBoys = students.filter(s => s.dorm === 'Nova Residence (Boys)').length;
+      const novaGirls = students.filter(s => s.dorm === 'Nova Residence (Girls)').length;
+
       const today = new Date().toISOString().split('T')[0];
       const presentToday = attendance.filter(a => a.date === today && a.status === 'Present').length;
 
@@ -1402,8 +1439,12 @@
       document.getElementById('boardingStats').innerHTML = `
         <div class="stat-card" style="border-top-color:#2980b9;"><div class="stat-number">${boarders}</div><div class="stat-label">🏠 Boarders</div></div>
         <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${dayScholars}</div><div class="stat-label">🚶 Day Scholars</div></div>
-        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${total ? Math.round(male/total*100) : 0}%</div><div class="stat-label">👦 Boys Ratio</div></div>
-        <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${total ? Math.round(female/total*100) : 0}%</div><div class="stat-label">👧 Girls Ratio</div></div>
+        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${boysUpstairs}</div><div class="stat-label">👦 Boys Upstairs</div></div>
+        <div class="stat-card" style="border-top-color:#2980b9;"><div class="stat-number">${boysDownstairs}</div><div class="stat-label">👦 Boys Downstairs</div></div>
+        <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${girlsUpstairs}</div><div class="stat-label">👧 Girls Upstairs</div></div>
+        <div class="stat-card" style="border-top-color:#c2185b;"><div class="stat-number">${girlsDownstairs}</div><div class="stat-label">👧 Girls Downstairs</div></div>
+        <div class="stat-card" style="border-top-color:#8e44ad;"><div class="stat-number">${novaBoys}</div><div class="stat-label">🏠 Nova Boys</div></div>
+        <div class="stat-card" style="border-top-color:#9b59b6;"><div class="stat-number">${novaGirls}</div><div class="stat-label">🏠 Nova Girls</div></div>
       `;
 
       const classData = {};
@@ -1445,7 +1486,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS
+    // 👩‍🎓 STUDENTS - WITH DORM SELECTION
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -1498,6 +1539,14 @@
           <div class="form-group">
             <label>Location</label>
             <input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira">
+          </div>
+
+          <!-- 🏠 DORM SELECTION -->
+          <div class="form-group" id="dormGroup">
+            <label>🏠 Dorm</label>
+            <select id="s_dorm">
+              ${dormSelectHtml(student?.dorm || '')}
+            </select>
           </div>
 
           <!-- 📸 PHOTO UPLOAD -->
@@ -1675,6 +1724,7 @@
         dob: document.getElementById('s_dob').value,
         status: document.getElementById('s_status').value,
         location: document.getElementById('s_location').value,
+        dorm: document.getElementById('s_dorm').value || '',
         isPrefect: isPrefect,
         prefectRole: prefectRole,
         prefectDepartment: prefectDepartment,
@@ -1726,6 +1776,7 @@
         const isPrefect = s.isPrefect === 'Yes';
         const prefectRole = s.prefectRole || '-';
         const prefectDept = s.prefectDepartment || '-';
+        const dormDisplay = s.dorm ? `<span class="badge ${s.dorm.includes('Nova') ? 'badge-nova' : s.dorm.includes('Boys') ? 'badge-blue' : 'badge-pink'}">${s.dorm}</span>` : '-';
 
         return `
           <tr>
@@ -1740,6 +1791,7 @@
             <td>${s.class}</td>
             <td>${s.gender || '-'}</td>
             <td><span class="badge ${s.status === 'Boarder' ? 'badge-primary' : 'badge-warning'}">${s.status || '-'}</span></td>
+            <td>${dormDisplay}</td>
             <td>${s.sponsorshipType ? `<span class="badge ${s.sponsorshipType !== 'Self Sponsored' ? 'badge-success' : 'badge-info'}">${s.sponsorshipType}${s.sponsorName ? ': ' + s.sponsorName : ''}</span>` : '-'}</td>
             <td>${isPrefect ? '<span class="badge badge-gold">⭐ Yes</span>' : '-'}</td>
             <td>${isPrefect ? `<span class="badge badge-purple">${prefectRole}</span>` : '-'}</td>
@@ -1753,7 +1805,7 @@
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="12" style="text-align:center;color:#999;padding:20px;">No students found</td></tr>';
+      }).join('') || '<tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">No students found</td></tr>';
     };
 
     window.deleteStudent = async function(id) {
@@ -1836,7 +1888,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES - WITH ALL SUBJECTS
+    // 📝 GRADES
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -1966,7 +2018,7 @@
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHERS - WITH ALL SUBJECTS
+    // 👨‍🏫 TEACHERS
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -2017,8 +2069,7 @@
             <label>Dorm *</label>
             <select id="t_dorm">
               <option value="">Select Dorm</option>
-              <option value="Boys Dorm" ${teacher?.dorm === 'Boys Dorm' ? 'selected' : ''}>Boys Dorm</option>
-              <option value="Girls Dorm" ${teacher?.dorm === 'Girls Dorm' ? 'selected' : ''}>Girls Dorm</option>
+              ${DORMS.map(d => `<option value="${d}" ${teacher?.dorm === d ? 'selected' : ''}>${d}</option>`).join('')}
             </select>
           </div>
           <div class="form-group"><label>Status</label>
@@ -2084,7 +2135,6 @@
           `<span class="badge badge-blue">👨 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
           '-';
         
-        // Show subjects with badges
         const subjectsDisplay = (t.subjects || []).map(s => 
           `<span class="badge badge-info">${s}</span>`
         ).join(' ') || '-';
@@ -3347,6 +3397,7 @@
       console.log('📚 Version 8.0.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
       console.log('📚 Subjects included:', SUBJECTS.join(', '));
+      console.log('🏠 Dorms available:', DORMS.join(', '));
     });
   </script>
 </body>
