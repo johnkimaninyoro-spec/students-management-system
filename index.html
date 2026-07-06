@@ -684,7 +684,7 @@
             <div class="table-container">
               <table>
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
-                <tbody id="clinicTableBody"></tbody>
+                <tbody id="clinicTableBody"></tbody></table>
               </table>
             </div>
           </div>
@@ -737,7 +737,7 @@
           </div>
         </div>
 
-        <!-- ANALYTICS - WITH LOAD BUTTON -->
+        <!-- ANALYTICS -->
         <div class="tab-content" id="tab-analytics">
           <div class="card">
             <div class="card-header">
@@ -869,10 +869,15 @@
       'Form 3 East', 'Form 3 West', 'Form 4 East', 'Form 4 West'
     ];
 
+    // ============================================================
+    // 📚 SUBJECTS - INCLUDING BIOLOGY, CHEMISTRY, PHYSICS
+    // ============================================================
     const SUBJECTS = [
-      'Mathematics', 'English', 'Kiswahili', 'Science', 'Social Studies',
-      'CRE', 'Agriculture', 'Business Studies', 'Computer Studies',
-      'History', 'Geography'
+      'Mathematics', 'English', 'Kiswahili',
+      'Biology', 'Chemistry', 'Physics',
+      'Science', 'Social Studies',
+      'CRE', 'Agriculture', 'Business Studies',
+      'Computer Studies', 'History', 'Geography'
     ];
 
     const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director'];
@@ -1828,7 +1833,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES
+    // 📝 GRADES - WITH BIOLOGY, CHEMISTRY, PHYSICS
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -1837,19 +1842,39 @@
       const html = `
         <div class="form-grid">
           <div class="form-group"><label>Student *</label>
-            <select id="g_student">${studentsCache.map(s => `<option value="${s.id}" ${grade?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+            <select id="g_student">
+              ${studentsCache.map(s => `
+                <option value="${s.id}" ${grade?.studentId === s.id ? 'selected' : ''}>
+                  ${s.firstName} ${s.lastName} (${s.class})
+                </option>
+              `).join('')}
+            </select>
           </div>
           <div class="form-group"><label>Subject *</label>
-            <select id="g_subject">${SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+            <select id="g_subject">
+              ${SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
           </div>
           <div class="form-group"><label>Term *</label>
-            <select id="g_term"><option value="Term 1" ${grade?.term === 'Term 1' ? 'selected' : ''}>Term 1</option><option value="Term 2" ${grade?.term === 'Term 2' ? 'selected' : ''}>Term 2</option><option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option></select>
+            <select id="g_term">
+              <option value="Term 1" ${grade?.term === 'Term 1' ? 'selected' : ''}>Term 1</option>
+              <option value="Term 2" ${grade?.term === 'Term 2' ? 'selected' : ''}>Term 2</option>
+              <option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option>
+            </select>
           </div>
-          <div class="form-group"><label>Test 1 (/30)</label><input type="number" id="g_test1" value="${grade?.test1 || 0}" min="0" max="30"></div>
-          <div class="form-group"><label>Test 2 (/30)</label><input type="number" id="g_test2" value="${grade?.test2 || 0}" min="0" max="30"></div>
-          <div class="form-group"><label>Exam (/70)</label><input type="number" id="g_exam" value="${grade?.exam || 0}" min="0" max="70"></div>
+          <div class="form-group"><label>Test 1 (/30)</label>
+            <input type="number" id="g_test1" value="${grade?.test1 || 0}" min="0" max="30">
+          </div>
+          <div class="form-group"><label>Test 2 (/30)</label>
+            <input type="number" id="g_test2" value="${grade?.test2 || 0}" min="0" max="30">
+          </div>
+          <div class="form-group"><label>Exam (/70)</label>
+            <input type="number" id="g_exam" value="${grade?.exam || 0}" min="0" max="70">
+          </div>
         </div>
-        <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Grade</button>
+        <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Save'} Grade
+        </button>
       `;
       openModal(editId ? 'Edit Grade' : 'Add Grade', html);
     };
@@ -1891,10 +1916,18 @@
       if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
 
       const subjectSelect = document.getElementById('gradeSubjectFilter');
-      if (subjectSelect.options.length <= 1) subjectSelect.innerHTML = '<option value="">All Subjects</option>' + SUBJECTS.map(s => `<option value="${s}">${s}</option>`).join('');
+      if (subjectSelect.options.length <= 1) {
+        subjectSelect.innerHTML = '<option value="">All Subjects</option>' +
+          SUBJECTS.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
 
       let filtered = gradesCache;
-      if (classFilter) filtered = filtered.filter(g => { const s = studentsCache.find(st => st.id === g.studentId); return s && s.class === classFilter; });
+      if (classFilter) {
+        filtered = filtered.filter(g => {
+          const s = studentsCache.find(st => st.id === g.studentId);
+          return s && s.class === classFilter;
+        });
+      }
       if (subjectFilter) filtered = filtered.filter(g => g.subject === subjectFilter);
       if (termFilter) filtered = filtered.filter(g => g.term === termFilter);
 
@@ -1930,6 +1963,154 @@
     };
 
     // ============================================================
+    // 👨‍🏫 TEACHERS - WITH BIOLOGY, CHEMISTRY, PHYSICS
+    // ============================================================
+
+    window.showAddTeacherModal = function(editId) {
+      if (!canAdd('teachers')) { showToast('You do not have permission to add teachers', 'error'); return; }
+      const teacher = editId ? teachersCache.find(t => t.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Full Name *</label>
+            <input type="text" id="t_name" value="${teacher?.name || ''}" placeholder="Full name">
+          </div>
+          <div class="form-group"><label>Employee ID *</label>
+            <input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., TCH-001">
+          </div>
+          <div class="form-group"><label>TSC Number</label>
+            <input type="text" id="t_tsc" value="${teacher?.tsc || ''}">
+          </div>
+          <div class="form-group"><label>Phone</label>
+            <input type="text" id="t_phone" value="${teacher?.phone || ''}">
+          </div>
+          <div class="form-group"><label>Subjects</label>
+            <select id="t_subjects" multiple style="height:120px;">
+              ${SUBJECTS.map(s => `
+                <option value="${s}" ${teacher?.subjects?.includes(s) ? 'selected' : ''}>${s}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Classes</label>
+            <select id="t_classes" multiple style="height:120px;">
+              ${CLASSES.map(c => `
+                <option value="${c}" ${teacher?.classes?.includes(c) ? 'selected' : ''}>${c}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Class Teacher *</label>
+            <select id="t_classTeacher">
+              <option value="">Not a Class Teacher</option>
+              ${CLASSES.map(c => `<option value="${c}" ${teacher?.classTeacher === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Dorm Role *</label>
+            <select id="t_dormRole" onchange="toggleDormSelect()">
+              <option value="None" ${teacher?.dormRole === 'None' ? 'selected' : ''}>None</option>
+              <option value="Dorm Matron" ${teacher?.dormRole === 'Dorm Matron' ? 'selected' : ''}>Dorm Matron</option>
+              <option value="Dorm Patron" ${teacher?.dormRole === 'Dorm Patron' ? 'selected' : ''}>Dorm Patron</option>
+            </select>
+          </div>
+          <div class="form-group" id="dormSelectGroup" style="display:${teacher?.dormRole && teacher?.dormRole !== 'None' ? 'block' : 'none'}">
+            <label>Dorm *</label>
+            <select id="t_dorm">
+              <option value="">Select Dorm</option>
+              <option value="Boys Dorm" ${teacher?.dorm === 'Boys Dorm' ? 'selected' : ''}>Boys Dorm</option>
+              <option value="Girls Dorm" ${teacher?.dorm === 'Girls Dorm' ? 'selected' : ''}>Girls Dorm</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="t_status">
+              <option value="Active" ${teacher?.status === 'Active' ? 'selected' : ''}>Active</option>
+              <option value="Inactive" ${teacher?.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveTeacher('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Add'} Teacher
+        </button>
+      `;
+
+      openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
+
+      window.toggleDormSelect = function() {
+        const dormRole = document.getElementById('t_dormRole').value;
+        const dormGroup = document.getElementById('dormSelectGroup');
+        dormGroup.style.display = (dormRole !== 'None') ? 'block' : 'none';
+      };
+    };
+
+    window.saveTeacher = async function(editId) {
+      const name = document.getElementById('t_name').value.trim();
+      const empId = document.getElementById('t_empId').value.trim();
+      if (!name || !empId) { showToast('Name and Employee ID are required', 'error'); return; }
+      
+      const subjects = Array.from(document.getElementById('t_subjects').selectedOptions).map(o => o.value);
+      const classes = Array.from(document.getElementById('t_classes').selectedOptions).map(o => o.value);
+      const classTeacher = document.getElementById('t_classTeacher').value;
+      const dormRole = document.getElementById('t_dormRole').value;
+      const dorm = document.getElementById('t_dorm')?.value || '';
+      
+      const data = { 
+        name, empId, 
+        tsc: document.getElementById('t_tsc').value.trim(), 
+        phone: document.getElementById('t_phone').value.trim(), 
+        subjects, classes,
+        classTeacher: classTeacher || '',
+        dormRole: dormRole || 'None',
+        dorm: dorm || '',
+        status: document.getElementById('t_status').value 
+      };
+      
+      try {
+        if (editId) { await updateDoc(doc(db, 'teachers', editId), data); showToast('Teacher updated'); }
+        else { await addDoc(collection(db, 'teachers'), data); showToast(`Teacher ${name} added`); }
+        await addAuditLog(editId ? 'UPDATE_TEACHER' : 'ADD_TEACHER', name);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderTeachers = function() {
+      const canEditTeachers = canEdit('teachers');
+      const canDeleteTeachers = canDeleteSpecific('teachers');
+      
+      document.getElementById('teachersTableBody').innerHTML = teachersCache.map(t => {
+        const classTeacher = t.classTeacher ? `<span class="badge badge-info">${t.classTeacher}</span>` : '-';
+        const dormBadge = t.dormRole === 'Dorm Matron' ? 
+          `<span class="badge badge-pink">👩 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
+          t.dormRole === 'Dorm Patron' ?
+          `<span class="badge badge-blue">👨 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
+          '-';
+        
+        // Show subjects with badges
+        const subjectsDisplay = (t.subjects || []).map(s => 
+          `<span class="badge badge-info">${s}</span>`
+        ).join(' ') || '-';
+        
+        return `
+          <tr>
+            <td><strong>${t.name}</strong></td>
+            <td>${t.empId}</td>
+            <td>${subjectsDisplay}</td>
+            <td>${(t.classes || []).join(', ') || '-'}</td>
+            <td>${classTeacher}</td>
+            <td>${t.dormRole !== 'None' ? t.dormRole : '-'}</td>
+            <td>${t.dormRole !== 'None' ? t.dorm || '-' : '-'}</td>
+            <td><span class="badge ${t.status === 'Active' ? 'badge-success' : 'badge-danger'}">${t.status}</span></td>
+            <td>
+              ${canEditTeachers ? `<button class="btn btn-primary btn-sm" onclick="showAddTeacherModal('${t.id}')">Edit</button>` : ''}
+              ${canDeleteTeachers ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No teachers found</td></tr>';
+    };
+
+    window.deleteTeacher = async function(id) {
+      if (!confirm('Delete this teacher?')) return;
+      try { const teacher = teachersCache.find(t => t.id === id); await deleteDoc(doc(db, 'teachers', id)); await addAuditLog('DELETE_TEACHER', teacher?.name || 'Unknown'); showToast('Teacher deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
     // 📋 STUDENT ATTENDANCE
     // ============================================================
 
@@ -1954,8 +2135,12 @@
             <option value="Excused" ${existing?.status === 'Excused' ? 'selected' : ''}>Excused</option>
           </select>
         </div>
-        <div class="form-group"><label>Reason</label><input type="text" id="attReason" value="${existing?.reason || ''}" placeholder="Reason for absence"></div>
-        <button class="btn btn-success" onclick="saveAttendance('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Attendance</button>
+        <div class="form-group"><label>Reason</label>
+          <input type="text" id="attReason" value="${existing?.reason || ''}" placeholder="Reason for absence">
+        </div>
+        <button class="btn btn-success" onclick="saveAttendance('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Save'} Attendance
+        </button>
       `;
       openModal(editId ? 'Edit Attendance' : 'Mark Attendance', html);
     };
@@ -2508,129 +2693,6 @@
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHERS
-    // ============================================================
-
-    window.showAddTeacherModal = function(editId) {
-      if (!canAdd('teachers')) { showToast('You do not have permission to add teachers', 'error'); return; }
-      const teacher = editId ? teachersCache.find(t => t.id === editId) : null;
-      const html = `
-        <div class="form-grid">
-          <div class="form-group"><label>Full Name *</label><input type="text" id="t_name" value="${teacher?.name || ''}" placeholder="Full name"></div>
-          <div class="form-group"><label>Employee ID *</label><input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., TCH-001"></div>
-          <div class="form-group"><label>TSC Number</label><input type="text" id="t_tsc" value="${teacher?.tsc || ''}"></div>
-          <div class="form-group"><label>Phone</label><input type="text" id="t_phone" value="${teacher?.phone || ''}"></div>
-          <div class="form-group"><label>Subjects</label>
-            <select id="t_subjects" multiple style="height:100px;">${SUBJECTS.map(s => `<option value="${s}" ${teacher?.subjects?.includes(s) ? 'selected' : ''}>${s}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label>Classes</label>
-            <select id="t_classes" multiple style="height:100px;">${CLASSES.map(c => `<option value="${c}" ${teacher?.classes?.includes(c) ? 'selected' : ''}>${c}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label>Class Teacher *</label>
-            <select id="t_classTeacher">
-              <option value="">Not a Class Teacher</option>
-              ${CLASSES.map(c => `<option value="${c}" ${teacher?.classTeacher === c ? 'selected' : ''}>${c}</option>`).join('')}
-            </select>
-          </div>
-          <div class="form-group"><label>Dorm Role *</label>
-            <select id="t_dormRole" onchange="toggleDormSelect()">
-              <option value="None" ${teacher?.dormRole === 'None' ? 'selected' : ''}>None</option>
-              <option value="Dorm Matron" ${teacher?.dormRole === 'Dorm Matron' ? 'selected' : ''}>Dorm Matron</option>
-              <option value="Dorm Patron" ${teacher?.dormRole === 'Dorm Patron' ? 'selected' : ''}>Dorm Patron</option>
-            </select>
-          </div>
-          <div class="form-group" id="dormSelectGroup" style="display:${teacher?.dormRole && teacher?.dormRole !== 'None' ? 'block' : 'none'}">
-            <label>Dorm *</label>
-            <select id="t_dorm">
-              <option value="">Select Dorm</option>
-              <option value="Boys Dorm" ${teacher?.dorm === 'Boys Dorm' ? 'selected' : ''}>Boys Dorm</option>
-              <option value="Girls Dorm" ${teacher?.dorm === 'Girls Dorm' ? 'selected' : ''}>Girls Dorm</option>
-            </select>
-          </div>
-          <div class="form-group"><label>Status</label>
-            <select id="t_status"><option value="Active" ${teacher?.status === 'Active' ? 'selected' : ''}>Active</option><option value="Inactive" ${teacher?.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select>
-          </div>
-        </div>
-        <button class="btn btn-success" onclick="saveTeacher('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Teacher</button>
-      `;
-
-      openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
-
-      window.toggleDormSelect = function() {
-        const dormRole = document.getElementById('t_dormRole').value;
-        const dormGroup = document.getElementById('dormSelectGroup');
-        dormGroup.style.display = (dormRole !== 'None') ? 'block' : 'none';
-      };
-    };
-
-    window.saveTeacher = async function(editId) {
-      const name = document.getElementById('t_name').value.trim();
-      const empId = document.getElementById('t_empId').value.trim();
-      if (!name || !empId) { showToast('Name and Employee ID are required', 'error'); return; }
-      
-      const subjects = Array.from(document.getElementById('t_subjects').selectedOptions).map(o => o.value);
-      const classes = Array.from(document.getElementById('t_classes').selectedOptions).map(o => o.value);
-      const classTeacher = document.getElementById('t_classTeacher').value;
-      const dormRole = document.getElementById('t_dormRole').value;
-      const dorm = document.getElementById('t_dorm')?.value || '';
-      
-      const data = { 
-        name, empId, 
-        tsc: document.getElementById('t_tsc').value.trim(), 
-        phone: document.getElementById('t_phone').value.trim(), 
-        subjects, classes,
-        classTeacher: classTeacher || '',
-        dormRole: dormRole || 'None',
-        dorm: dorm || '',
-        status: document.getElementById('t_status').value 
-      };
-      
-      try {
-        if (editId) { await updateDoc(doc(db, 'teachers', editId), data); showToast('Teacher updated'); }
-        else { await addDoc(collection(db, 'teachers'), data); showToast(`Teacher ${name} added`); }
-        await addAuditLog(editId ? 'UPDATE_TEACHER' : 'ADD_TEACHER', name);
-        closeModal();
-      } catch (err) { showToast('Error: ' + err.message, 'error'); }
-    };
-
-    window.renderTeachers = function() {
-      const canEditTeachers = canEdit('teachers');
-      const canDeleteTeachers = canDeleteSpecific('teachers');
-      
-      document.getElementById('teachersTableBody').innerHTML = teachersCache.map(t => {
-        const classTeacher = t.classTeacher ? `<span class="badge badge-info">${t.classTeacher}</span>` : '-';
-        const dormBadge = t.dormRole === 'Dorm Matron' ? 
-          `<span class="badge badge-pink">👩 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
-          t.dormRole === 'Dorm Patron' ?
-          `<span class="badge badge-blue">👨 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
-          '-';
-        const dormDisplay = t.dormRole !== 'None' ? dormBadge : '-';
-        
-        return `
-          <tr>
-            <td><strong>${t.name}</strong></td>
-            <td>${t.empId}</td>
-            <td>${(t.subjects || []).map(s => `<span class="badge badge-info">${s}</span>`).join(' ') || '-'}</td>
-            <td>${(t.classes || []).join(', ') || '-'}</td>
-            <td>${classTeacher}</td>
-            <td>${t.dormRole !== 'None' ? t.dormRole : '-'}</td>
-            <td>${t.dormRole !== 'None' ? t.dorm || '-' : '-'}</td>
-            <td><span class="badge ${t.status === 'Active' ? 'badge-success' : 'badge-danger'}">${t.status}</span></td>
-            <td>
-              ${canEditTeachers ? `<button class="btn btn-primary btn-sm" onclick="showAddTeacherModal('${t.id}')">Edit</button>` : ''}
-              ${canDeleteTeachers ? `<button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Del</button>` : ''}
-            </td>
-          </tr>
-        `;
-      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No teachers found</td></tr>';
-    };
-
-    window.deleteTeacher = async function(id) {
-      if (!confirm('Delete this teacher?')) return;
-      try { const teacher = teachersCache.find(t => t.id === id); await deleteDoc(doc(db, 'teachers', id)); await addAuditLog('DELETE_TEACHER', teacher?.name || 'Unknown'); showToast('Teacher deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
-    };
-
-    // ============================================================
     // 📅 TEACHER ATTENDANCE
     // ============================================================
 
@@ -2767,7 +2829,7 @@
     };
 
     // ============================================================
-    // 📊 ANALYTICS - WITH LOAD BUTTON
+    // 📊 ANALYTICS
     // ============================================================
 
     function renderAnalytics() {
@@ -2787,10 +2849,8 @@
         if (current) classSelect.value = current;
       }
 
-      // Show load button
       document.getElementById('analyticsLoadBtn').style.display = 'inline-flex';
 
-      // Clear all charts
       destroyChart('analyticsStudentChart');
       destroyChart('analyticsTrendChart');
       destroyChart('analyticsAttendanceChart');
@@ -3282,6 +3342,7 @@
       console.log('🚀 Mara Christian High School Management System');
       console.log('📚 Version 8.0.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
+      console.log('📚 Subjects included:', SUBJECTS.join(', '));
     });
   </script>
 </body>
