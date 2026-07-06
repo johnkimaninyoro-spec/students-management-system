@@ -398,7 +398,6 @@
     .badge-gold { background: #f9e79f; color: #8e6b00; }
     .badge-pink { background: #fce4ec; color: #c2185b; }
     .badge-blue { background: #e3f2fd; color: #0d47a1; }
-    .badge-nova { background: #8e44ad; color: #fff; }
 
     .toast-container { position: fixed; top: 80px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
     .toast { padding: 14px 24px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.4s ease; font-size: 0.9em; max-width: 400px; }
@@ -535,7 +534,10 @@
             <div class="card-header"><h2>📊 Dashboard Overview</h2><span style="font-size:0.8em;color:var(--gray);">Last updated: <span id="lastUpdated">Just now</span></span></div>
             <div class="stats-grid" id="dashboardStats"></div>
           </div>
-          <div class="card"><div class="card-header"><h3>🏠 Boarding Status</h3></div><div class="stats-grid" id="boardingStats"></div></div>
+          <div class="card">
+            <div class="card-header"><h3>🏠 Boarding Status</h3></div>
+            <div class="stats-grid" id="boardingStats"></div>
+          </div>
           <div class="charts-grid">
             <div class="card"><div class="card-header"><h3>Students Per Class</h3></div><div class="chart-container"><canvas id="dashClassChart"></canvas></div></div>
             <div class="card"><div class="card-header"><h3>Grade Distribution</h3></div><div class="chart-container"><canvas id="dashGradeChart"></canvas></div></div>
@@ -685,7 +687,7 @@
             <div class="table-container">
               <table>
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
-                <tbody id="clinicTableBody"></tbody></table>
+                <tbody id="clinicTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -717,7 +719,7 @@
           <div class="card">
             <div class="card-header"><h2>👨‍🏫 Teachers</h2><button class="btn btn-primary" id="addTeacherBtn" onclick="showAddTeacherModal()">+ Add Teacher</button></div>
             <div class="table-container">
-              <table><thead><tr><th>Name</th><th>Employee ID</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr></thead>
+              <table><thead><tr><th>Name</th><th>Employee ID</th><th>Staff Type</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody id="teachersTableBody"></tbody></table>
             </div>
           </div>
@@ -805,11 +807,16 @@
           </div>
         </div>
 
-        <!-- AUDIT -->
+        <!-- AUDIT LOG - FIXED -->
         <div class="tab-content" id="tab-audit">
           <div class="card">
             <div class="card-header"><h2>🔍 Audit Log</h2></div>
-            <div class="form-group" style="max-width:300px;"><label>Filter by User</label><select id="auditUserFilter" onchange="renderAudit()"><option value="">All Users</option></select></div>
+            <div class="form-group" style="max-width:300px;">
+              <label>Filter by User</label>
+              <select id="auditUserFilter" onchange="renderAudit()">
+                <option value="">All Users</option>
+              </select>
+            </div>
             <div id="auditLogContent"></div>
           </div>
         </div>
@@ -885,15 +892,13 @@
     ];
 
     // ============================================================
-    // 🏠 DORMS - WITH NOVA RESIDENCE & UPSTAIRS/DOWNSTAIRS
+    // 🏠 DORMS - WITHOUT NOVA RESIDENCE (Removed)
     // ============================================================
     const DORMS = [
       'Boys Dorm (Upstairs)',
       'Boys Dorm (Downstairs)',
       'Girls Dorm (Upstairs)',
-      'Girls Dorm (Downstairs)',
-      'Nova Residence (Boys)',
-      'Nova Residence (Girls)'
+      'Girls Dorm (Downstairs)'
     ];
 
     const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director'];
@@ -978,8 +983,8 @@
     function dormSelectHtml(selected = '') {
       let html = '<option value="">None</option>';
       const groups = {
-        'Boys Dorms': ['Boys Dorm (Upstairs)', 'Boys Dorm (Downstairs)', 'Nova Residence (Boys)'],
-        'Girls Dorms': ['Girls Dorm (Upstairs)', 'Girls Dorm (Downstairs)', 'Nova Residence (Girls)']
+        'Boys Dorms': ['Boys Dorm (Upstairs)', 'Boys Dorm (Downstairs)'],
+        'Girls Dorms': ['Girls Dorm (Upstairs)', 'Girls Dorm (Downstairs)']
       };
       for (const [group, dorms] of Object.entries(groups)) {
         html += `<optgroup label="${group}">`;
@@ -1376,7 +1381,7 @@
     };
 
     // ============================================================
-    // 📊 DASHBOARD
+    // 📊 DASHBOARD - UPDATED
     // ============================================================
 
     function renderDashboard() {
@@ -1388,63 +1393,58 @@
       const expulsions = expulsionsCache;
       const clinic = clinicCache;
       const prefects = prefectsCache;
+      const teachers = teachersCache;
 
       const total = students.length;
       const male = students.filter(s => s.gender === 'Male').length;
       const female = students.filter(s => s.gender === 'Female').length;
       const boarders = students.filter(s => s.status === 'Boarder').length;
       const dayScholars = students.filter(s => s.status === 'Day Scholar').length;
+      const totalTeachers = teachers.filter(t => t.status === 'Active').length;
       
       const sponsoredBoys = students.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored' && s.gender === 'Male').length;
       const sponsoredGirls = students.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored' && s.gender === 'Female').length;
       const sponsoredTotal = sponsoredBoys + sponsoredGirls;
 
       const prefectCount = students.filter(s => s.isPrefect === 'Yes').length;
-      const classTeachers = teachersCache.filter(t => t.classTeacher && t.classTeacher !== '').length;
-      const dormMatrons = teachersCache.filter(t => t.dormRole === 'Dorm Matron').length;
-      const dormPatrons = teachersCache.filter(t => t.dormRole === 'Dorm Patron').length;
 
-      // Dorm counts
+      // Dorm counts (without Nova)
       const boysUpstairs = students.filter(s => s.dorm === 'Boys Dorm (Upstairs)').length;
       const boysDownstairs = students.filter(s => s.dorm === 'Boys Dorm (Downstairs)').length;
       const girlsUpstairs = students.filter(s => s.dorm === 'Girls Dorm (Upstairs)').length;
       const girlsDownstairs = students.filter(s => s.dorm === 'Girls Dorm (Downstairs)').length;
-      const novaBoys = students.filter(s => s.dorm === 'Nova Residence (Boys)').length;
-      const novaGirls = students.filter(s => s.dorm === 'Nova Residence (Girls)').length;
 
       const today = new Date().toISOString().split('T')[0];
       const presentToday = attendance.filter(a => a.date === today && a.status === 'Present').length;
 
       const avgGrade = grades.length ? Math.round(grades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / grades.length) : 0;
 
+      // Dashboard Overview Stats
       document.getElementById('dashboardStats').innerHTML = `
-        <div class="stat-card"><div class="stat-number">${total}</div><div class="stat-label">👩‍🎓 Total</div></div>
+        <div class="stat-card"><div class="stat-number">${total}</div><div class="stat-label">👩‍🎓 Total Students</div></div>
         <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${male}</div><div class="stat-label">👦 Boys</div></div>
         <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${female}</div><div class="stat-label">👧 Girls</div></div>
-        <div class="stat-card" style="border-top-color:#27ae60;"><div class="stat-number">${presentToday}</div><div class="stat-label">✅ Present</div></div>
+        <div class="stat-card" style="border-top-color:#27ae60;"><div class="stat-number">${presentToday}</div><div class="stat-label">✅ Present Today</div></div>
         <div class="stat-card" style="border-top-color:#2e86c1;"><div class="stat-number">${avgGrade}%</div><div class="stat-label">📊 Avg Grade</div></div>
         <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${warnings.length}</div><div class="stat-label">⚠️ Warnings</div></div>
         <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${suspensions.length}</div><div class="stat-label">🚫 Suspensions</div></div>
         <div class="stat-card" style="border-top-color:#c0392b;"><div class="stat-number">${expulsions.length}</div><div class="stat-label">❌ Expulsions</div></div>
-        <div class="stat-card" style="border-top-color:#8e44ad;"><div class="stat-number">${clinic.length}</div><div class="stat-label">🏥 Clinic</div></div>
-        <div class="stat-card" style="border-top-color:#f1c40f;"><div class="stat-number">${sponsoredTotal}</div><div class="stat-label">💰 Sponsored</div></div>
+        <div class="stat-card" style="border-top-color:#8e44ad;"><div class="stat-number">${clinic.length}</div><div class="stat-label">🏥 Clinic Visits</div></div>
+        <div class="stat-card" style="border-top-color:#f1c40f;"><div class="stat-number">${sponsoredTotal}</div><div class="stat-label">💰 Sponsored Students</div></div>
         <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${sponsoredBoys}</div><div class="stat-label">👦 Spon Boys</div></div>
         <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${sponsoredGirls}</div><div class="stat-label">👧 Spon Girls</div></div>
         <div class="stat-card" style="border-top-color:#9b59b6;"><div class="stat-number">${prefectCount}</div><div class="stat-label">⭐ Prefects</div></div>
-        <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${classTeachers}</div><div class="stat-label">👨‍🏫 Class Teachers</div></div>
-        <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${dormMatrons}</div><div class="stat-label">👩 Dorm Matrons</div></div>
-        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${dormPatrons}</div><div class="stat-label">👨 Dorm Patrons</div></div>
+        <div class="stat-card" style="border-top-color:#27ae60;"><div class="stat-number">${boarders}</div><div class="stat-label">🏠 Total Boarders</div></div>
+        <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${dayScholars}</div><div class="stat-label">🚶 Total Day Scholars</div></div>
+        <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${totalTeachers}</div><div class="stat-label">👨‍🏫 Total Teachers</div></div>
       `;
 
+      // Boarding Status - Only shows dorm breakdowns (no Day Scholars)
       document.getElementById('boardingStats').innerHTML = `
-        <div class="stat-card" style="border-top-color:#2980b9;"><div class="stat-number">${boarders}</div><div class="stat-label">🏠 Boarders</div></div>
-        <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${dayScholars}</div><div class="stat-label">🚶 Day Scholars</div></div>
         <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${boysUpstairs}</div><div class="stat-label">👦 Boys Upstairs</div></div>
         <div class="stat-card" style="border-top-color:#2980b9;"><div class="stat-number">${boysDownstairs}</div><div class="stat-label">👦 Boys Downstairs</div></div>
         <div class="stat-card" style="border-top-color:#e91e8c;"><div class="stat-number">${girlsUpstairs}</div><div class="stat-label">👧 Girls Upstairs</div></div>
         <div class="stat-card" style="border-top-color:#c2185b;"><div class="stat-number">${girlsDownstairs}</div><div class="stat-label">👧 Girls Downstairs</div></div>
-        <div class="stat-card" style="border-top-color:#8e44ad;"><div class="stat-number">${novaBoys}</div><div class="stat-label">🏠 Nova Boys</div></div>
-        <div class="stat-card" style="border-top-color:#9b59b6;"><div class="stat-number">${novaGirls}</div><div class="stat-label">🏠 Nova Girls</div></div>
       `;
 
       const classData = {};
@@ -1486,7 +1486,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS - WITH DORM SELECTION
+    // 👩‍🎓 STUDENTS
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -1541,7 +1541,7 @@
             <input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira">
           </div>
 
-          <!-- 🏠 DORM SELECTION -->
+          <!-- 🏠 DORM SELECTION - Without Nova -->
           <div class="form-group" id="dormGroup">
             <label>🏠 Dorm</label>
             <select id="s_dorm">
@@ -1776,7 +1776,7 @@
         const isPrefect = s.isPrefect === 'Yes';
         const prefectRole = s.prefectRole || '-';
         const prefectDept = s.prefectDepartment || '-';
-        const dormDisplay = s.dorm ? `<span class="badge ${s.dorm.includes('Nova') ? 'badge-nova' : s.dorm.includes('Boys') ? 'badge-blue' : 'badge-pink'}">${s.dorm}</span>` : '-';
+        const dormDisplay = s.dorm ? `<span class="badge ${s.dorm.includes('Boys') ? 'badge-blue' : 'badge-pink'}">${s.dorm}</span>` : '-';
 
         return `
           <tr>
@@ -2032,6 +2032,22 @@
           <div class="form-group"><label>Employee ID *</label>
             <input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., TCH-001">
           </div>
+          <div class="form-group"><label>Staff Type</label>
+            <select id="t_type">
+              <option value="teaching" ${teacher?.type !== 'medical' ? 'selected' : ''}>Teaching Staff</option>
+              <option value="medical" ${teacher?.type === 'medical' ? 'selected' : ''}>Medical Staff (Doctor/Nurse)</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Specialization (Medical)</label>
+            <select id="t_specialization">
+              <option value="">-- Select --</option>
+              <option value="General Practitioner" ${teacher?.specialization === 'General Practitioner' ? 'selected' : ''}>General Practitioner (Doctor)</option>
+              <option value="Registered Nurse" ${teacher?.specialization === 'Registered Nurse' ? 'selected' : ''}>Registered Nurse</option>
+              <option value="Clinical Officer" ${teacher?.specialization === 'Clinical Officer' ? 'selected' : ''}>Clinical Officer</option>
+              <option value="School Nurse" ${teacher?.specialization === 'School Nurse' ? 'selected' : ''}>School Nurse</option>
+              <option value="Other" ${teacher?.specialization === 'Other' ? 'selected' : ''}>Other</option>
+            </select>
+          </div>
           <div class="form-group"><label>TSC Number</label>
             <input type="text" id="t_tsc" value="${teacher?.tsc || ''}">
           </div>
@@ -2052,13 +2068,13 @@
               `).join('')}
             </select>
           </div>
-          <div class="form-group"><label>Class Teacher *</label>
+          <div class="form-group"><label>Class Teacher</label>
             <select id="t_classTeacher">
               <option value="">Not a Class Teacher</option>
               ${CLASSES.map(c => `<option value="${c}" ${teacher?.classTeacher === c ? 'selected' : ''}>${c}</option>`).join('')}
             </select>
           </div>
-          <div class="form-group"><label>Dorm Role *</label>
+          <div class="form-group"><label>Dorm Role</label>
             <select id="t_dormRole" onchange="toggleDormSelect()">
               <option value="None" ${teacher?.dormRole === 'None' ? 'selected' : ''}>None</option>
               <option value="Dorm Matron" ${teacher?.dormRole === 'Dorm Matron' ? 'selected' : ''}>Dorm Matron</option>
@@ -2066,7 +2082,7 @@
             </select>
           </div>
           <div class="form-group" id="dormSelectGroup" style="display:${teacher?.dormRole && teacher?.dormRole !== 'None' ? 'block' : 'none'}">
-            <label>Dorm *</label>
+            <label>Dorm</label>
             <select id="t_dorm">
               <option value="">Select Dorm</option>
               ${DORMS.map(d => `<option value="${d}" ${teacher?.dorm === d ? 'selected' : ''}>${d}</option>`).join('')}
@@ -2080,16 +2096,15 @@
           </div>
         </div>
         <button class="btn btn-success" onclick="saveTeacher('${editId || ''}')" style="width:100%;margin-top:16px;">
-          ${editId ? 'Update' : 'Add'} Teacher
+          ${editId ? 'Update' : 'Add'} Staff
         </button>
       `;
 
-      openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
+      openModal(editId ? 'Edit Staff' : 'Add Staff', html);
 
       window.toggleDormSelect = function() {
         const dormRole = document.getElementById('t_dormRole').value;
-        const dormGroup = document.getElementById('dormSelectGroup');
-        dormGroup.style.display = (dormRole !== 'None') ? 'block' : 'none';
+        document.getElementById('dormSelectGroup').style.display = (dormRole !== 'None') ? 'block' : 'none';
       };
     };
 
@@ -2098,6 +2113,7 @@
       const empId = document.getElementById('t_empId').value.trim();
       if (!name || !empId) { showToast('Name and Employee ID are required', 'error'); return; }
       
+      const type = document.getElementById('t_type').value;
       const subjects = Array.from(document.getElementById('t_subjects').selectedOptions).map(o => o.value);
       const classes = Array.from(document.getElementById('t_classes').selectedOptions).map(o => o.value);
       const classTeacher = document.getElementById('t_classTeacher').value;
@@ -2105,7 +2121,9 @@
       const dorm = document.getElementById('t_dorm')?.value || '';
       
       const data = { 
-        name, empId, 
+        name, empId,
+        type: type || 'teaching',
+        specialization: document.getElementById('t_specialization').value || '',
         tsc: document.getElementById('t_tsc').value.trim(), 
         phone: document.getElementById('t_phone').value.trim(), 
         subjects, classes,
@@ -2116,8 +2134,8 @@
       };
       
       try {
-        if (editId) { await updateDoc(doc(db, 'teachers', editId), data); showToast('Teacher updated'); }
-        else { await addDoc(collection(db, 'teachers'), data); showToast(`Teacher ${name} added`); }
+        if (editId) { await updateDoc(doc(db, 'teachers', editId), data); showToast('Staff updated'); }
+        else { await addDoc(collection(db, 'teachers'), data); showToast(`Staff ${name} added`); }
         await addAuditLog(editId ? 'UPDATE_TEACHER' : 'ADD_TEACHER', name);
         closeModal();
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
@@ -2135,6 +2153,10 @@
           `<span class="badge badge-blue">👨 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
           '-';
         
+        const typeBadge = t.type === 'medical' ? 
+          `<span class="badge badge-success">🏥 ${t.specialization || 'Medical'}</span>` : 
+          `<span class="badge badge-info">👨‍🏫 Teacher</span>`;
+        
         const subjectsDisplay = (t.subjects || []).map(s => 
           `<span class="badge badge-info">${s}</span>`
         ).join(' ') || '-';
@@ -2143,6 +2165,7 @@
           <tr>
             <td><strong>${t.name}</strong></td>
             <td>${t.empId}</td>
+            <td>${typeBadge}</td>
             <td>${subjectsDisplay}</td>
             <td>${(t.classes || []).join(', ') || '-'}</td>
             <td>${classTeacher}</td>
@@ -2155,7 +2178,7 @@
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No teachers found</td></tr>';
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No staff found</td></tr>';
     };
 
     window.deleteTeacher = async function(id) {
@@ -3351,7 +3374,7 @@
     };
 
     // ============================================================
-    // 🔍 AUDIT LOG
+    // 🔍 AUDIT LOG - FIXED
     // ============================================================
 
     function populateAuditFilter() {
@@ -3366,7 +3389,11 @@
     function renderAudit() {
       const filter = document.getElementById('auditUserFilter').value;
       let logs = auditCache;
-      if (filter) logs = logs.filter(a => a.user === filter);
+
+      if (filter) {
+        logs = logs.filter(a => a.user === filter);
+      }
+
       document.getElementById('auditLogContent').innerHTML = logs.slice(0, 100).map(a => `
         <div class="log-entry" style="padding:10px 14px;border-left:3px solid var(--primary-light);margin-bottom:8px;background:#f8f9fa;border-radius:0 6px 6px 0;">
           <strong>${a.user || 'system'}</strong>
