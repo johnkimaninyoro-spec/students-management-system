@@ -1095,6 +1095,7 @@
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
+      // *** FIX: Secretary can now add students ***
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
 
@@ -1157,7 +1158,7 @@
       }
       
       if (role === 'secretary') {
-        return ['grades', 'attendance', 'teacherAttendance'].includes(tab);
+        return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
       }
       
       return false;
@@ -1184,7 +1185,7 @@
       }
       
       if (role === 'secretary') {
-        return ['grades', 'attendance', 'teacherAttendance'].includes(tab);
+        return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
       }
       
       return false;
