@@ -1095,9 +1095,9 @@
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
-      // *** FIX: Secretary can now add students ***
+      // *** FIX: Teachers can now add students ***
       const addStudentBtn = document.getElementById('addStudentBtn');
-      if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary) ? 'inline-block' : 'none';
+      if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary || isTeacher) ? 'inline-block' : 'none';
 
       const editSponsorshipBtn = document.getElementById('editSponsorshipBtn');
       if (editSponsorshipBtn) editSponsorshipBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
@@ -1150,7 +1150,7 @@
       }
       
       if (role === 'teacher') {
-        return ['grades', 'attendance'].includes(tab);
+        return ['grades', 'attendance', 'students'].includes(tab);
       }
       
       if (role === 'nurse' || role === 'doctor') {
@@ -1177,7 +1177,7 @@
       }
       
       if (role === 'teacher') {
-        return ['grades', 'attendance'].includes(tab);
+        return ['grades', 'attendance', 'students'].includes(tab);
       }
       
       if (role === 'nurse' || role === 'doctor') {
