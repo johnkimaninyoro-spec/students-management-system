@@ -1095,7 +1095,7 @@
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
-      // *** FIX: Teachers can now add students ***
+      // Teachers can now add students
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary || isTeacher) ? 'inline-block' : 'none';
 
@@ -3405,8 +3405,28 @@
       `).join('') || '<div style="text-align:center;color:#999;padding:20px;">No audit logs found</div>';
     }
 
+    // ============================================================
+    // 🔧 FIXED: AUDIT LOG - NOW CAPTURES ALL USERS
+    // ============================================================
     async function addAuditLog(action, details) {
-      try { await addDoc(collection(db, 'auditLog'), { user: currentUser?.email || 'system', role: currentUser?.role || 'system', action, details: details || '', time: serverTimestamp() }); } catch (err) { console.warn('Failed to write audit log:', err); }
+      try {
+        // Use current user data, fallback to 'system' if not available
+        const userEmail = currentUser?.email || 'system';
+        const userRole = currentUser?.role || 'system';
+        const userName = currentUser?.fullName || userEmail;
+        
+        await addDoc(collection(db, 'auditLog'), { 
+          user: userName,
+          email: userEmail,
+          role: userRole, 
+          action, 
+          details: details || '', 
+          time: serverTimestamp() 
+        });
+        console.log(`📝 Audit log: ${action} by ${userName} (${userRole})`);
+      } catch (err) { 
+        console.warn('Failed to write audit log:', err); 
+      }
     }
 
     // ============================================================
