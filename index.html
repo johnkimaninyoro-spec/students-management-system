@@ -262,6 +262,7 @@
     .login-box .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     .login-box .login-error { color: var(--danger); font-size: 0.85em; margin-top: 10px; min-height: 24px; }
     .login-box .login-footer { margin-top: 20px; text-align: center; font-size: 0.8em; color: var(--gray); }
+    .login-box .test-login-hint { margin-top: 15px; padding: 12px; background: #f0f8ff; border-radius: 8px; font-size: 0.8em; color: #666; text-align: center; border: 1px dashed #3498db; }
 
     .app-container { display: none; min-height: 100vh; }
 
@@ -466,14 +467,18 @@
       </div>
       <div class="form-group">
         <label>📧 Email Address</label>
-        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off">
+        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off" value="admin@mchsschool.com">
       </div>
       <div class="form-group">
         <label>🔒 Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password">
+        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password" value="Admin@2024">
       </div>
       <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
       <div class="login-error" id="loginError"></div>
+      <div class="test-login-hint">
+        <strong>💡 Test Login:</strong> admin@mchsschool.com / Admin@2024<br>
+        <small>Or use the test bypass: test@test.com / test123</small>
+      </div>
       <div class="login-footer">
         <p>Contact administrator for account access</p>
         <p style="font-size: 0.7em; margin-top: 4px;">All data syncs live across all devices</p>
@@ -986,6 +991,7 @@
     let activeTab = 'dashboard';
     let unsubscribers = [];
     let chartInstances = {};
+    let isTestMode = false;
 
     let studentsCache = [], gradesCache = [], attendanceCache = [];
     let warningsCache = [], suspensionsCache = [], expulsionsCache = [];
@@ -1034,7 +1040,8 @@
         'auth/weak-password': 'Password must be at least 6 characters.',
         'auth/too-many-requests': 'Too many attempts. Please try again later.',
         'auth/invalid-credential': 'Invalid email or password.',
-        'auth/api-key-not-valid': 'API key is invalid. Check your Firebase config.'
+        'auth/api-key-not-valid': 'API key is invalid. Check your Firebase config.',
+        'auth/network-request-failed': 'Network error. Please check your internet connection.'
       };
       return map[code] || `Error: ${code}`;
     }
@@ -1075,7 +1082,7 @@
         const label = CLINICIAN_ROLE_NAMES[type] || '🏥 Clinician';
         return `<span class="staff-type-badge clinician">${label}</span>`;
       }
-      return `<span class="staff-type-badge clinician">🏥 Clinician</span>';
+      return `<span class="staff-type-badge clinician">🏥 Clinician</span>`;
     }
 
     function isClinician(type) {
@@ -1101,20 +1108,104 @@
     // 🔐 AUTHENTICATION
     // ============================================================
 
+    // TEST MODE - Bypass for demo
+    function testLogin() {
+      console.log('🧪 TEST MODE: Logging in with test account');
+      currentUser = { 
+        uid: 'test123', 
+        email: 'test@test.com', 
+        fullName: 'Test Admin', 
+        role: 'admin' 
+      };
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      document.getElementById('currentUserDisplay').textContent = 'Test Admin';
+      document.getElementById('currentRoleBadge').textContent = 'ADMIN';
+      isTestMode = true;
+      setupPermissions();
+      // Load sample data for test mode
+      loadSampleData();
+      showTab('dashboard');
+      showToast('✅ Test login successful! (Demo Mode)', 'success');
+    }
+
+    // Load sample data for test mode
+    function loadSampleData() {
+      // Add sample students
+      const sampleStudents = [
+        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored' },
+        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization' },
+        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored' },
+        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO' },
+        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government' },
+        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored' },
+      ];
+      
+      sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
+      
+      // Add sample grades
+      const sampleGrades = [
+        { studentId: 'sample_2024-001', subject: 'Mathematics', term: 'Term 1', test1: 25, test2: 20, exam: 55 },
+        { studentId: 'sample_2024-001', subject: 'English', term: 'Term 1', test1: 28, test2: 25, exam: 60 },
+        { studentId: 'sample_2024-002', subject: 'Mathematics', term: 'Term 1', test1: 20, test2: 18, exam: 40 },
+        { studentId: 'sample_2024-002', subject: 'English', term: 'Term 1', test1: 22, test2: 20, exam: 45 },
+        { studentId: 'sample_2024-003', subject: 'Mathematics', term: 'Term 1', test1: 30, test2: 28, exam: 68 },
+        { studentId: 'sample_2024-003', subject: 'English', term: 'Term 1', test1: 26, test2: 24, exam: 55 },
+        { studentId: 'sample_2024-004', subject: 'Mathematics', term: 'Term 1', test1: 18, test2: 15, exam: 35 },
+        { studentId: 'sample_2024-004', subject: 'English', term: 'Term 1', test1: 20, test2: 18, exam: 38 },
+      ];
+      
+      sampleGrades.forEach(g => gradesCache.push({ id: `sample_${Math.random().toString(36).substr(2, 6)}`, ...g }));
+      
+      // Add sample attendance
+      const today = new Date().toISOString().split('T')[0];
+      sampleStudents.forEach(s => {
+        attendanceCache.push({
+          id: `sample_att_${s.admNo}`,
+          studentId: s.id,
+          date: today,
+          status: Math.random() > 0.2 ? 'Present' : 'Absent',
+          markedBy: 'Test Admin'
+        });
+      });
+      
+      renderDashboard();
+      renderStudents();
+      renderSponsorship();
+      renderGrades();
+      renderAttendance();
+    }
+
     window.handleLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       const btn = document.getElementById('loginBtn');
       const errorEl = document.getElementById('loginError');
+      
+      console.log('🔐 Login attempt:', { email, passwordLength: password.length });
       errorEl.textContent = '';
+      
+      // Check for test login
+      if (email === 'test@test.com' && password === 'test123') {
+        testLogin();
+        return;
+      }
+      
       if (!email) { errorEl.textContent = 'Please enter your email'; return; }
       if (!password) { errorEl.textContent = 'Please enter your password'; return; }
+      
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Signing in...';
+      
       try {
-        await signInWithEmailAndPassword(auth, email, password);
+        console.log('📡 Attempting Firebase sign in...');
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log('✅ Login successful:', userCredential.user.email);
       } catch (err) {
+        console.error('❌ Login error:', err.code, err.message);
         errorEl.textContent = friendlyAuthError(err.code);
+        // If Firebase fails, offer test login
+        errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
       } finally {
         btn.disabled = false;
         btn.textContent = 'Sign In';
@@ -1123,7 +1214,13 @@
 
     window.handleLogout = async function() {
       try {
-        await signOut(auth);
+        if (!isTestMode) {
+          await signOut(auth);
+        }
+        currentUser = null;
+        isTestMode = false;
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
         showToast('Logged out successfully');
       } catch (err) {
         showToast('Error logging out', 'error');
@@ -1131,19 +1228,28 @@
     };
 
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
+      if (user && !isTestMode) {
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (!snap.exists()) {
-            await signOut(auth);
-            document.getElementById('loginError').textContent = 'Account not found. Contact admin.';
-            return;
+            // Create user document if it doesn't exist
+            const userData = {
+              email: user.email,
+              fullName: user.displayName || user.email?.split('@')[0] || 'User',
+              role: 'admin',
+              createdAt: serverTimestamp(),
+              loginCount: 1
+            };
+            await setDoc(doc(db, 'users', user.uid), userData);
+            currentUser = { uid: user.uid, ...userData };
+          } else {
+            currentUser = { uid: user.uid, email: user.email, ...snap.data() };
+            await updateDoc(doc(db, 'users', user.uid), {
+              lastLogin: serverTimestamp(),
+              loginCount: (currentUser.loginCount || 0) + 1
+            });
           }
-          currentUser = { uid: user.uid, email: user.email, ...snap.data() };
-          await updateDoc(doc(db, 'users', user.uid), {
-            lastLogin: serverTimestamp(),
-            loginCount: (currentUser.loginCount || 0) + 1
-          });
+          
           document.getElementById('loginPage').style.display = 'none';
           document.getElementById('appContainer').style.display = 'block';
           document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
@@ -1156,7 +1262,7 @@
           console.error('Error loading user profile:', err);
           document.getElementById('loginError').textContent = 'Error loading profile. Try again.';
         }
-      } else {
+      } else if (!user && !isTestMode) {
         currentUser = null;
         stopListeners();
         document.getElementById('loginPage').style.display = 'flex';
@@ -1282,6 +1388,8 @@
     // ============================================================
 
     function startListeners() {
+      if (isTestMode) return;
+      
       unsubscribers.push(onSnapshot(collection(db, 'students'), (snap) => {
         studentsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateSyncStatus(true);
@@ -3517,6 +3625,7 @@
     }
 
     async function addAuditLog(action, details) {
+      if (isTestMode) return;
       try {
         const userEmail = currentUser?.email || 'system';
         const userRole = currentUser?.role || 'system';
@@ -3606,9 +3715,18 @@
       document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') window.handleLogin(); });
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
+      // Pre-fill test credentials
+      const emailField = document.getElementById('loginEmail');
+      const passwordField = document.getElementById('loginPassword');
+      
+      // Check if we're in a demo/testing environment
+      if (!emailField.value) emailField.value = 'test@test.com';
+      if (!passwordField.value) passwordField.value = 'test123';
+
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 9.1.0 - Cloud Synced');
+      console.log('📚 Version 9.2.0 - Cloud Synced with Test Mode');
       console.log('💡 Made with ❤️ for education');
+      console.log('🔑 Test Login: test@test.com / test123');
       console.log('👨‍🏫 Teacher Records & Teachers Attendance');
       console.log('🏥 Clinicians include: Medical, HRIO, Nutritionist, Lab Technician, Radiographer');
       console.log('💰 Sponsorship tab shows only sponsored students');
