@@ -339,6 +339,8 @@
     .btn-outline { background: transparent; border: 2px solid var(--primary-light); color: var(--primary-light); }
     .btn-outline:hover { background: var(--primary-light); color: white; }
     .btn-sm { padding: 4px 12px; font-size: 0.75em; }
+    .btn-purple { background: #8e44ad; color: white; }
+    .btn-purple:hover { background: #7d3c98; }
 
     .share-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-print { background: #34495e; color: white; }
@@ -387,6 +389,8 @@
     .badge-amber { background: #fff8e1; color: #ff6f00; }
     .badge-brown { background: #efebe9; color: #4e342e; }
     .badge-indigo { background: #e8eaf6; color: #283593; }
+    .badge-red { background: #fce4ec; color: #c62828; }
+    .badge-orange { background: #fff3e0; color: #e65100; }
 
     .toast-container { position: fixed; top: 80px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
     .toast { padding: 14px 24px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.4s ease; font-size: 0.9em; max-width: 400px; }
@@ -433,6 +437,18 @@
       font-size: 24px;
     }
 
+    .maintenance-item {
+      display: inline-block;
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: 500;
+    }
+    .maintenance-item.electrical { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+    .maintenance-item.furniture { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
+    .maintenance-item.whiteboard { background: #e8eaf6; color: #283593; border: 1px solid #9fa8da; }
+
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -280px; z-index: 999; height: calc(100vh - 70px); transition: left 0.3s; top: 70px; }
@@ -467,17 +483,17 @@
       </div>
       <div class="form-group">
         <label>📧 Email Address</label>
-        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off" value="admin@mchsschool.com">
+        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off" value="test@test.com">
       </div>
       <div class="form-group">
         <label>🔒 Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password" value="Admin@2024">
+        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password" value="test123">
       </div>
       <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
       <div class="login-error" id="loginError"></div>
       <div class="test-login-hint">
-        <strong>💡 Test Login:</strong> admin@mchsschool.com / Admin@2024<br>
-        <small>Or use the test bypass: test@test.com / test123</small>
+        <strong>💡 Test Login:</strong> test@test.com / test123<br>
+        <small>Or use your Firebase credentials</small>
       </div>
       <div class="login-footer">
         <p>Contact administrator for account access</p>
@@ -534,11 +550,14 @@
         <div class="nav-item" onclick="showTab('clinic')" data-tab="clinic"><span class="icon">🏥</span> Clinic Visits</div>
 
         <div class="sidebar-section">⭐ Leadership</div>
-        <div class="nav-item" id="prefectNav" onclick="showTab('prefects')" data-tab="prefects"><span class="icon">⭐</span> Prefect Roles</div>
+        <div class="nav-item" onclick="showTab('prefects')" data-tab="prefects"><span class="icon">⭐</span> Prefect Roles</div>
 
         <div class="sidebar-section">👨‍🏫 Teachers</div>
         <div class="nav-item" onclick="showTab('teachers')" data-tab="teachers"><span class="icon">👨‍🏫</span> Teacher Records</div>
-        <div class="nav-item" id="teacherAttNav" onclick="showTab('teacherAttendance')" data-tab="teacherAttendance"><span class="icon">📅</span> Teachers Attendance</div>
+        <div class="nav-item" onclick="showTab('teacherAttendance')" data-tab="teacherAttendance"><span class="icon">📅</span> Teachers Attendance</div>
+
+        <div class="sidebar-section">🔧 Maintenance</div>
+        <div class="nav-item" onclick="showTab('maintenance')" data-tab="maintenance"><span class="icon">🔧</span> Classroom Maintenance</div>
 
         <div class="sidebar-section">📈 Analytics</div>
         <div class="nav-item" onclick="showTab('analytics')" data-tab="analytics"><span class="icon">📈</span> Analytics</div>
@@ -598,7 +617,7 @@
           </div>
         </div>
 
-        <!-- SPONSORSHIP - ONLY SPONSORED STUDENTS -->
+        <!-- SPONSORSHIP -->
         <div class="tab-content" id="tab-sponsorship">
           <div class="card">
             <div class="card-header">
@@ -792,6 +811,52 @@
           </div>
         </div>
 
+        <!-- CLASSROOM MAINTENANCE -->
+        <div class="tab-content" id="tab-maintenance">
+          <div class="card">
+            <div class="card-header">
+              <h2>🔧 Classroom Maintenance Reports</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printMaintenanceReport()">🖨️ Print Report</button>
+                <button class="btn btn-primary" id="addMaintenanceBtn" onclick="showAddMaintenanceModal()">+ Add Report</button>
+              </div>
+            </div>
+            <div class="form-row" style="margin-bottom:16px;">
+              <div class="form-group"><label>Class</label>
+                <select id="maintenanceClassFilter" onchange="renderMaintenance()">
+                  <option value="">All Classes</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Status</label>
+                <select id="maintenanceStatusFilter" onchange="renderMaintenance()">
+                  <option value="">All</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Issue Type</label>
+                <select id="maintenanceTypeFilter" onchange="renderMaintenance()">
+                  <option value="">All</option>
+                  <option value="Electrical">⚡ Electrical</option>
+                  <option value="Furniture">🪑 Furniture</option>
+                  <option value="Whiteboard">📋 Whiteboard</option>
+                  <option value="Other">🔧 Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="stats-grid" id="maintenanceStats"></div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr><th>Date Reported</th><th>Class</th><th>Reported By</th><th>Issue Type</th><th>Description</th><th>Damaged By</th><th>Status</th><th>Resolved Date</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="maintenanceTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- ANALYTICS -->
         <div class="tab-content" id="tab-analytics">
           <div class="card">
@@ -954,7 +1019,17 @@
     ];
     const PREFECT_ROLES = ['Head Prefect', 'Deputy Head Prefect', 'Class Prefect', 'Assistant Class Prefect'];
 
-    // CLINICIAN ROLES - All medical-related staff
+    // Maintenance issue types
+    const MAINTENANCE_TYPES = [
+      { value: 'Electrical', label: '⚡ Electrical', icon: '⚡' },
+      { value: 'Furniture', label: '🪑 Furniture', icon: '🪑' },
+      { value: 'Whiteboard', label: '📋 Whiteboard', icon: '📋' },
+      { value: 'Other', label: '🔧 Other', icon: '🔧' }
+    ];
+
+    const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
+
+    // CLINICIAN ROLES
     const CLINICIAN_ROLES = ['medical', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
     const CLINICIAN_ROLE_NAMES = {
       'medical': '🏥 Medical',
@@ -963,12 +1038,6 @@
       'labtech': '🔬 Lab Technician',
       'radiographer': '📷 Radiographer'
     };
-
-    // Staff types - only 2 main categories now
-    const STAFF_TYPES = [
-      { value: 'teaching', label: '👨‍🏫 Teaching Staff', category: 'teaching' },
-      { value: 'clinician', label: '🏥 Clinicians (Medical)', category: 'clinician' }
-    ];
 
     const STAFF_SUB_TYPES = [
       { value: 'medical', label: '🏥 Medical', category: 'clinician' },
@@ -997,6 +1066,7 @@
     let warningsCache = [], suspensionsCache = [], expulsionsCache = [];
     let clinicCache = [], teachersCache = [], teacherAttCache = [];
     let prefectsCache = [], usersCache = [], auditCache = [];
+    let maintenanceCache = [];
 
     function formatDate(dateStr) {
       if (!dateStr) return '-';
@@ -1089,12 +1159,6 @@
       return CLINICIAN_ROLES.includes(type);
     }
 
-    function getStaffCategory(type) {
-      if (type === 'teaching') return 'teaching';
-      if (isClinician(type)) return 'clinician';
-      return 'clinician';
-    }
-
     function showToast(message, type = 'success', duration = 4000) {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
@@ -1108,7 +1172,6 @@
     // 🔐 AUTHENTICATION
     // ============================================================
 
-    // TEST MODE - Bypass for demo
     function testLogin() {
       console.log('🧪 TEST MODE: Logging in with test account');
       currentUser = { 
@@ -1123,15 +1186,12 @@
       document.getElementById('currentRoleBadge').textContent = 'ADMIN';
       isTestMode = true;
       setupPermissions();
-      // Load sample data for test mode
       loadSampleData();
       showTab('dashboard');
       showToast('✅ Test login successful! (Demo Mode)', 'success');
     }
 
-    // Load sample data for test mode
     function loadSampleData() {
-      // Add sample students
       const sampleStudents = [
         { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored' },
         { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization' },
@@ -1143,7 +1203,6 @@
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
       
-      // Add sample grades
       const sampleGrades = [
         { studentId: 'sample_2024-001', subject: 'Mathematics', term: 'Term 1', test1: 25, test2: 20, exam: 55 },
         { studentId: 'sample_2024-001', subject: 'English', term: 'Term 1', test1: 28, test2: 25, exam: 60 },
@@ -1151,13 +1210,10 @@
         { studentId: 'sample_2024-002', subject: 'English', term: 'Term 1', test1: 22, test2: 20, exam: 45 },
         { studentId: 'sample_2024-003', subject: 'Mathematics', term: 'Term 1', test1: 30, test2: 28, exam: 68 },
         { studentId: 'sample_2024-003', subject: 'English', term: 'Term 1', test1: 26, test2: 24, exam: 55 },
-        { studentId: 'sample_2024-004', subject: 'Mathematics', term: 'Term 1', test1: 18, test2: 15, exam: 35 },
-        { studentId: 'sample_2024-004', subject: 'English', term: 'Term 1', test1: 20, test2: 18, exam: 38 },
       ];
       
       sampleGrades.forEach(g => gradesCache.push({ id: `sample_${Math.random().toString(36).substr(2, 6)}`, ...g }));
       
-      // Add sample attendance
       const today = new Date().toISOString().split('T')[0];
       sampleStudents.forEach(s => {
         attendanceCache.push({
@@ -1168,12 +1224,59 @@
           markedBy: 'Test Admin'
         });
       });
+
+      // Sample maintenance reports
+      const sampleMaintenance = [
+        {
+          class: 'Grade 7 East',
+          issueType: 'Electrical',
+          description: 'Two wall sockets are not working and one switch is faulty',
+          damagedBy: 'Unknown - noticed during morning class',
+          reportedBy: 'Mr. Peter Ochieng',
+          status: 'Pending',
+          date: today,
+          resolvedDate: ''
+        },
+        {
+          class: 'Grade 8 West',
+          issueType: 'Furniture',
+          description: '3 desks are broken (legs loose) and 2 chairs are wobbly',
+          damagedBy: 'Students - reported by class monitor',
+          reportedBy: 'Mrs. Jane Akinyi',
+          status: 'In Progress',
+          date: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0],
+          resolvedDate: ''
+        },
+        {
+          class: 'Grade 9 East',
+          issueType: 'Whiteboard',
+          description: 'Whiteboard has a large scratch mark and is difficult to write on',
+          damagedBy: 'Teacher - accidental during lesson',
+          reportedBy: 'Mr. James Omondi',
+          status: 'Resolved',
+          date: new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0],
+          resolvedDate: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]
+        },
+        {
+          class: 'Form 3 West',
+          issueType: 'Electrical',
+          description: 'TV in the classroom is not displaying properly (flickering screen)',
+          damagedBy: 'Unknown - reported by students',
+          reportedBy: 'Mr. David Kamau',
+          status: 'Pending',
+          date: new Date(Date.now() - 1 * 86400000).toISOString().split('T')[0],
+          resolvedDate: ''
+        }
+      ];
+      
+      sampleMaintenance.forEach(m => maintenanceCache.push({ id: `sample_maint_${Math.random().toString(36).substr(2, 6)}`, ...m }));
       
       renderDashboard();
       renderStudents();
       renderSponsorship();
       renderGrades();
       renderAttendance();
+      renderMaintenance();
     }
 
     window.handleLogin = async function() {
@@ -1185,7 +1288,6 @@
       console.log('🔐 Login attempt:', { email, passwordLength: password.length });
       errorEl.textContent = '';
       
-      // Check for test login
       if (email === 'test@test.com' && password === 'test123') {
         testLogin();
         return;
@@ -1204,7 +1306,6 @@
       } catch (err) {
         console.error('❌ Login error:', err.code, err.message);
         errorEl.textContent = friendlyAuthError(err.code);
-        // If Firebase fails, offer test login
         errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
       } finally {
         btn.disabled = false;
@@ -1232,7 +1333,6 @@
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (!snap.exists()) {
-            // Create user document if it doesn't exist
             const userData = {
               email: user.email,
               fullName: user.displayName || user.email?.split('@')[0] || 'User',
@@ -1285,11 +1385,8 @@
       const isTeacher = role === 'teacher';
       const isDirector = role === 'director';
       const isHRIO = role === 'hrio';
-      const isNutritionist = role === 'nutritionist';
-      const isLabTech = role === 'labtech';
-      const isRadiographer = role === 'radiographer';
 
-      const canManageClinic = isAdmin || isNurse || isDoctor || isHRIO || isNutritionist || isLabTech || isRadiographer;
+      const canManageClinic = isAdmin || isNurse || isDoctor || isHRIO;
       
       document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
@@ -1328,6 +1425,11 @@
       const addPrefectBtn = document.getElementById('addPrefectBtn');
       if (addPrefectBtn) addPrefectBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
+      const addMaintenanceBtn = document.getElementById('addMaintenanceBtn');
+      if (addMaintenanceBtn) {
+        addMaintenanceBtn.style.display = (isAdmin || isPrincipal || isTeacher) ? 'inline-block' : 'none';
+      }
+
       const teacherAttNav = document.getElementById('teacherAttNav');
       if (teacherAttNav) {
         teacherAttNav.style.display = (isAdmin || isPrincipal || isSecretary || isDirector || isTeacher || isHRIO) ? 'flex' : 'none';
@@ -1340,12 +1442,12 @@
       if (role === 'admin') return true;
       if (role === 'director') return false;
       if (role === 'principal') {
-        const editTabs = ['grades', 'attendance', 'warnings', 'suspensions', 'expulsions', 'prefects'];
+        const editTabs = ['grades', 'attendance', 'warnings', 'suspensions', 'expulsions', 'prefects', 'maintenance'];
         return editTabs.includes(tab);
       }
-      if (role === 'teacher') return ['grades', 'attendance', 'students'].includes(tab);
+      if (role === 'teacher') return ['grades', 'attendance', 'students', 'maintenance'].includes(tab);
       if (tab === 'clinic') {
-        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio'];
         return clinicRoles.includes(role);
       }
       if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
@@ -1359,12 +1461,12 @@
       if (role === 'admin') return true;
       if (role === 'director') return false;
       if (role === 'principal') {
-        const addTabs = ['grades', 'attendance', 'warnings', 'suspensions', 'expulsions', 'prefects'];
+        const addTabs = ['grades', 'attendance', 'warnings', 'suspensions', 'expulsions', 'prefects', 'maintenance'];
         return addTabs.includes(tab);
       }
-      if (role === 'teacher') return ['grades', 'attendance', 'students'].includes(tab);
+      if (role === 'teacher') return ['grades', 'attendance', 'students', 'maintenance'].includes(tab);
       if (tab === 'clinic') {
-        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio'];
         return clinicRoles.includes(role);
       }
       if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
@@ -1377,8 +1479,11 @@
       const role = currentUser.role;
       if (role === 'director') return false;
       if (tab === 'clinic') {
-        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio'];
         return clinicRoles.includes(role);
+      }
+      if (tab === 'maintenance') {
+        return role === 'admin' || role === 'principal';
       }
       return role === 'admin';
     }
@@ -1441,6 +1546,11 @@
         refreshCurrentView();
       }));
 
+      unsubscribers.push(onSnapshot(collection(db, 'maintenance'), (snap) => {
+        maintenanceCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refreshCurrentView();
+      }));
+
       unsubscribers.push(onSnapshot(collection(db, 'users'), (snap) => {
         usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (activeTab === 'users') renderUsers();
@@ -1486,6 +1596,7 @@
         case 'prefects': renderPrefects(); break;
         case 'teachers': renderTeachers(); break;
         case 'teacherAttendance': renderTeacherAttendance(); break;
+        case 'maintenance': renderMaintenance(); break;
         case 'analytics': renderAnalytics(); break;
         case 'users': renderUsers(); break;
         case 'audit': renderAudit(); break;
@@ -1548,6 +1659,7 @@
       const clinic = clinicCache;
       const prefects = prefectsCache;
       const teachers = teachersCache;
+      const maintenance = maintenanceCache;
 
       const total = students.length;
       const male = students.filter(s => s.gender === 'Male').length;
@@ -1558,12 +1670,6 @@
       const teachingStaff = teachers.filter(t => t.type === 'teaching' && t.status === 'Active').length;
       const clinicians = teachers.filter(t => isClinician(t.type) && t.status === 'Active').length;
       const totalActiveStaff = teachers.filter(t => t.status === 'Active').length;
-      
-      const medicalStaff = teachers.filter(t => t.type === 'medical' && t.status === 'Active').length;
-      const hrioStaff = teachers.filter(t => t.type === 'hrio' && t.status === 'Active').length;
-      const nutritionistStaff = teachers.filter(t => t.type === 'nutritionist' && t.status === 'Active').length;
-      const labTechStaff = teachers.filter(t => t.type === 'labtech' && t.status === 'Active').length;
-      const radiographerStaff = teachers.filter(t => t.type === 'radiographer' && t.status === 'Active').length;
       
       const sponsoredTotal = students.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored').length;
       const prefectCount = students.filter(s => s.isPrefect === 'Yes').length;
@@ -1577,6 +1683,8 @@
       const presentToday = attendance.filter(a => a.date === today && a.status === 'Present').length;
 
       const avgGrade = grades.length ? Math.round(grades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / grades.length) : 0;
+      
+      const pendingMaintenance = maintenance.filter(m => m.status === 'Pending').length;
 
       document.getElementById('dashboardStats').innerHTML = `
         <div class="stat-card"><div class="stat-number">${total}</div><div class="stat-label">👩‍🎓 Total Students</div></div>
@@ -1590,19 +1698,13 @@
         <div class="stat-card" style="border-top-color:#8e44ad;"><div class="stat-number">${clinic.length}</div><div class="stat-label">🏥 Clinic Visits</div></div>
         <div class="stat-card" style="border-top-color:#f1c40f;"><div class="stat-number">${sponsoredTotal}</div><div class="stat-label">💰 Sponsored</div></div>
         <div class="stat-card" style="border-top-color:#9b59b6;"><div class="stat-number">${prefectCount}</div><div class="stat-label">⭐ Prefects</div></div>
-        <div class="stat-card" style="border-top-color:#27ae60;"><div class="stat-number">${boarders}</div><div class="stat-label">🏠 Boarders</div></div>
-        <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${dayScholars}</div><div class="stat-label">🚶 Day Scholars</div></div>
+        <div class="stat-card" style="border-top-color:#e67e22;"><div class="stat-number">${pendingMaintenance}</div><div class="stat-label">🔧 Pending Maintenance</div></div>
       `;
 
       document.getElementById('staffBreakdownStats').innerHTML = `
         <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${totalActiveStaff}</div><div class="stat-label">👨‍🏫 Total Teachers</div></div>
         <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${teachingStaff}</div><div class="stat-label">👨‍🏫 Teaching Staff</div></div>
-        <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${clinicians}</div><div class="stat-label">🏥 Clinicians (Medical)</div></div>
-        <div class="stat-card" style="border-top-color:#c0392b;"><div class="stat-number">${medicalStaff}</div><div class="stat-label">🏥 Medical</div></div>
-        <div class="stat-card" style="border-top-color:#283593;"><div class="stat-number">${hrioStaff}</div><div class="stat-label">👔 HRIO</div></div>
-        <div class="stat-card" style="border-top-color:#00695c;"><div class="stat-number">${nutritionistStaff}</div><div class="stat-label">🍎 Nutritionist</div></div>
-        <div class="stat-card" style="border-top-color:#e65100;"><div class="stat-number">${labTechStaff}</div><div class="stat-label">🔬 Lab Tech</div></div>
-        <div class="stat-card" style="border-top-color:#6a1b9a;"><div class="stat-number">${radiographerStaff}</div><div class="stat-label">📷 Radiographer</div></div>
+        <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${clinicians}</div><div class="stat-label">🏥 Clinicians</div></div>
       `;
 
       document.getElementById('boardingStats').innerHTML = `
@@ -1651,7 +1753,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS - WITH DUPLICATE PREVENTION
+    // 👩‍🎓 STUDENTS
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -2026,7 +2128,7 @@
     };
 
     // ============================================================
-    // 💰 SPONSORSHIP - ONLY SPONSORED STUDENTS
+    // 💰 SPONSORSHIP
     // ============================================================
 
     window.showEditSponsorshipModal = function() {
@@ -2100,7 +2202,7 @@
           <td>${s.sponsorContact || '-'}</td>
           <td>${s.sponsorNotes || '-'}</td>
         </tr>
-      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found. Students with "Self Sponsored" are not shown here.</td></tr>';
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found</td></tr>';
     };
 
     // ============================================================
@@ -2631,10 +2733,10 @@
 
     window.showAddClinicModal = function(editId) {
       const role = currentUser?.role || '';
-      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio'];
       
       if (!clinicRoles.includes(role)) {
-        showToast('Only Admin, Nurse, Doctor, HRIO, Nutritionist, Lab Technician, and Radiographer can manage clinic visits', 'error');
+        showToast('Only Admin, Nurse, Doctor, and HRIO can manage clinic visits', 'error');
         return;
       }
       
@@ -2681,7 +2783,7 @@
 
     window.saveClinic = async function(editId) {
       const role = currentUser?.role || '';
-      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio'];
       
       if (!clinicRoles.includes(role)) {
         showToast('You do not have permission to save clinic visits', 'error');
@@ -2730,7 +2832,7 @@
 
     window.renderClinic = function() {
       const role = currentUser?.role || '';
-      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio'];
       const canManageClinic = clinicRoles.includes(role);
 
       document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
@@ -2761,7 +2863,7 @@
 
     window.deleteClinic = async function(id) {
       const role = currentUser?.role || '';
-      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio'];
       
       if (!clinicRoles.includes(role)) {
         showToast('You do not have permission to delete clinic visits', 'error');
@@ -3082,11 +3184,6 @@
       
       document.getElementById('teachersTableBody').innerHTML = filtered.map(t => {
         const classTeacher = t.classTeacher ? `<span class="badge badge-info">${t.classTeacher}</span>` : '-';
-        const dormBadge = t.dormRole === 'Dorm Matron' ? 
-          `<span class="badge badge-pink">👩 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
-          t.dormRole === 'Dorm Patron' ?
-          `<span class="badge badge-blue">👨 ${t.dormRole}${t.dorm ? ' (' + t.dorm + ')' : ''}</span>` :
-          '-';
         
         const typeBadge = getStaffTypeBadge(t.type);
         const specializationDisplay = t.specialization ? 
@@ -3270,6 +3367,239 @@
         await addAuditLog('DELETE_TEACHER_ATTENDANCE', 'Deleted teachers attendance record'); 
         showToast('Record deleted'); 
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 🔧 CLASSROOM MAINTENANCE
+    // ============================================================
+
+    window.showAddMaintenanceModal = function(editId) {
+      if (!canAdd('maintenance')) { showToast('You do not have permission to add maintenance reports', 'error'); return; }
+      
+      const report = editId ? maintenanceCache.find(m => m.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
+      
+      const typeOptions = MAINTENANCE_TYPES.map(t => 
+        `<option value="${t.value}" ${report?.issueType === t.value ? 'selected' : ''}>${t.label}</option>`
+      ).join('');
+      
+      const statusOptions = MAINTENANCE_STATUSES.map(s => 
+        `<option value="${s}" ${report?.status === s ? 'selected' : ''}>${s}</option>`
+      ).join('');
+      
+      const classOptions = CLASSES.map(c => 
+        `<option value="${c}" ${report?.class === c ? 'selected' : ''}>${c}</option>`
+      ).join('');
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Class *</label>
+            <select id="m_class">
+              <option value="">Select Class</option>
+              ${classOptions}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Issue Type *</label>
+            <select id="m_issueType">
+              <option value="">Select Issue Type</option>
+              ${typeOptions}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date Reported *</label>
+            <input type="date" id="m_date" value="${report?.date || today}">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="m_status">
+              ${statusOptions}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description of Issue *</label>
+          <textarea id="m_description" rows="3" placeholder="Describe the issue in detail...">${report?.description || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Damaged By (Who caused the damage?)</label>
+          <input type="text" id="m_damagedBy" value="${report?.damagedBy || ''}" placeholder="e.g., Students, Teacher, Unknown, Specific student name">
+        </div>
+        <div class="form-group">
+          <label>Reported By (Teacher/Staff Name)</label>
+          <input type="text" id="m_reportedBy" value="${report?.reportedBy || currentUser?.fullName || ''}" placeholder="Your full name">
+        </div>
+        <div class="form-group" id="resolvedDateGroup" style="display:${report?.status === 'Resolved' ? 'block' : 'none'}">
+          <label>Resolved Date</label>
+          <input type="date" id="m_resolvedDate" value="${report?.resolvedDate || ''}">
+        </div>
+        <button class="btn btn-success" onclick="saveMaintenanceReport('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Add'} Report
+        </button>
+      `;
+      
+      openModal(editId ? 'Edit Maintenance Report' : 'Add Maintenance Report', html);
+      
+      // Show/hide resolved date based on status
+      document.getElementById('m_status').addEventListener('change', function() {
+        const group = document.getElementById('resolvedDateGroup');
+        if (this.value === 'Resolved') {
+          group.style.display = 'block';
+          if (!document.getElementById('m_resolvedDate').value) {
+            document.getElementById('m_resolvedDate').value = new Date().toISOString().split('T')[0];
+          }
+        } else {
+          group.style.display = 'none';
+        }
+      });
+    };
+
+    window.saveMaintenanceReport = async function(editId) {
+      const className = document.getElementById('m_class').value;
+      const issueType = document.getElementById('m_issueType').value;
+      const date = document.getElementById('m_date').value;
+      const status = document.getElementById('m_status').value;
+      const description = document.getElementById('m_description').value.trim();
+      const damagedBy = document.getElementById('m_damagedBy').value.trim();
+      const reportedBy = document.getElementById('m_reportedBy').value.trim();
+      const resolvedDate = document.getElementById('m_resolvedDate').value || '';
+      
+      if (!className || !issueType || !date || !description) {
+        showToast('Please fill all required fields (Class, Issue Type, Date, Description)', 'error');
+        return;
+      }
+      
+      if (status === 'Resolved' && !resolvedDate) {
+        showToast('Please enter the resolved date when marking as Resolved', 'error');
+        return;
+      }
+      
+      const data = {
+        class: className,
+        issueType,
+        date,
+        status,
+        description,
+        damagedBy: damagedBy || 'Unknown',
+        reportedBy: reportedBy || currentUser?.fullName || 'Unknown',
+        resolvedDate: status === 'Resolved' ? resolvedDate : ''
+      };
+      
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'maintenance', editId), data);
+          await addAuditLog('UPDATE_MAINTENANCE', `Updated maintenance report for ${className} - ${issueType}`);
+          showToast('✅ Maintenance report updated successfully!');
+        } else {
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'maintenance'), data);
+          await addAuditLog('ADD_MAINTENANCE', `Added maintenance report for ${className} - ${issueType}`);
+          showToast('✅ Maintenance report added successfully!');
+        }
+        closeModal();
+      } catch (err) {
+        showToast('❌ Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderMaintenance = function() {
+      const classFilter = document.getElementById('maintenanceClassFilter').value;
+      const statusFilter = document.getElementById('maintenanceStatusFilter').value;
+      const typeFilter = document.getElementById('maintenanceTypeFilter').value;
+      
+      const classSelect = document.getElementById('maintenanceClassFilter');
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = '<option value="">All Classes</option>' + 
+          CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      
+      let filtered = maintenanceCache;
+      if (classFilter) filtered = filtered.filter(m => m.class === classFilter);
+      if (statusFilter) filtered = filtered.filter(m => m.status === statusFilter);
+      if (typeFilter) filtered = filtered.filter(m => m.issueType === typeFilter);
+      
+      // Stats
+      const total = maintenanceCache.length;
+      const pending = maintenanceCache.filter(m => m.status === 'Pending').length;
+      const inProgress = maintenanceCache.filter(m => m.status === 'In Progress').length;
+      const resolved = maintenanceCache.filter(m => m.status === 'Resolved').length;
+      const electrical = maintenanceCache.filter(m => m.issueType === 'Electrical').length;
+      const furniture = maintenanceCache.filter(m => m.issueType === 'Furniture').length;
+      const whiteboard = maintenanceCache.filter(m => m.issueType === 'Whiteboard').length;
+      
+      document.getElementById('maintenanceStats').innerHTML = `
+        <div class="stat-card" style="border-top-color:#2e86c1;"><div class="stat-number">${total}</div><div class="stat-label">📋 Total Reports</div></div>
+        <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${pending}</div><div class="stat-label">⏳ Pending</div></div>
+        <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${inProgress}</div><div class="stat-label">🔄 In Progress</div></div>
+        <div class="stat-card" style="border-top-color:#27ae60;"><div class="stat-number">${resolved}</div><div class="stat-label">✅ Resolved</div></div>
+        <div class="stat-card" style="border-top-color:#e65100;"><div class="stat-number">${electrical}</div><div class="stat-label">⚡ Electrical</div></div>
+        <div class="stat-card" style="border-top-color:#c62828;"><div class="stat-number">${furniture}</div><div class="stat-label">🪑 Furniture</div></div>
+        <div class="stat-card" style="border-top-color:#283593;"><div class="stat-number">${whiteboard}</div><div class="stat-label">📋 Whiteboard</div></div>
+      `;
+      
+      const canEditMaint = canEdit('maintenance');
+      const canDeleteMaint = canDeleteSpecific('maintenance');
+      
+      document.getElementById('maintenanceTableBody').innerHTML = filtered.map(m => {
+        const statusBadge = m.status === 'Pending' ? 'badge-danger' : 
+                            m.status === 'In Progress' ? 'badge-warning' : 'badge-success';
+        
+        const typeBadge = m.issueType === 'Electrical' ? 'badge-orange' :
+                          m.issueType === 'Furniture' ? 'badge-red' :
+                          m.issueType === 'Whiteboard' ? 'badge-indigo' : 'badge-info';
+        
+        const typeIcon = MAINTENANCE_TYPES.find(t => t.value === m.issueType)?.icon || '🔧';
+        
+        return `
+          <tr>
+            <td>${formatDate(m.date)}</td>
+            <td><strong>${m.class}</strong></td>
+            <td>${m.reportedBy || '-'}</td>
+            <td><span class="badge ${typeBadge}">${typeIcon} ${m.issueType}</span></td>
+            <td>${m.description}</td>
+            <td>${m.damagedBy || 'Unknown'}</td>
+            <td><span class="badge ${statusBadge}">${m.status}</span></td>
+            <td>${m.status === 'Resolved' ? formatDate(m.resolvedDate) : '-'}</td>
+            <td>
+              ${canEditMaint ? `<button class="btn btn-primary btn-sm" onclick="showAddMaintenanceModal('${m.id}')">Edit</button>` : ''}
+              ${canDeleteMaint ? `<button class="btn btn-danger btn-sm" onclick="deleteMaintenanceReport('${m.id}')">Del</button>` : ''}
+              ${m.status !== 'Resolved' ? `<button class="btn btn-success btn-sm" onclick="markMaintenanceResolved('${m.id}')">Resolve</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No maintenance reports found</td></tr>';
+    };
+
+    window.markMaintenanceResolved = async function(id) {
+      if (!confirm('Mark this issue as Resolved?')) return;
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        await updateDoc(doc(db, 'maintenance', id), {
+          status: 'Resolved',
+          resolvedDate: today
+        });
+        await addAuditLog('RESOLVE_MAINTENANCE', `Resolved maintenance issue`);
+        showToast('✅ Issue marked as Resolved');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.deleteMaintenanceReport = async function(id) {
+      if (!confirm('Delete this maintenance report?')) return;
+      try {
+        await deleteDoc(doc(db, 'maintenance', id));
+        await addAuditLog('DELETE_MAINTENANCE', 'Deleted maintenance report');
+        showToast('Report deleted');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    window.printMaintenanceReport = function() {
+      if (!maintenanceCache.length) { showToast('No reports to print', 'warning'); return; }
+      showToast('🖨️ Printing maintenance report...', 'info');
     };
 
     // ============================================================
@@ -3715,22 +4045,11 @@
       document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') window.handleLogin(); });
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
-      // Pre-fill test credentials
-      const emailField = document.getElementById('loginEmail');
-      const passwordField = document.getElementById('loginPassword');
-      
-      // Check if we're in a demo/testing environment
-      if (!emailField.value) emailField.value = 'test@test.com';
-      if (!passwordField.value) passwordField.value = 'test123';
-
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 9.2.0 - Cloud Synced with Test Mode');
+      console.log('📚 Version 9.3.0 - With Classroom Maintenance Module');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('👨‍🏫 Teacher Records & Teachers Attendance');
-      console.log('🏥 Clinicians include: Medical, HRIO, Nutritionist, Lab Technician, Radiographer');
-      console.log('💰 Sponsorship tab shows only sponsored students');
-      console.log('🔒 Duplicate prevention enabled for student records');
+      console.log('🔧 Classroom Maintenance: Track faulty electricals, broken furniture, and damaged whiteboards');
     });
   </script>
 </body>
