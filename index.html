@@ -412,11 +412,7 @@
       font-weight: 600;
     }
     .staff-type-badge.teacher { background: #d6eaf8; color: #1a5276; }
-    .staff-type-badge.medical { background: #fce4ec; color: #c2185b; }
-    .staff-type-badge.hrio { background: #e8eaf6; color: #283593; }
-    .staff-type-badge.nutritionist { background: #e0f2f1; color: #00695c; }
-    .staff-type-badge.labtech { background: #fff3e0; color: #e65100; }
-    .staff-type-badge.radiographer { background: #f3e5f5; color: #6a1b9a; }
+    .staff-type-badge.clinician { background: #fce4ec; color: #c2185b; }
 
     .duplicate-warning {
       background: #fff3cd;
@@ -558,6 +554,10 @@
             <div class="card-header"><h3>🏠 Boarding Status</h3></div>
             <div class="stats-grid" id="boardingStats"></div>
           </div>
+          <div class="card">
+            <div class="card-header"><h3>👨‍🏫 Staff Breakdown</h3></div>
+            <div class="stats-grid" id="staffBreakdownStats"></div>
+          </div>
           <div class="charts-grid">
             <div class="card"><div class="card-header"><h3>Students Per Class</h3></div><div class="chart-container"><canvas id="dashClassChart"></canvas></div></div>
             <div class="card"><div class="card-header"><h3>Grade Distribution</h3></div><div class="chart-container"><canvas id="dashGradeChart"></canvas></div></div>
@@ -593,10 +593,14 @@
           </div>
         </div>
 
-        <!-- SPONSORSHIP -->
+        <!-- SPONSORSHIP - ONLY SPONSORED STUDENTS -->
         <div class="tab-content" id="tab-sponsorship">
           <div class="card">
-            <div class="card-header"><h2>💰 Student Sponsorship</h2><button class="btn btn-primary" id="editSponsorshipBtn" onclick="showEditSponsorshipModal()">✏️ Edit Sponsorship</button></div>
+            <div class="card-header">
+              <h2>💰 Sponsored Students</h2>
+              <span style="font-size:0.85em;color:var(--gray);">Showing students with active sponsorship only</span>
+              <button class="btn btn-primary" id="editSponsorshipBtn" onclick="showEditSponsorshipModal()">✏️ Edit Sponsorship</button>
+            </div>
             <div class="table-container">
               <table><thead><tr><th>Student</th><th>Class</th><th>Sponsor Type</th><th>Sponsor Name</th><th>Contact</th><th>Notes</th></tr></thead>
               <tbody id="sponsorshipTableBody"></tbody></table>
@@ -707,7 +711,7 @@
             <div class="table-container">
               <table>
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
-                <tbody id="clinicTableBody"></tbody>
+                <tbody id="clinicTableBody"></tbody></table>
               </table>
             </div>
           </div>
@@ -743,11 +747,7 @@
                 <select id="teacherTypeFilter" onchange="renderTeachers()">
                   <option value="">All Staff</option>
                   <option value="teaching">👨‍🏫 Teaching Staff</option>
-                  <option value="medical">🏥 Medical Staff</option>
-                  <option value="hrio">👔 HRIO</option>
-                  <option value="nutritionist">🍎 Nutritionist</option>
-                  <option value="labtech">🔬 Lab Technician</option>
-                  <option value="radiographer">📷 Radiographer</option>
+                  <option value="clinician">🏥 Clinicians (Medical)</option>
                 </select>
               </div>
               <div class="form-group"><label>Status</label>
@@ -776,11 +776,7 @@
                 <select id="teacherAttTypeFilter" onchange="renderTeacherAttendance()">
                   <option value="">All Types</option>
                   <option value="teaching">👨‍🏫 Teaching</option>
-                  <option value="medical">🏥 Medical</option>
-                  <option value="hrio">👔 HRIO</option>
-                  <option value="nutritionist">🍎 Nutritionist</option>
-                  <option value="labtech">🔬 Lab Technician</option>
-                  <option value="radiographer">📷 Radiographer</option>
+                  <option value="clinician">🏥 Clinicians (Medical)</option>
                 </select>
               </div>
             </div>
@@ -953,13 +949,28 @@
     ];
     const PREFECT_ROLES = ['Head Prefect', 'Deputy Head Prefect', 'Class Prefect', 'Assistant Class Prefect'];
 
+    // CLINICIAN ROLES - All medical-related staff
+    const CLINICIAN_ROLES = ['medical', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+    const CLINICIAN_ROLE_NAMES = {
+      'medical': '🏥 Medical',
+      'hrio': '👔 HRIO',
+      'nutritionist': '🍎 Nutritionist',
+      'labtech': '🔬 Lab Technician',
+      'radiographer': '📷 Radiographer'
+    };
+
+    // Staff types - only 2 main categories now
     const STAFF_TYPES = [
-      { value: 'teaching', label: '👨‍🏫 Teaching Staff', color: 'teacher' },
-      { value: 'medical', label: '🏥 Medical Staff', color: 'medical' },
-      { value: 'hrio', label: '👔 HRIO', color: 'hrio' },
-      { value: 'nutritionist', label: '🍎 Nutritionist', color: 'nutritionist' },
-      { value: 'labtech', label: '🔬 Lab Technician', color: 'labtech' },
-      { value: 'radiographer', label: '📷 Radiographer', color: 'radiographer' }
+      { value: 'teaching', label: '👨‍🏫 Teaching Staff', category: 'teaching' },
+      { value: 'clinician', label: '🏥 Clinicians (Medical)', category: 'clinician' }
+    ];
+
+    const STAFF_SUB_TYPES = [
+      { value: 'medical', label: '🏥 Medical', category: 'clinician' },
+      { value: 'hrio', label: '👔 HRIO', category: 'clinician' },
+      { value: 'nutritionist', label: '🍎 Nutritionist', category: 'clinician' },
+      { value: 'labtech', label: '🔬 Lab Technician', category: 'clinician' },
+      { value: 'radiographer', label: '📷 Radiographer', category: 'clinician' }
     ];
 
     const STAFF_SPECIALIZATIONS = {
@@ -1058,16 +1069,23 @@
     }
 
     function getStaffTypeBadge(type) {
-      const map = {
-        'teaching': { label: '👨‍🏫 Teaching', cls: 'teacher' },
-        'medical': { label: '🏥 Medical', cls: 'medical' },
-        'hrio': { label: '👔 HRIO', cls: 'hrio' },
-        'nutritionist': { label: '🍎 Nutritionist', cls: 'nutritionist' },
-        'labtech': { label: '🔬 Lab Tech', cls: 'labtech' },
-        'radiographer': { label: '📷 Radiographer', cls: 'radiographer' }
-      };
-      const info = map[type] || { label: type || 'Unknown', cls: 'info' };
-      return `<span class="staff-type-badge ${info.cls}">${info.label}</span>`;
+      if (type === 'teaching') {
+        return `<span class="staff-type-badge teacher">👨‍🏫 Teaching</span>`;
+      } else if (CLINICIAN_ROLES.includes(type)) {
+        const label = CLINICIAN_ROLE_NAMES[type] || '🏥 Clinician';
+        return `<span class="staff-type-badge clinician">${label}</span>`;
+      }
+      return `<span class="staff-type-badge clinician">🏥 Clinician</span>`;
+    }
+
+    function isClinician(type) {
+      return CLINICIAN_ROLES.includes(type);
+    }
+
+    function getStaffCategory(type) {
+      if (type === 'teaching') return 'teaching';
+      if (isClinician(type)) return 'clinician';
+      return 'clinician'; // Default to clinician for any other type
     }
 
     function showToast(message, type = 'success', duration = 4000) {
@@ -1409,7 +1427,7 @@
     };
 
     // ============================================================
-    // 📊 DASHBOARD
+    // 📊 DASHBOARD - WITH STAFF BREAKDOWN
     // ============================================================
 
     function renderDashboard() {
@@ -1429,13 +1447,17 @@
       const boarders = students.filter(s => s.status === 'Boarder').length;
       const dayScholars = students.filter(s => s.status === 'Day Scholar').length;
       
+      // Staff breakdown by category - ALL clinicians grouped together
       const teachingStaff = teachers.filter(t => t.type === 'teaching' && t.status === 'Active').length;
+      const clinicians = teachers.filter(t => isClinician(t.type) && t.status === 'Active').length;
+      const totalActiveStaff = teachers.filter(t => t.status === 'Active').length;
+      
+      // Individual clinician types for detailed view
       const medicalStaff = teachers.filter(t => t.type === 'medical' && t.status === 'Active').length;
       const hrioStaff = teachers.filter(t => t.type === 'hrio' && t.status === 'Active').length;
       const nutritionistStaff = teachers.filter(t => t.type === 'nutritionist' && t.status === 'Active').length;
       const labTechStaff = teachers.filter(t => t.type === 'labtech' && t.status === 'Active').length;
       const radiographerStaff = teachers.filter(t => t.type === 'radiographer' && t.status === 'Active').length;
-      const totalActiveStaff = teachers.filter(t => t.status === 'Active').length;
       
       const sponsoredTotal = students.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored').length;
       const prefectCount = students.filter(s => s.isPrefect === 'Yes').length;
@@ -1464,9 +1486,14 @@
         <div class="stat-card" style="border-top-color:#9b59b6;"><div class="stat-number">${prefectCount}</div><div class="stat-label">⭐ Prefects</div></div>
         <div class="stat-card" style="border-top-color:#27ae60;"><div class="stat-number">${boarders}</div><div class="stat-label">🏠 Boarders</div></div>
         <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${dayScholars}</div><div class="stat-label">🚶 Day Scholars</div></div>
-        <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${totalActiveStaff}</div><div class="stat-label">👨‍🏫 Active Staff</div></div>
+      `;
+
+      // Staff Breakdown Stats - Separate card with Clinicians grouped
+      document.getElementById('staffBreakdownStats').innerHTML = `
+        <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${totalActiveStaff}</div><div class="stat-label">👨‍🏫 Total Active Staff</div></div>
         <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${teachingStaff}</div><div class="stat-label">👨‍🏫 Teachers</div></div>
-        <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${medicalStaff}</div><div class="stat-label">🏥 Medical</div></div>
+        <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${clinicians}</div><div class="stat-label">🏥 Clinicians (Medical)</div></div>
+        <div class="stat-card" style="border-top-color:#c0392b;"><div class="stat-number">${medicalStaff}</div><div class="stat-label">🏥 Medical</div></div>
         <div class="stat-card" style="border-top-color:#283593;"><div class="stat-number">${hrioStaff}</div><div class="stat-label">👔 HRIO</div></div>
         <div class="stat-card" style="border-top-color:#00695c;"><div class="stat-number">${nutritionistStaff}</div><div class="stat-label">🍎 Nutritionist</div></div>
         <div class="stat-card" style="border-top-color:#e65100;"><div class="stat-number">${labTechStaff}</div><div class="stat-label">🔬 Lab Tech</div></div>
@@ -1664,7 +1691,6 @@
         document.getElementById('prefectDeptGroup').style.display = isPrefect ? 'block' : 'none';
       };
       
-      // Initialize duplicate check
       window.checkStudentDuplicate = function() {
         const admNo = document.getElementById('s_admNo').value.trim();
         const firstName = document.getElementById('s_firstName').value.trim();
@@ -1673,7 +1699,6 @@
         const messageEl = document.getElementById('duplicateMessage');
         const saveBtn = document.getElementById('saveStudentBtn');
         
-        // If editing, skip duplicate check for the same student
         if (editId) {
           const currentStudent = studentsCache.find(s => s.id === editId);
           if (currentStudent) {
@@ -1693,11 +1718,9 @@
           return;
         }
         
-        // Check for duplicates
         let duplicateFound = false;
         let duplicateMessage = '';
         
-        // Check by Admission Number
         if (admNo) {
           const existingByAdm = studentsCache.find(s => s.admNo === admNo && s.id !== editId);
           if (existingByAdm) {
@@ -1706,7 +1729,6 @@
           }
         }
         
-        // Check by Full Name (if no admission number duplicate found)
         if (!duplicateFound && firstName && lastName) {
           const fullName = `${firstName} ${lastName}`.toLowerCase();
           const existingByName = studentsCache.find(s => {
@@ -1758,11 +1780,9 @@
         return;
       }
 
-      // Double-check for duplicates before saving
       let duplicateFound = false;
       let duplicateMessage = '';
       
-      // Check by Admission Number
       if (admNo) {
         const existingByAdm = studentsCache.find(s => s.admNo === admNo && s.id !== editId);
         if (existingByAdm) {
@@ -1771,7 +1791,6 @@
         }
       }
       
-      // Check by Full Name
       if (!duplicateFound && firstName && lastName) {
         const fullName = `${firstName} ${lastName}`.toLowerCase();
         const existingByName = studentsCache.find(s => {
@@ -1902,7 +1921,7 @@
     };
 
     // ============================================================
-    // 💰 SPONSORSHIP
+    // 💰 SPONSORSHIP - ONLY SPONSORED STUDENTS
     // ============================================================
 
     window.showEditSponsorshipModal = function() {
@@ -1910,10 +1929,17 @@
         showToast('Only Admin and Director can edit sponsorship', 'error'); 
         return; 
       }
+      const sponsoredStudents = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
+      
+      if (sponsoredStudents.length === 0) {
+        showToast('No sponsored students found to edit', 'warning');
+        return;
+      }
+      
       const html = `
         <div class="form-group"><label>Student *</label>
           <select id="sp_student">
-            ${studentsCache.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+            ${sponsoredStudents.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class}) - ${s.sponsorshipType}</option>`).join('')}
           </select>
         </div>
         <div class="form-grid">
@@ -1958,16 +1984,18 @@
     };
 
     window.renderSponsorship = function() {
-      document.getElementById('sponsorshipTableBody').innerHTML = studentsCache.map(s => `
+      const sponsoredStudents = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
+      
+      document.getElementById('sponsorshipTableBody').innerHTML = sponsoredStudents.map(s => `
         <tr>
-          <td>${s.firstName} ${s.lastName}</td>
+          <td><strong>${s.firstName} ${s.lastName}</strong></td>
           <td>${s.class}</td>
-          <td><span class="badge ${s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored' ? 'badge-success' : 'badge-info'}">${s.sponsorshipType || 'Self Sponsored'}</span></td>
+          <td><span class="badge badge-success">${s.sponsorshipType}</span></td>
           <td>${s.sponsorName || '-'}</td>
           <td>${s.sponsorContact || '-'}</td>
           <td>${s.sponsorNotes || '-'}</td>
         </tr>
-      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students found</td></tr>';
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found. Students with "Self Sponsored" are not shown here.</td></tr>';
     };
 
     // ============================================================
@@ -2733,14 +2761,21 @@
     };
 
     // ============================================================
-    // 👨‍🏫 STAFF RECORDS
+    // 👨‍🏫 STAFF RECORDS - UPDATED WITH CLINICIAN GROUPING
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
       if (!canAdd('teachers')) { showToast('You do not have permission to add staff', 'error'); return; }
       const teacher = editId ? teachersCache.find(t => t.id === editId) : null;
       
-      const typeOptions = STAFF_TYPES.map(t => 
+      // Build staff type options - only Teaching and Clinician as main categories
+      const typeOptions = `
+        <option value="teaching" ${teacher?.type === 'teaching' ? 'selected' : ''}>👨‍🏫 Teaching Staff</option>
+        <option value="clinician" ${teacher?.type && isClinician(teacher.type) ? 'selected' : ''}>🏥 Clinicians (Medical)</option>
+      `;
+
+      // Sub-type options for clinicians
+      const subTypeOptions = STAFF_SUB_TYPES.map(t => 
         `<option value="${t.value}" ${teacher?.type === t.value ? 'selected' : ''}>${t.label}</option>`
       ).join('');
 
@@ -2757,9 +2792,16 @@
           <div class="form-group"><label>Employee ID *</label>
             <input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., STF-001">
           </div>
-          <div class="form-group"><label>Staff Type *</label>
-            <select id="t_type" onchange="updateSpecializationOptions()">
+          <div class="form-group"><label>Staff Category *</label>
+            <select id="t_type" onchange="updateStaffFields()">
               ${typeOptions}
+            </select>
+          </div>
+          <div class="form-group" id="subTypeGroup">
+            <label>Staff Sub-Type (for Clinicians)</label>
+            <select id="t_subType" onchange="updateSpecializationOptions()">
+              <option value="">-- Select Sub-Type --</option>
+              ${subTypeOptions}
             </select>
           </div>
           <div class="form-group"><label>Specialization</label>
@@ -2825,11 +2867,32 @@
 
       openModal(editId ? 'Edit Staff' : 'Add Staff', html);
 
-      window.updateSpecializationOptions = function() {
+      window.updateStaffFields = function() {
         const type = document.getElementById('t_type').value;
-        const select = document.getElementById('t_specialization');
-        const specs = STAFF_SPECIALIZATIONS[type] || [];
-        select.innerHTML = '<option value="">-- Select Specialization --</option>' + 
+        const subTypeGroup = document.getElementById('subTypeGroup');
+        const subType = document.getElementById('t_subType');
+        const specSelect = document.getElementById('t_specialization');
+        
+        if (type === 'teaching') {
+          subTypeGroup.style.display = 'none';
+          subType.value = '';
+          const specs = STAFF_SPECIALIZATIONS['teaching'] || [];
+          specSelect.innerHTML = '<option value="">-- Select Specialization --</option>' + 
+            specs.map(s => `<option value="${s}">${s}</option>`).join('');
+        } else {
+          subTypeGroup.style.display = 'block';
+          const selectedSubType = subType.value;
+          const specs = STAFF_SPECIALIZATIONS[selectedSubType] || [];
+          specSelect.innerHTML = '<option value="">-- Select Specialization --</option>' + 
+            specs.map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+      };
+
+      window.updateSpecializationOptions = function() {
+        const subType = document.getElementById('t_subType').value;
+        const specSelect = document.getElementById('t_specialization');
+        const specs = STAFF_SPECIALIZATIONS[subType] || [];
+        specSelect.innerHTML = '<option value="">-- Select Specialization --</option>' + 
           specs.map(s => `<option value="${s}">${s}</option>`).join('');
       };
 
@@ -2837,6 +2900,16 @@
         const dormRole = document.getElementById('t_dormRole').value;
         document.getElementById('dormSelectGroup').style.display = (dormRole !== 'None') ? 'block' : 'none';
       };
+      
+      // Initialize fields
+      setTimeout(() => {
+        window.updateStaffFields();
+        if (teacher?.type && isClinician(teacher.type)) {
+          document.getElementById('t_type').value = 'clinician';
+          document.getElementById('t_subType').value = teacher.type;
+          window.updateSpecializationOptions();
+        }
+      }, 100);
     };
 
     window.saveTeacher = async function(editId) {
@@ -2844,7 +2917,15 @@
       const empId = document.getElementById('t_empId').value.trim();
       if (!name || !empId) { showToast('Name and Employee ID are required', 'error'); return; }
       
-      const type = document.getElementById('t_type').value;
+      const category = document.getElementById('t_type').value;
+      let type = category;
+      
+      // If clinician, get the sub-type
+      if (category === 'clinician') {
+        type = document.getElementById('t_subType').value;
+        if (!type) { showToast('Please select a Clinician Sub-Type', 'error'); return; }
+      }
+      
       const specialization = document.getElementById('t_specialization').value;
       const subjects = Array.from(document.getElementById('t_subjects').selectedOptions).map(o => o.value);
       const classes = Array.from(document.getElementById('t_classes').selectedOptions).map(o => o.value);
@@ -2886,7 +2967,14 @@
       const statusFilter = document.getElementById('teacherStatusFilter').value;
       
       let filtered = teachersCache;
-      if (typeFilter) filtered = filtered.filter(t => t.type === typeFilter);
+      
+      // Filter by category
+      if (typeFilter === 'teaching') {
+        filtered = filtered.filter(t => t.type === 'teaching');
+      } else if (typeFilter === 'clinician') {
+        filtered = filtered.filter(t => isClinician(t.type));
+      }
+      
       if (statusFilter) filtered = filtered.filter(t => t.status === statusFilter);
 
       const canEditTeachers = canEdit('teachers');
@@ -3035,7 +3123,7 @@
       const filterSelect = document.getElementById('teacherAttFilter');
       if (filterSelect.options.length <= 1) {
         filterSelect.innerHTML = '<option value="">All Staff</option>' +
-          teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.type})</option>`).join('');
+          teachersCache.map(t => `<option value="${t.id}">${t.name} (${isClinician(t.type) ? 'Clinician' : t.type})</option>`).join('');
       }
 
       if (!date) document.getElementById('teacherAttDate').value = new Date().toISOString().split('T')[0];
@@ -3044,7 +3132,11 @@
       if (date) filtered = filtered.filter(a => a.date === date);
       if (teacherFilter) filtered = filtered.filter(a => a.teacherId === teacherFilter);
       if (typeFilter) {
-        const staffIds = teachersCache.filter(t => t.type === typeFilter).map(t => t.id);
+        const staffIds = teachersCache.filter(t => {
+          if (typeFilter === 'teaching') return t.type === 'teaching';
+          if (typeFilter === 'clinician') return isClinician(t.type);
+          return false;
+        }).map(t => t.id);
         filtered = filtered.filter(a => staffIds.includes(a.teacherId));
       }
 
@@ -3523,11 +3615,12 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 8.6.0 - Cloud Synced');
+      console.log('📚 Version 9.0.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
+      console.log('👨‍🏫 Staff Categories: Teaching Staff & Clinicians (Medical)');
+      console.log('🏥 Clinicians include: Medical, HRIO, Nutritionist, Lab Technician, Radiographer');
+      console.log('💰 Sponsorship tab shows only sponsored students');
       console.log('🔒 Duplicate prevention enabled for student records');
-      console.log('👔 Staff Roles: HRIO, Nutritionist, Lab Technician, Radiographer');
-      console.log('🏥 Clinic permissions: Admin, Nurse, Doctor, HRIO, Nutritionist, Lab Technician, Radiographer');
     });
   </script>
 </body>
