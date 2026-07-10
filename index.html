@@ -531,9 +531,9 @@
         <div class="sidebar-section">⭐ Leadership</div>
         <div class="nav-item" id="prefectNav" onclick="showTab('prefects')" data-tab="prefects"><span class="icon">⭐</span> Prefect Roles</div>
 
-        <div class="sidebar-section">👨‍🏫 Staff</div>
-        <div class="nav-item" onclick="showTab('teachers')" data-tab="teachers"><span class="icon">👨‍🏫</span> Staff Records</div>
-        <div class="nav-item" id="teacherAttNav" onclick="showTab('teacherAttendance')" data-tab="teacherAttendance"><span class="icon">📅</span> Staff Attendance</div>
+        <div class="sidebar-section">👨‍🏫 Teachers</div>
+        <div class="nav-item" onclick="showTab('teachers')" data-tab="teachers"><span class="icon">👨‍🏫</span> Teacher Records</div>
+        <div class="nav-item" id="teacherAttNav" onclick="showTab('teacherAttendance')" data-tab="teacherAttendance"><span class="icon">📅</span> Teachers Attendance</div>
 
         <div class="sidebar-section">📈 Analytics</div>
         <div class="nav-item" onclick="showTab('analytics')" data-tab="analytics"><span class="icon">📈</span> Analytics</div>
@@ -555,7 +555,7 @@
             <div class="stats-grid" id="boardingStats"></div>
           </div>
           <div class="card">
-            <div class="card-header"><h3>👨‍🏫 Staff Breakdown</h3></div>
+            <div class="card-header"><h3>👨‍🏫 Teacher Breakdown</h3></div>
             <div class="stats-grid" id="staffBreakdownStats"></div>
           </div>
           <div class="charts-grid">
@@ -711,7 +711,7 @@
             <div class="table-container">
               <table>
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
-                <tbody id="clinicTableBody"></tbody></table>
+                <tbody id="clinicTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -738,14 +738,14 @@
           </div>
         </div>
 
-        <!-- TEACHERS / STAFF RECORDS -->
+        <!-- TEACHER RECORDS -->
         <div class="tab-content" id="tab-teachers">
           <div class="card">
-            <div class="card-header"><h2>👨‍🏫 Staff Records</h2><button class="btn btn-primary" id="addTeacherBtn" onclick="showAddTeacherModal()">+ Add Staff</button></div>
+            <div class="card-header"><h2>👨‍🏫 Teacher Records</h2><button class="btn btn-primary" id="addTeacherBtn" onclick="showAddTeacherModal()">+ Add Teacher</button></div>
             <div class="form-row" style="margin-bottom:16px;">
-              <div class="form-group"><label>Staff Type</label>
+              <div class="form-group"><label>Teacher Type</label>
                 <select id="teacherTypeFilter" onchange="renderTeachers()">
-                  <option value="">All Staff</option>
+                  <option value="">All Teachers</option>
                   <option value="teaching">👨‍🏫 Teaching Staff</option>
                   <option value="clinician">🏥 Clinicians (Medical)</option>
                 </select>
@@ -759,20 +759,20 @@
               </div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Name</th><th>Employee ID</th><th>Staff Type</th><th>Specialization</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr></thead>
+              <table><thead><tr><th>Name</th><th>Employee ID</th><th>Type</th><th>Specialization</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody id="teachersTableBody"></tbody></table>
             </div>
           </div>
         </div>
 
-        <!-- TEACHER ATTENDANCE / STAFF ATTENDANCE -->
+        <!-- TEACHERS ATTENDANCE -->
         <div class="tab-content" id="tab-teacherAttendance">
           <div class="card">
-            <div class="card-header"><h2>📅 Staff Attendance</h2><button class="btn btn-primary" id="addTeacherAttBtn" onclick="showTeacherAttendanceModal()">+ Mark Attendance</button></div>
+            <div class="card-header"><h2>📅 Teachers Attendance</h2><button class="btn btn-primary" id="addTeacherAttBtn" onclick="showTeacherAttendanceModal()">+ Mark Attendance</button></div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Date</label><input type="date" id="teacherAttDate" onchange="renderTeacherAttendance()"></div>
-              <div class="form-group"><label>Staff</label><select id="teacherAttFilter" onchange="renderTeacherAttendance()"><option value="">All Staff</option></select></div>
-              <div class="form-group"><label>Staff Type</label>
+              <div class="form-group"><label>Teacher</label><select id="teacherAttFilter" onchange="renderTeacherAttendance()"><option value="">All Teachers</option></select></div>
+              <div class="form-group"><label>Teacher Type</label>
                 <select id="teacherAttTypeFilter" onchange="renderTeacherAttendance()">
                   <option value="">All Types</option>
                   <option value="teaching">👨‍🏫 Teaching</option>
@@ -781,7 +781,7 @@
               </div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Date</th><th>Staff</th><th>Type</th><th>Status</th><th>Reason</th><th>Lessons Today</th><th>Lessons/Week</th><th>Marked By</th><th>Actions</th></tr></thead>
+              <table><thead><tr><th>Date</th><th>Teacher</th><th>Type</th><th>Status</th><th>Reason</th><th>Lessons Today</th><th>Lessons/Week</th><th>Marked By</th><th>Actions</th></tr></thead>
               <tbody id="teacherAttendanceBody"></tbody></table>
             </div>
           </div>
@@ -1075,7 +1075,7 @@
         const label = CLINICIAN_ROLE_NAMES[type] || '🏥 Clinician';
         return `<span class="staff-type-badge clinician">${label}</span>`;
       }
-      return `<span class="staff-type-badge clinician">🏥 Clinician</span>`;
+      return `<span class="staff-type-badge clinician">🏥 Clinician</span>';
     }
 
     function isClinician(type) {
@@ -1085,7 +1085,7 @@
     function getStaffCategory(type) {
       if (type === 'teaching') return 'teaching';
       if (isClinician(type)) return 'clinician';
-      return 'clinician'; // Default to clinician for any other type
+      return 'clinician';
     }
 
     function showToast(message, type = 'success', duration = 4000) {
@@ -1427,7 +1427,7 @@
     };
 
     // ============================================================
-    // 📊 DASHBOARD - WITH STAFF BREAKDOWN
+    // 📊 DASHBOARD
     // ============================================================
 
     function renderDashboard() {
@@ -1447,12 +1447,10 @@
       const boarders = students.filter(s => s.status === 'Boarder').length;
       const dayScholars = students.filter(s => s.status === 'Day Scholar').length;
       
-      // Staff breakdown by category - ALL clinicians grouped together
       const teachingStaff = teachers.filter(t => t.type === 'teaching' && t.status === 'Active').length;
       const clinicians = teachers.filter(t => isClinician(t.type) && t.status === 'Active').length;
       const totalActiveStaff = teachers.filter(t => t.status === 'Active').length;
       
-      // Individual clinician types for detailed view
       const medicalStaff = teachers.filter(t => t.type === 'medical' && t.status === 'Active').length;
       const hrioStaff = teachers.filter(t => t.type === 'hrio' && t.status === 'Active').length;
       const nutritionistStaff = teachers.filter(t => t.type === 'nutritionist' && t.status === 'Active').length;
@@ -1488,10 +1486,9 @@
         <div class="stat-card" style="border-top-color:#f39c12;"><div class="stat-number">${dayScholars}</div><div class="stat-label">🚶 Day Scholars</div></div>
       `;
 
-      // Staff Breakdown Stats - Separate card with Clinicians grouped
       document.getElementById('staffBreakdownStats').innerHTML = `
-        <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${totalActiveStaff}</div><div class="stat-label">👨‍🏫 Total Active Staff</div></div>
-        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${teachingStaff}</div><div class="stat-label">👨‍🏫 Teachers</div></div>
+        <div class="stat-card" style="border-top-color:#2ecc71;"><div class="stat-number">${totalActiveStaff}</div><div class="stat-label">👨‍🏫 Total Teachers</div></div>
+        <div class="stat-card" style="border-top-color:#3498db;"><div class="stat-number">${teachingStaff}</div><div class="stat-label">👨‍🏫 Teaching Staff</div></div>
         <div class="stat-card" style="border-top-color:#e74c3c;"><div class="stat-number">${clinicians}</div><div class="stat-label">🏥 Clinicians (Medical)</div></div>
         <div class="stat-card" style="border-top-color:#c0392b;"><div class="stat-number">${medicalStaff}</div><div class="stat-label">🏥 Medical</div></div>
         <div class="stat-card" style="border-top-color:#283593;"><div class="stat-number">${hrioStaff}</div><div class="stat-label">👔 HRIO</div></div>
@@ -2761,20 +2758,18 @@
     };
 
     // ============================================================
-    // 👨‍🏫 STAFF RECORDS - UPDATED WITH CLINICIAN GROUPING
+    // 👨‍🏫 TEACHER RECORDS
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
-      if (!canAdd('teachers')) { showToast('You do not have permission to add staff', 'error'); return; }
+      if (!canAdd('teachers')) { showToast('You do not have permission to add teachers', 'error'); return; }
       const teacher = editId ? teachersCache.find(t => t.id === editId) : null;
       
-      // Build staff type options - only Teaching and Clinician as main categories
       const typeOptions = `
         <option value="teaching" ${teacher?.type === 'teaching' ? 'selected' : ''}>👨‍🏫 Teaching Staff</option>
         <option value="clinician" ${teacher?.type && isClinician(teacher.type) ? 'selected' : ''}>🏥 Clinicians (Medical)</option>
       `;
 
-      // Sub-type options for clinicians
       const subTypeOptions = STAFF_SUB_TYPES.map(t => 
         `<option value="${t.value}" ${teacher?.type === t.value ? 'selected' : ''}>${t.label}</option>`
       ).join('');
@@ -2792,13 +2787,13 @@
           <div class="form-group"><label>Employee ID *</label>
             <input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., STF-001">
           </div>
-          <div class="form-group"><label>Staff Category *</label>
+          <div class="form-group"><label>Teacher Category *</label>
             <select id="t_type" onchange="updateStaffFields()">
               ${typeOptions}
             </select>
           </div>
           <div class="form-group" id="subTypeGroup">
-            <label>Staff Sub-Type (for Clinicians)</label>
+            <label>Sub-Type (for Clinicians)</label>
             <select id="t_subType" onchange="updateSpecializationOptions()">
               <option value="">-- Select Sub-Type --</option>
               ${subTypeOptions}
@@ -2861,11 +2856,11 @@
           </div>
         </div>
         <button class="btn btn-success" onclick="saveTeacher('${editId || ''}')" style="width:100%;margin-top:16px;">
-          ${editId ? 'Update' : 'Add'} Staff
+          ${editId ? 'Update' : 'Add'} Teacher
         </button>
       `;
 
-      openModal(editId ? 'Edit Staff' : 'Add Staff', html);
+      openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
 
       window.updateStaffFields = function() {
         const type = document.getElementById('t_type').value;
@@ -2901,7 +2896,6 @@
         document.getElementById('dormSelectGroup').style.display = (dormRole !== 'None') ? 'block' : 'none';
       };
       
-      // Initialize fields
       setTimeout(() => {
         window.updateStaffFields();
         if (teacher?.type && isClinician(teacher.type)) {
@@ -2920,7 +2914,6 @@
       const category = document.getElementById('t_type').value;
       let type = category;
       
-      // If clinician, get the sub-type
       if (category === 'clinician') {
         type = document.getElementById('t_subType').value;
         if (!type) { showToast('Please select a Clinician Sub-Type', 'error'); return; }
@@ -2950,12 +2943,12 @@
       try {
         if (editId) { 
           await updateDoc(doc(db, 'teachers', editId), data); 
-          showToast('Staff updated');
+          showToast('Teacher updated');
           await addAuditLog('UPDATE_TEACHER', name);
         } else { 
           data.createdAt = serverTimestamp();
           await addDoc(collection(db, 'teachers'), data); 
-          showToast(`Staff ${name} added`);
+          showToast(`Teacher ${name} added`);
           await addAuditLog('ADD_TEACHER', `${name} (${type})`);
         }
         closeModal();
@@ -2968,7 +2961,6 @@
       
       let filtered = teachersCache;
       
-      // Filter by category
       if (typeFilter === 'teaching') {
         filtered = filtered.filter(t => t.type === 'teaching');
       } else if (typeFilter === 'clinician') {
@@ -3016,34 +3008,34 @@
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="11" style="text-align:center;color:#999;padding:20px;">No staff found</td></tr>';
+      }).join('') || '<tr><td colspan="11" style="text-align:center;color:#999;padding:20px;">No teachers found</td></tr>';
     };
 
     window.deleteTeacher = async function(id) {
-      if (!confirm('Delete this staff member?')) return;
+      if (!confirm('Delete this teacher?')) return;
       try { 
         const teacher = teachersCache.find(t => t.id === id); 
         await deleteDoc(doc(db, 'teachers', id)); 
         await addAuditLog('DELETE_TEACHER', teacher?.name || 'Unknown'); 
-        showToast('Staff deleted'); 
+        showToast('Teacher deleted'); 
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
     // ============================================================
-    // 📅 STAFF ATTENDANCE
+    // 📅 TEACHERS ATTENDANCE
     // ============================================================
 
     window.showTeacherAttendanceModal = function() {
-      if (!canAdd('teacherAttendance')) { showToast('You do not have permission to mark staff attendance', 'error'); return; }
+      if (!canAdd('teacherAttendance')) { showToast('You do not have permission to mark teachers attendance', 'error'); return; }
       const today = new Date().toISOString().split('T')[0];
-      const activeStaff = teachersCache.filter(t => t.status === 'Active');
+      const activeTeachers = teachersCache.filter(t => t.status === 'Active');
 
-      if (!activeStaff.length) { showToast('No active staff found', 'error'); return; }
+      if (!activeTeachers.length) { showToast('No active teachers found', 'error'); return; }
 
       let html = `
         <div class="form-group"><label>Date</label><input type="date" id="ta_date" value="${today}"></div>
-        <div style="font-size:0.85em;color:#666;margin-bottom:10px;">Total: ${activeStaff.length} active staff members</div>
-        ${activeStaff.map(t => `
+        <div style="font-size:0.85em;color:#666;margin-bottom:10px;">Total: ${activeTeachers.length} active teachers</div>
+        ${activeTeachers.map(t => `
           <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;flex-wrap:wrap;">
             <span style="flex:1;min-width:150px;font-size:0.8em;">
               ${t.name}
@@ -3067,10 +3059,10 @@
             <input type="number" id="ta_lessons_week" value="30" min="0" max="40">
           </div>
         ` : ''}
-        <button class="btn btn-success" onclick="saveTeacherAttendance()" style="width:100%;margin-top:16px;">💾 Save Staff Attendance</button>
+        <button class="btn btn-success" onclick="saveTeacherAttendance()" style="width:100%;margin-top:16px;">💾 Save Teachers Attendance</button>
       `;
 
-      openModal('📅 Staff Attendance', html);
+      openModal('📅 Teachers Attendance', html);
 
       window.toggleTeacherReason = function(teacherId) {
         const sel = document.getElementById('ta_status_' + teacherId);
@@ -3084,11 +3076,11 @@
       if (!date) { showToast('Please select a date', 'error'); return; }
 
       const lessonsWeek = parseInt(document.getElementById('ta_lessons_week')?.value) || 30;
-      const activeStaff = teachersCache.filter(t => t.status === 'Active');
+      const activeTeachers = teachersCache.filter(t => t.status === 'Active');
 
       try {
         const promises = [];
-        activeStaff.forEach(t => {
+        activeTeachers.forEach(t => {
           const statusEl = document.getElementById('ta_status_' + t.id);
           if (!statusEl) return;
           const reasonEl = document.getElementById('ta_reason_' + t.id);
@@ -3109,8 +3101,8 @@
         });
 
         await Promise.all(promises);
-        await addAuditLog('TEACHER_ATTENDANCE', `Marked ${activeStaff.length} staff on ${date}`);
-        showToast(`✅ Staff attendance saved for ${activeStaff.length} staff members`);
+        await addAuditLog('TEACHER_ATTENDANCE', `Marked ${activeTeachers.length} teachers on ${date}`);
+        showToast(`✅ Teachers attendance saved for ${activeTeachers.length} teachers`);
         closeModal();
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
@@ -3122,7 +3114,7 @@
 
       const filterSelect = document.getElementById('teacherAttFilter');
       if (filterSelect.options.length <= 1) {
-        filterSelect.innerHTML = '<option value="">All Staff</option>' +
+        filterSelect.innerHTML = '<option value="">All Teachers</option>' +
           teachersCache.map(t => `<option value="${t.id}">${t.name} (${isClinician(t.type) ? 'Clinician' : t.type})</option>`).join('');
       }
 
@@ -3132,12 +3124,12 @@
       if (date) filtered = filtered.filter(a => a.date === date);
       if (teacherFilter) filtered = filtered.filter(a => a.teacherId === teacherFilter);
       if (typeFilter) {
-        const staffIds = teachersCache.filter(t => {
+        const teacherIds = teachersCache.filter(t => {
           if (typeFilter === 'teaching') return t.type === 'teaching';
           if (typeFilter === 'clinician') return isClinician(t.type);
           return false;
         }).map(t => t.id);
-        filtered = filtered.filter(a => staffIds.includes(a.teacherId));
+        filtered = filtered.filter(a => teacherIds.includes(a.teacherId));
       }
 
       const canDeleteTA = canDeleteSpecific('teacherAttendance');
@@ -3160,14 +3152,14 @@
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No staff attendance records found</td></tr>';
+      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No teachers attendance records found</td></tr>';
     };
 
     window.deleteTeacherAttendance = async function(id) {
-      if (!confirm('Delete this staff attendance record?')) return;
+      if (!confirm('Delete this teachers attendance record?')) return;
       try { 
         await deleteDoc(doc(db, 'teacherAttendance', id)); 
-        await addAuditLog('DELETE_TEACHER_ATTENDANCE', 'Deleted staff attendance record'); 
+        await addAuditLog('DELETE_TEACHER_ATTENDANCE', 'Deleted teachers attendance record'); 
         showToast('Record deleted'); 
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
@@ -3615,9 +3607,9 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 9.0.0 - Cloud Synced');
+      console.log('📚 Version 9.1.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
-      console.log('👨‍🏫 Staff Categories: Teaching Staff & Clinicians (Medical)');
+      console.log('👨‍🏫 Teacher Records & Teachers Attendance');
       console.log('🏥 Clinicians include: Medical, HRIO, Nutritionist, Lab Technician, Radiographer');
       console.log('💰 Sponsorship tab shows only sponsored students');
       console.log('🔒 Duplicate prevention enabled for student records');
