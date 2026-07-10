@@ -418,6 +418,24 @@
     .staff-type-badge.labtech { background: #fff3e0; color: #e65100; }
     .staff-type-badge.radiographer { background: #f3e5f5; color: #6a1b9a; }
 
+    .duplicate-warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      color: #856404;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    .duplicate-warning.show {
+      display: flex;
+    }
+    .duplicate-warning .icon {
+      font-size: 24px;
+    }
+
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -280px; z-index: 999; height: calc(100vh - 70px); transition: left 0.3s; top: 70px; }
@@ -1147,6 +1165,8 @@
       const isLabTech = role === 'labtech';
       const isRadiographer = role === 'radiographer';
 
+      const canManageClinic = isAdmin || isNurse || isDoctor || isHRIO || isNutritionist || isLabTech || isRadiographer;
+      
       document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
@@ -1173,7 +1193,7 @@
       if (addExpulsionBtn) addExpulsionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
       const addClinicBtn = document.getElementById('addClinicBtn');
-      if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isNurse || isDoctor) ? 'inline-block' : 'none';
+      if (addClinicBtn) addClinicBtn.style.display = canManageClinic ? 'inline-block' : 'none';
 
       const addTeacherBtn = document.getElementById('addTeacherBtn');
       if (addTeacherBtn) addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
@@ -1200,7 +1220,10 @@
         return editTabs.includes(tab);
       }
       if (role === 'teacher') return ['grades', 'attendance', 'students'].includes(tab);
-      if (role === 'nurse' || role === 'doctor') return tab === 'clinic';
+      if (tab === 'clinic') {
+        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+        return clinicRoles.includes(role);
+      }
       if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
       if (role === 'hrio') return ['teacherAttendance'].includes(tab);
       return false;
@@ -1216,7 +1239,10 @@
         return addTabs.includes(tab);
       }
       if (role === 'teacher') return ['grades', 'attendance', 'students'].includes(tab);
-      if (role === 'nurse' || role === 'doctor') return tab === 'clinic';
+      if (tab === 'clinic') {
+        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+        return clinicRoles.includes(role);
+      }
       if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
       if (role === 'hrio') return ['teacherAttendance'].includes(tab);
       return false;
@@ -1226,6 +1252,10 @@
       if (!currentUser) return false;
       const role = currentUser.role;
       if (role === 'director') return false;
+      if (tab === 'clinic') {
+        const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+        return clinicRoles.includes(role);
+      }
       return role === 'admin';
     }
 
@@ -1489,7 +1519,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS - FULL IMPLEMENTATION
+    // 👩‍🎓 STUDENTS - WITH DUPLICATE PREVENTION
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -1501,15 +1531,15 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Admission Number *</label>
-            <input type="text" id="s_admNo" value="${student?.admNo || ''}" placeholder="e.g., 2024-001">
+            <input type="text" id="s_admNo" value="${student?.admNo || ''}" placeholder="e.g., 2024-001" oninput="checkStudentDuplicate()">
           </div>
           <div class="form-group">
             <label>First Name *</label>
-            <input type="text" id="s_firstName" value="${student?.firstName || ''}" placeholder="First name">
+            <input type="text" id="s_firstName" value="${student?.firstName || ''}" placeholder="First name" oninput="checkStudentDuplicate()">
           </div>
           <div class="form-group">
             <label>Last Name *</label>
-            <input type="text" id="s_lastName" value="${student?.lastName || ''}" placeholder="Last name">
+            <input type="text" id="s_lastName" value="${student?.lastName || ''}" placeholder="Last name" oninput="checkStudentDuplicate()">
           </div>
           <div class="form-group">
             <label>Class *</label>
@@ -1553,6 +1583,12 @@
                 <input type="file" id="s_photo" accept="image/*" onchange="previewStudentPhoto(this)" style="margin-bottom:5px;">
                 <div style="font-size:0.75em;color:#888;">Max size: 200KB (JPEG, PNG)</div>
               </div>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <div id="duplicateWarning" class="duplicate-warning">
+              <span class="icon">⚠️</span>
+              <span id="duplicateMessage">A student with this Admission Number or Name already exists!</span>
             </div>
           </div>
           <div class="form-group">
@@ -1615,7 +1651,7 @@
             <textarea id="s_notes" rows="2">${student?.notes || ''}</textarea>
           </div>
         </div>
-        <button class="btn btn-success" onclick="saveStudent('${editId || ''}')" style="width:100%;margin-top:16px;">
+        <button class="btn btn-success" id="saveStudentBtn" onclick="saveStudent('${editId || ''}')" style="width:100%;margin-top:16px;">
           ${editId ? 'Update' : 'Add'} Student
         </button>
       `;
@@ -1626,6 +1662,71 @@
         const isPrefect = document.getElementById('s_isPrefect').value === 'Yes';
         document.getElementById('prefectRoleGroup').style.display = isPrefect ? 'block' : 'none';
         document.getElementById('prefectDeptGroup').style.display = isPrefect ? 'block' : 'none';
+      };
+      
+      // Initialize duplicate check
+      window.checkStudentDuplicate = function() {
+        const admNo = document.getElementById('s_admNo').value.trim();
+        const firstName = document.getElementById('s_firstName').value.trim();
+        const lastName = document.getElementById('s_lastName').value.trim();
+        const warningEl = document.getElementById('duplicateWarning');
+        const messageEl = document.getElementById('duplicateMessage');
+        const saveBtn = document.getElementById('saveStudentBtn');
+        
+        // If editing, skip duplicate check for the same student
+        if (editId) {
+          const currentStudent = studentsCache.find(s => s.id === editId);
+          if (currentStudent) {
+            const isSameAdm = currentStudent.admNo === admNo;
+            const isSameName = currentStudent.firstName === firstName && currentStudent.lastName === lastName;
+            if (isSameAdm && isSameName) {
+              warningEl.classList.remove('show');
+              if (saveBtn) saveBtn.disabled = false;
+              return;
+            }
+          }
+        }
+        
+        if (!admNo && !firstName && !lastName) {
+          warningEl.classList.remove('show');
+          if (saveBtn) saveBtn.disabled = false;
+          return;
+        }
+        
+        // Check for duplicates
+        let duplicateFound = false;
+        let duplicateMessage = '';
+        
+        // Check by Admission Number
+        if (admNo) {
+          const existingByAdm = studentsCache.find(s => s.admNo === admNo && s.id !== editId);
+          if (existingByAdm) {
+            duplicateFound = true;
+            duplicateMessage = `⚠️ Admission Number "${admNo}" is already assigned to ${existingByAdm.firstName} ${existingByAdm.lastName} (${existingByAdm.class})`;
+          }
+        }
+        
+        // Check by Full Name (if no admission number duplicate found)
+        if (!duplicateFound && firstName && lastName) {
+          const fullName = `${firstName} ${lastName}`.toLowerCase();
+          const existingByName = studentsCache.find(s => {
+            const sFullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+            return sFullName === fullName && s.id !== editId;
+          });
+          if (existingByName) {
+            duplicateFound = true;
+            duplicateMessage = `⚠️ Student "${firstName} ${lastName}" already exists with Admission Number: ${existingByName.admNo} (${existingByName.class})`;
+          }
+        }
+        
+        if (duplicateFound) {
+          warningEl.classList.add('show');
+          messageEl.textContent = duplicateMessage;
+          if (saveBtn) saveBtn.disabled = true;
+        } else {
+          warningEl.classList.remove('show');
+          if (saveBtn) saveBtn.disabled = false;
+        }
       };
     };
 
@@ -1654,6 +1755,37 @@
       
       if (!admNo || !firstName || !lastName) {
         showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      // Double-check for duplicates before saving
+      let duplicateFound = false;
+      let duplicateMessage = '';
+      
+      // Check by Admission Number
+      if (admNo) {
+        const existingByAdm = studentsCache.find(s => s.admNo === admNo && s.id !== editId);
+        if (existingByAdm) {
+          duplicateFound = true;
+          duplicateMessage = `Admission Number "${admNo}" is already assigned to ${existingByAdm.firstName} ${existingByAdm.lastName}`;
+        }
+      }
+      
+      // Check by Full Name
+      if (!duplicateFound && firstName && lastName) {
+        const fullName = `${firstName} ${lastName}`.toLowerCase();
+        const existingByName = studentsCache.find(s => {
+          const sFullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+          return sFullName === fullName && s.id !== editId;
+        });
+        if (existingByName) {
+          duplicateFound = true;
+          duplicateMessage = `Student "${firstName} ${lastName}" already exists with Admission Number: ${existingByName.admNo}`;
+        }
+      }
+      
+      if (duplicateFound) {
+        showToast(`❌ ${duplicateMessage}`, 'error');
         return;
       }
 
@@ -2365,9 +2497,17 @@
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
-      if (!canAdd('clinic')) { showToast('Only Doctor and Nurse can record clinic visits', 'error'); return; }
+      const role = currentUser?.role || '';
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      
+      if (!clinicRoles.includes(role)) {
+        showToast('Only Admin, Nurse, Doctor, HRIO, Nutritionist, Lab Technician, and Radiographer can manage clinic visits', 'error');
+        return;
+      }
+      
       const visit = editId ? clinicCache.find(c => c.id === editId) : null;
       const today = new Date().toISOString().split('T')[0];
+      
       const html = `
         <div class="form-grid">
           <div class="form-group"><label>Student *</label>
@@ -2397,6 +2537,7 @@
         </div>
         <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
       `;
+      
       openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
       
       window.toggleFollowUpDate = function() {
@@ -2406,6 +2547,14 @@
     };
 
     window.saveClinic = async function(editId) {
+      const role = currentUser?.role || '';
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      
+      if (!clinicRoles.includes(role)) {
+        showToast('You do not have permission to save clinic visits', 'error');
+        return;
+      }
+      
       const studentId = document.getElementById('c_student').value;
       const date = document.getElementById('c_date').value;
       const doctor = document.getElementById('c_doctor').value.trim();
@@ -2416,22 +2565,40 @@
       const followUp = document.getElementById('c_followUp').value;
       const followUpDate = document.getElementById('c_followUpDate').value;
 
-      if (!studentId || !date || !doctor || !condition || !complaint) { showToast('Please fill all required fields', 'error'); return; }
+      if (!studentId || !date || !doctor || !condition || !complaint) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
 
-      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication, followUp, followUpDate: followUp === 'Yes' ? followUpDate : '' };
+      const data = { 
+        studentId, date, doctor, condition, complaint, 
+        diagnosis, medication, followUp, 
+        followUpDate: followUp === 'Yes' ? followUpDate : '' 
+      };
 
       try {
         const student = studentsCache.find(s => s.id === studentId);
-        if (editId) { await updateDoc(doc(db, 'clinic', editId), data); showToast('Visit updated'); }
-        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'clinic'), data); showToast(`Visit recorded for ${student?.firstName} ${student?.lastName}`); }
-        await addAuditLog(editId ? 'UPDATE_CLINIC' : 'ADD_CLINIC', `${student?.firstName} ${student?.lastName}`);
+        if (editId) { 
+          await updateDoc(doc(db, 'clinic', editId), data); 
+          showToast('Visit updated');
+          await addAuditLog('UPDATE_CLINIC', `Updated visit for ${student?.firstName} ${student?.lastName}`);
+        } else { 
+          data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; 
+          data.createdAt = serverTimestamp(); 
+          await addDoc(collection(db, 'clinic'), data); 
+          showToast(`Visit recorded for ${student?.firstName} ${student?.lastName}`);
+          await addAuditLog('ADD_CLINIC', `Recorded visit for ${student?.firstName} ${student?.lastName}`);
+        }
         closeModal();
-      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+      } catch (err) { 
+        showToast('Error: ' + err.message, 'error'); 
+      }
     };
 
     window.renderClinic = function() {
-      const canEditClinic = canEdit('clinic');
-      const canDeleteClinic = canDeleteSpecific('clinic');
+      const role = currentUser?.role || '';
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      const canManageClinic = clinicRoles.includes(role);
 
       document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
         const student = studentsCache.find(s => s.id === c.studentId);
@@ -2451,8 +2618,8 @@
             <td>${followUpBadge}</td>
             <td>${c.followUp === 'Yes' ? formatDate(c.followUpDate) : '-'}</td>
             <td>
-              ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
-              ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
+              ${canManageClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
+              ${canManageClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
@@ -2460,8 +2627,22 @@
     };
 
     window.deleteClinic = async function(id) {
+      const role = currentUser?.role || '';
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'nutritionist', 'labtech', 'radiographer'];
+      
+      if (!clinicRoles.includes(role)) {
+        showToast('You do not have permission to delete clinic visits', 'error');
+        return;
+      }
+      
       if (!confirm('Delete this clinic visit?')) return;
-      try { await deleteDoc(doc(db, 'clinic', id)); await addAuditLog('DELETE_CLINIC', 'Deleted clinic visit'); showToast('Visit deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+      try { 
+        await deleteDoc(doc(db, 'clinic', id)); 
+        await addAuditLog('DELETE_CLINIC', 'Deleted clinic visit'); 
+        showToast('Visit deleted'); 
+      } catch (err) { 
+        showToast('Error: ' + err.message, 'error'); 
+      }
     };
 
     // ============================================================
@@ -2552,7 +2733,7 @@
     };
 
     // ============================================================
-    // 👨‍🏫 STAFF RECORDS - WITH NEW ROLES
+    // 👨‍🏫 STAFF RECORDS
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -3342,9 +3523,11 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 8.5.0 - Cloud Synced');
+      console.log('📚 Version 8.6.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
-      console.log('👔 New Staff Roles: HRIO, Nutritionist, Lab Technician, Radiographer');
+      console.log('🔒 Duplicate prevention enabled for student records');
+      console.log('👔 Staff Roles: HRIO, Nutritionist, Lab Technician, Radiographer');
+      console.log('🏥 Clinic permissions: Admin, Nurse, Doctor, HRIO, Nutritionist, Lab Technician, Radiographer');
     });
   </script>
 </body>
