@@ -31,9 +31,6 @@
 
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: var(--dark); line-height: 1.6; }
 
-    /* ============================================================
-       SCHOOL LOGO STYLES
-    ============================================================ */
     .school-logo {
       display: flex;
       align-items: center;
@@ -65,7 +62,6 @@
       letter-spacing: 1px;
     }
 
-    /* Login page logo */
     .login-logo {
       display: flex;
       flex-direction: column;
@@ -85,9 +81,6 @@
       letter-spacing: 2px;
     }
 
-    /* ============================================================
-       PRINT WATERMARK
-    ============================================================ */
     .print-watermark {
       display: none;
     }
@@ -149,9 +142,6 @@
       display: none;
     }
 
-    /* ============================================================
-       COMPACT DASHBOARD STATS
-    ============================================================ */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -201,9 +191,6 @@
       }
     }
 
-    /* ============================================================
-       RESPONSIVE LOGO
-    ============================================================ */
     @media (max-width: 768px) {
       .school-logo img {
         height: 30px;
@@ -219,9 +206,6 @@
       }
     }
 
-    /* ============================================================
-       REST OF STYLES
-    ============================================================ */
     .hidden { display: none !important; }
     .text-center { text-align: center; }
     .text-muted { color: var(--gray); }
@@ -454,9 +438,7 @@
 </head>
 <body>
 
-  <!-- ============================================================
-       PRINT WATERMARK
-  ============================================================ -->
+  <!-- PRINT WATERMARK -->
   <div class="print-watermark" id="printWatermark">
     <img src="https://raw.githubusercontent.com/johnkimaninyoro-spec/students-management-system/main/MCHSLogo.png" alt="School Logo Watermark">
   </div>
@@ -928,23 +910,15 @@
       'Form 3 East', 'Form 3 West', 'Form 4 East', 'Form 4 West'
     ];
 
-    // ============================================================
-    // 📚 SUBJECTS - COMPLETE LIST
-    // ============================================================
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
       'Biology', 'Chemistry', 'Physics',
-      'KSL', // Kenya Sign Language
-      'Creative Arts & Sports (CA)',
-      'Cose Maths',
-      'Science', 'Social Studies',
+      'KSL', 'Creative Arts & Sports (CA)',
+      'Cose Maths', 'Science', 'Social Studies',
       'CRE', 'Agriculture', 'Business Studies',
       'Computer Studies', 'History', 'Geography'
     ];
 
-    // ============================================================
-    // 🏠 DORMS
-    // ============================================================
     const DORMS = [
       'Boys Dorm (Upstairs)',
       'Boys Dorm (Downstairs)',
@@ -961,9 +935,6 @@
     ];
     const PREFECT_ROLES = ['Head Prefect', 'Deputy Head Prefect', 'Class Prefect', 'Assistant Class Prefect'];
 
-    // ============================================================
-    // 🏷️ STAFF TYPES & SPECIALIZATIONS
-    // ============================================================
     const STAFF_TYPES = [
       { value: 'teaching', label: '👨‍🏫 Teaching Staff', color: 'teacher' },
       { value: 'medical', label: '🏥 Medical Staff', color: 'medical' },
@@ -974,44 +945,12 @@
     ];
 
     const STAFF_SPECIALIZATIONS = {
-      medical: [
-        'General Practitioner (Doctor)',
-        'Registered Nurse',
-        'Clinical Officer',
-        'School Nurse',
-        'Other'
-      ],
-      hrio: [
-        'Human Resources Manager',
-        'Industrial Relations Officer',
-        'Staff Welfare Officer',
-        'Other'
-      ],
-      nutritionist: [
-        'Clinical Nutritionist',
-        'Public Health Nutritionist',
-        'Dietitian',
-        'School Nutritionist',
-        'Other'
-      ],
-      labtech: [
-        'Medical Laboratory Technician',
-        'Science Laboratory Technician',
-        'Computer Lab Technician',
-        'Other'
-      ],
-      radiographer: [
-        'Diagnostic Radiographer',
-        'X-Ray Technician',
-        'Ultrasound Technician',
-        'Other'
-      ],
-      teaching: [
-        'Subject Teacher',
-        'Senior Teacher',
-        'Head of Department',
-        'Other'
-      ]
+      medical: ['General Practitioner (Doctor)', 'Registered Nurse', 'Clinical Officer', 'School Nurse', 'Other'],
+      hrio: ['Human Resources Manager', 'Industrial Relations Officer', 'Staff Welfare Officer', 'Other'],
+      nutritionist: ['Clinical Nutritionist', 'Public Health Nutritionist', 'Dietitian', 'School Nutritionist', 'Other'],
+      labtech: ['Medical Laboratory Technician', 'Science Laboratory Technician', 'Computer Lab Technician', 'Other'],
+      radiographer: ['Diagnostic Radiographer', 'X-Ray Technician', 'Ultrasound Technician', 'Other'],
+      teaching: ['Subject Teacher', 'Senior Teacher', 'Head of Department', 'Other']
     };
 
     let currentUser = null;
@@ -1122,6 +1061,10 @@
       setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; setTimeout(() => toast.remove(), 400); }, duration);
     }
 
+    // ============================================================
+    // 🔐 AUTHENTICATION
+    // ============================================================
+
     window.handleLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -1145,10 +1088,6 @@
     window.handleLogout = async function() {
       try {
         await signOut(auth);
-        const emailInput = document.getElementById('loginEmail');
-        const passwordInput = document.getElementById('loginPassword');
-        if (emailInput) emailInput.value = '';
-        if (passwordInput) passwordInput.value = '';
         showToast('Logged out successfully');
       } catch (err) {
         showToast('Error logging out', 'error');
@@ -1190,14 +1129,11 @@
     });
 
     // ============================================================
-    // 🔒 PERMISSIONS - UPDATED FOR NEW ROLES
+    // 🔒 PERMISSIONS
     // ============================================================
 
     function setupPermissions() {
-      if (!currentUser) {
-        console.log('⚠️ No user logged in, skipping role setup');
-        return;
-      }
+      if (!currentUser) return;
       const role = currentUser?.role || '';
       const isAdmin = role === 'admin';
       const isPrincipal = role === 'principal';
@@ -1210,133 +1146,80 @@
       const isNutritionist = role === 'nutritionist';
       const isLabTech = role === 'labtech';
       const isRadiographer = role === 'radiographer';
-      
-      console.log('🔐 Setting up permissions for:', role);
 
       document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
-      // Add Student - Admin, Secretary, Teacher
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isSecretary || isTeacher) ? 'inline-block' : 'none';
 
-      // Edit Sponsorship - Admin, Director
       const editSponsorshipBtn = document.getElementById('editSponsorshipBtn');
       if (editSponsorshipBtn) editSponsorshipBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
 
-      // Add Grade - Admin, Principal, Teacher, Secretary
       const addGradeBtn = document.getElementById('addGradeBtn');
       if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Attendance - Admin, Principal, Teacher, Secretary
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
       if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isPrincipal || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
-      // Add Warning - Admin, Principal
       const addWarningBtn = document.getElementById('addWarningBtn');
       if (addWarningBtn) addWarningBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // Add Suspension - Admin, Principal
       const addSuspensionBtn = document.getElementById('addSuspensionBtn');
       if (addSuspensionBtn) addSuspensionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // Add Expulsion - Admin, Principal
       const addExpulsionBtn = document.getElementById('addExpulsionBtn');
       if (addExpulsionBtn) addExpulsionBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // Add Clinic - Admin, Nurse, Doctor
       const addClinicBtn = document.getElementById('addClinicBtn');
       if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isNurse || isDoctor) ? 'inline-block' : 'none';
 
-      // Add Staff - Admin only
       const addTeacherBtn = document.getElementById('addTeacherBtn');
       if (addTeacherBtn) addTeacherBtn.style.display = isAdmin ? 'inline-block' : 'none';
 
-      // Add Staff Attendance - Admin, Secretary, HRIO
       const addTeacherAttBtn = document.getElementById('addTeacherAttBtn');
       if (addTeacherAttBtn) addTeacherAttBtn.style.display = (isAdmin || isSecretary || isHRIO) ? 'inline-block' : 'none';
 
-      // Add Prefect - Admin, Principal
       const addPrefectBtn = document.getElementById('addPrefectBtn');
       if (addPrefectBtn) addPrefectBtn.style.display = (isAdmin || isPrincipal) ? 'inline-block' : 'none';
 
-      // Teacher Attendance Nav - Admin, Principal, Secretary, Director, Teacher, HRIO
       const teacherAttNav = document.getElementById('teacherAttNav');
       if (teacherAttNav) {
         teacherAttNav.style.display = (isAdmin || isPrincipal || isSecretary || isDirector || isTeacher || isHRIO) ? 'flex' : 'none';
       }
-
-      console.log('✅ Permissions configured for:', role);
     }
 
     function canEdit(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
-      
       if (role === 'admin') return true;
       if (role === 'director') return false;
-      
       if (role === 'principal') {
         const editTabs = ['grades', 'attendance', 'warnings', 'suspensions', 'expulsions', 'prefects'];
         return editTabs.includes(tab);
       }
-      
-      if (role === 'teacher') {
-        return ['grades', 'attendance', 'students'].includes(tab);
-      }
-      
-      if (role === 'nurse' || role === 'doctor') {
-        return tab === 'clinic';
-      }
-      
-      if (role === 'secretary') {
-        return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
-      }
-      
-      if (role === 'hrio') {
-        return ['teacherAttendance'].includes(tab);
-      }
-      
+      if (role === 'teacher') return ['grades', 'attendance', 'students'].includes(tab);
+      if (role === 'nurse' || role === 'doctor') return tab === 'clinic';
+      if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
+      if (role === 'hrio') return ['teacherAttendance'].includes(tab);
       return false;
     }
 
     function canAdd(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
-      
       if (role === 'admin') return true;
       if (role === 'director') return false;
-      
       if (role === 'principal') {
         const addTabs = ['grades', 'attendance', 'warnings', 'suspensions', 'expulsions', 'prefects'];
         return addTabs.includes(tab);
       }
-      
-      if (role === 'teacher') {
-        return ['grades', 'attendance', 'students'].includes(tab);
-      }
-      
-      if (role === 'nurse' || role === 'doctor') {
-        return tab === 'clinic';
-      }
-      
-      if (role === 'secretary') {
-        return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
-      }
-      
-      if (role === 'hrio') {
-        return ['teacherAttendance'].includes(tab);
-      }
-      
+      if (role === 'teacher') return ['grades', 'attendance', 'students'].includes(tab);
+      if (role === 'nurse' || role === 'doctor') return tab === 'clinic';
+      if (role === 'secretary') return ['grades', 'attendance', 'teacherAttendance', 'students'].includes(tab);
+      if (role === 'hrio') return ['teacherAttendance'].includes(tab);
       return false;
-    }
-
-    function canDelete() {
-      if (!currentUser) return false;
-      const role = currentUser.role;
-      if (role === 'director') return false;
-      return role === 'admin';
     }
 
     function canDeleteSpecific(tab) {
@@ -1344,45 +1227,6 @@
       const role = currentUser.role;
       if (role === 'director') return false;
       return role === 'admin';
-    }
-
-    function canView(tab) {
-      if (!currentUser) return false;
-      const role = currentUser.role;
-      
-      if (role === 'admin') return true;
-      if (role === 'director') return true;
-      
-      if (role === 'principal') {
-        const viewTabs = ['dashboard', 'students', 'grades', 'attendance', 'classPerformance', 'warnings', 'suspensions', 'expulsions', 'clinic', 'prefects', 'teachers', 'teacherAttendance', 'analytics', 'sponsorship'];
-        return viewTabs.includes(tab);
-      }
-      
-      if (role === 'teacher') {
-        return ['dashboard', 'students', 'grades', 'attendance', 'classPerformance', 'analytics'].includes(tab);
-      }
-      
-      if (role === 'nurse' || role === 'doctor') {
-        return ['dashboard', 'clinic'].includes(tab);
-      }
-      
-      if (role === 'secretary') {
-        return ['dashboard', 'students', 'grades', 'attendance', 'classPerformance', 'teacherAttendance', 'analytics', 'sponsorship'].includes(tab);
-      }
-      
-      if (role === 'hrio') {
-        return ['dashboard', 'teachers', 'teacherAttendance', 'analytics'].includes(tab);
-      }
-      
-      if (role === 'nutritionist') {
-        return ['dashboard', 'clinic', 'teachers'].includes(tab);
-      }
-      
-      if (role === 'labtech' || role === 'radiographer') {
-        return ['dashboard', 'clinic'].includes(tab);
-      }
-      
-      return false;
     }
 
     // ============================================================
@@ -1535,7 +1379,7 @@
     };
 
     // ============================================================
-    // 📊 DASHBOARD - UPDATED
+    // 📊 DASHBOARD
     // ============================================================
 
     function renderDashboard() {
@@ -1555,7 +1399,6 @@
       const boarders = students.filter(s => s.status === 'Boarder').length;
       const dayScholars = students.filter(s => s.status === 'Day Scholar').length;
       
-      // Staff breakdown by type
       const teachingStaff = teachers.filter(t => t.type === 'teaching' && t.status === 'Active').length;
       const medicalStaff = teachers.filter(t => t.type === 'medical' && t.status === 'Active').length;
       const hrioStaff = teachers.filter(t => t.type === 'hrio' && t.status === 'Active').length;
@@ -1564,10 +1407,7 @@
       const radiographerStaff = teachers.filter(t => t.type === 'radiographer' && t.status === 'Active').length;
       const totalActiveStaff = teachers.filter(t => t.status === 'Active').length;
       
-      const sponsoredBoys = students.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored' && s.gender === 'Male').length;
-      const sponsoredGirls = students.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored' && s.gender === 'Female').length;
-      const sponsoredTotal = sponsoredBoys + sponsoredGirls;
-
+      const sponsoredTotal = students.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored').length;
       const prefectCount = students.filter(s => s.isPrefect === 'Yes').length;
 
       const boysUpstairs = students.filter(s => s.dorm === 'Boys Dorm (Upstairs)').length;
@@ -1649,13 +1489,1070 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS - Same as before, omitted for brevity
+    // 👩‍🎓 STUDENTS - FULL IMPLEMENTATION
     // ============================================================
 
-    // ... (Student functions remain the same as in the original code)
+    window.showAddStudentModal = function(editId) {
+      if (!canAdd('students')) { showToast('You do not have permission to add students', 'error'); return; }
+      
+      const student = editId ? studentsCache.find(s => s.id === editId) : null;
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Admission Number *</label>
+            <input type="text" id="s_admNo" value="${student?.admNo || ''}" placeholder="e.g., 2024-001">
+          </div>
+          <div class="form-group">
+            <label>First Name *</label>
+            <input type="text" id="s_firstName" value="${student?.firstName || ''}" placeholder="First name">
+          </div>
+          <div class="form-group">
+            <label>Last Name *</label>
+            <input type="text" id="s_lastName" value="${student?.lastName || ''}" placeholder="Last name">
+          </div>
+          <div class="form-group">
+            <label>Class *</label>
+            <select id="s_class">${classSelectHtml(student?.class || '')}</select>
+          </div>
+          <div class="form-group">
+            <label>Gender *</label>
+            <select id="s_gender">
+              <option value="Male" ${student?.gender === 'Male' ? 'selected' : ''}>Male</option>
+              <option value="Female" ${student?.gender === 'Female' ? 'selected' : ''}>Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" id="s_dob" value="${student?.dob || ''}">
+          </div>
+          <div class="form-group">
+            <label>Status *</label>
+            <select id="s_status">
+              <option value="Boarder" ${student?.status === 'Boarder' ? 'selected' : ''}>Boarder</option>
+              <option value="Day Scholar" ${student?.status === 'Day Scholar' ? 'selected' : ''}>Day Scholar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira">
+          </div>
+          <div class="form-group">
+            <label>🏠 Dorm</label>
+            <select id="s_dorm">
+              ${dormSelectHtml(student?.dorm || '')}
+            </select>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>📸 Student Photo</label>
+            <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
+              <div id="photoPreviewContainer" style="width:100px;height:120px;border:2px dashed #ddd;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9f9f9;">
+                ${student?.photo ? `<img src="${student.photo}" style="width:100%;height:100%;object-fit:cover;">` : '<span style="color:#ccc;font-size:12px;">No Photo</span>'}
+              </div>
+              <div>
+                <input type="file" id="s_photo" accept="image/*" onchange="previewStudentPhoto(this)" style="margin-bottom:5px;">
+                <div style="font-size:0.75em;color:#888;">Max size: 200KB (JPEG, PNG)</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Is Prefect?</label>
+            <select id="s_isPrefect" onchange="togglePrefectFields()">
+              <option value="No" ${student?.isPrefect !== 'Yes' ? 'selected' : ''}>No</option>
+              <option value="Yes" ${student?.isPrefect === 'Yes' ? 'selected' : ''}>Yes</option>
+            </select>
+          </div>
+          <div class="form-group" id="prefectRoleGroup" style="display:${student?.isPrefect === 'Yes' ? 'block' : 'none'};">
+            <label>Prefect Role</label>
+            <select id="s_prefectRole">
+              <option value="">-- Select Role --</option>
+              ${PREFECT_ROLES.map(r => `<option value="${r}" ${student?.prefectRole === r ? 'selected' : ''}>${r}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" id="prefectDeptGroup" style="display:${student?.isPrefect === 'Yes' ? 'block' : 'none'};">
+            <label>Prefect Department</label>
+            <select id="s_prefectDept">
+              <option value="">-- Select Department --</option>
+              ${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${student?.prefectDepartment === d ? 'selected' : ''}>${d}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sponsorship Type</label>
+            <select id="s_sponsorshipType">
+              <option value="Self Sponsored" ${student?.sponsorshipType === 'Self Sponsored' ? 'selected' : ''}>Self Sponsored</option>
+              <option value="Organization" ${student?.sponsorshipType === 'Organization' ? 'selected' : ''}>Organization</option>
+              <option value="Government" ${student?.sponsorshipType === 'Government' ? 'selected' : ''}>Government</option>
+              <option value="NGO" ${student?.sponsorshipType === 'NGO' ? 'selected' : ''}>NGO</option>
+              <option value="Other" ${student?.sponsorshipType === 'Other' ? 'selected' : ''}>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sponsor Name</label>
+            <input type="text" id="s_sponsorName" value="${student?.sponsorName || ''}" placeholder="e.g., The Smith Foundation">
+          </div>
+          <div class="form-group">
+            <label>Sponsor Contact</label>
+            <input type="text" id="s_sponsorContact" value="${student?.sponsorContact || ''}" placeholder="Phone or Email">
+          </div>
+          <div class="form-group">
+            <label>Parent/Guardian Name</label>
+            <input type="text" id="s_parent" value="${student?.parent || ''}">
+          </div>
+          <div class="form-group">
+            <label>Parent Phone</label>
+            <input type="text" id="s_parentPhone" value="${student?.parentPhone || ''}">
+          </div>
+          <div class="form-group">
+            <label>Parent Email</label>
+            <input type="email" id="s_parentEmail" value="${student?.parentEmail || ''}">
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Health History</label>
+            <textarea id="s_health" rows="2">${student?.health || ''}</textarea>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Notes</label>
+            <textarea id="s_notes" rows="2">${student?.notes || ''}</textarea>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveStudent('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Add'} Student
+        </button>
+      `;
+      
+      openModal(editId ? 'Edit Student' : 'Add New Student', html);
+      
+      window.togglePrefectFields = function() {
+        const isPrefect = document.getElementById('s_isPrefect').value === 'Yes';
+        document.getElementById('prefectRoleGroup').style.display = isPrefect ? 'block' : 'none';
+        document.getElementById('prefectDeptGroup').style.display = isPrefect ? 'block' : 'none';
+      };
+    };
+
+    window.previewStudentPhoto = function(input) {
+      const container = document.getElementById('photoPreviewContainer');
+      if (!container) return;
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (file.size > 200 * 1024) {
+          showToast('⚠️ Photo too large! Please use image under 200KB.', 'error');
+          input.value = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          container.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    window.saveStudent = async function(editId) {
+      const admNo = document.getElementById('s_admNo').value.trim();
+      const firstName = document.getElementById('s_firstName').value.trim();
+      const lastName = document.getElementById('s_lastName').value.trim();
+      
+      if (!admNo || !firstName || !lastName) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const container = document.getElementById('photoPreviewContainer');
+      let photo = '';
+      if (container) {
+        const img = container.querySelector('img');
+        if (img) photo = img.src;
+      }
+
+      const isPrefect = document.getElementById('s_isPrefect').value;
+      const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
+      const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
+
+      const data = {
+        admNo, firstName, lastName,
+        class: document.getElementById('s_class').value,
+        gender: document.getElementById('s_gender').value,
+        dob: document.getElementById('s_dob').value,
+        status: document.getElementById('s_status').value,
+        location: document.getElementById('s_location').value,
+        dorm: document.getElementById('s_dorm').value || '',
+        isPrefect: isPrefect,
+        prefectRole: prefectRole,
+        prefectDepartment: prefectDepartment,
+        sponsorshipType: document.getElementById('s_sponsorshipType').value,
+        sponsorName: document.getElementById('s_sponsorName').value,
+        sponsorContact: document.getElementById('s_sponsorContact').value,
+        parent: document.getElementById('s_parent').value,
+        parentPhone: document.getElementById('s_parentPhone').value,
+        parentEmail: document.getElementById('s_parentEmail').value,
+        photo: photo,
+        health: document.getElementById('s_health').value,
+        notes: document.getElementById('s_notes').value
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'students', editId), data);
+          await addAuditLog('UPDATE_STUDENT', `Updated ${firstName} ${lastName}`);
+          showToast('✅ Student updated successfully!');
+        } else {
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'students'), data);
+          await addAuditLog('ADD_STUDENT', `Added ${firstName} ${lastName} (${admNo})`);
+          showToast('✅ Student added successfully!');
+        }
+        closeModal();
+      } catch (err) {
+        showToast('❌ Error: ' + err.message, 'error');
+      }
+    };
+
+    window.renderStudents = function() {
+      const search = document.getElementById('studentSearch').value.toLowerCase();
+      const classFilter = document.getElementById('studentClassFilter').value;
+      const statusFilter = document.getElementById('studentStatusFilter').value;
+
+      const classSelect = document.getElementById('studentClassFilter');
+      if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
+
+      let filtered = studentsCache;
+      if (search) filtered = filtered.filter(s => s.firstName.toLowerCase().includes(search) || s.lastName.toLowerCase().includes(search) || (s.admNo || '').toLowerCase().includes(search));
+      if (classFilter) filtered = filtered.filter(s => s.class === classFilter);
+      if (statusFilter) filtered = filtered.filter(s => s.status === statusFilter);
+
+      const canEditStudents = canEdit('students');
+      const canDeleteStudents = canDeleteSpecific('students');
+
+      document.getElementById('studentTableBody').innerHTML = filtered.map(s => {
+        const isPrefect = s.isPrefect === 'Yes';
+        const prefectRole = s.prefectRole || '-';
+        const prefectDept = s.prefectDepartment || '-';
+        const dormDisplay = s.dorm ? `<span class="badge ${s.dorm.includes('Boys') ? 'badge-blue' : 'badge-pink'}">${s.dorm}</span>` : '-';
+
+        return `
+          <tr>
+            <td>
+              ${s.photo ? 
+                `<img src="${s.photo}" alt="Photo" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-light);">` : 
+                `<span style="font-size:24px;">👤</span>`
+              }
+            </td>
+            <td><strong>${s.admNo}</strong></td>
+            <td>${s.firstName} ${s.lastName}</td>
+            <td>${s.class}</td>
+            <td>${s.gender || '-'}</td>
+            <td><span class="badge ${s.status === 'Boarder' ? 'badge-primary' : 'badge-warning'}">${s.status || '-'}</span></td>
+            <td>${dormDisplay}</td>
+            <td>${s.sponsorshipType ? `<span class="badge ${s.sponsorshipType !== 'Self Sponsored' ? 'badge-success' : 'badge-info'}">${s.sponsorshipType}${s.sponsorName ? ': ' + s.sponsorName : ''}</span>` : '-'}</td>
+            <td>${isPrefect ? '<span class="badge badge-gold">⭐ Yes</span>' : '-'}</td>
+            <td>${isPrefect ? `<span class="badge badge-purple">${prefectRole}</span>` : '-'}</td>
+            <td>${isPrefect ? `<span class="badge badge-info">${prefectDept}</span>` : '-'}</td>
+            <td>${s.parent || '-'}</td>
+            <td>
+              ${canEditStudents ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
+              ${canDeleteStudents ? `<button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Del</button>` : ''}
+              <button class="btn btn-print btn-sm" onclick="printStudentReport('${s.id}')">🖨️</button>
+              <button class="btn btn-share btn-sm" onclick="shareStudentLink('${s.id}')">📤</button>
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">No students found</td></tr>';
+    };
+
+    window.deleteStudent = async function(id) {
+      if (!confirm('Delete this student permanently?')) return;
+      try {
+        const student = studentsCache.find(s => s.id === id);
+        await deleteDoc(doc(db, 'students', id));
+        await addAuditLog('DELETE_STUDENT', `Deleted ${student?.firstName} ${student?.lastName}`);
+        showToast('Student deleted');
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
 
     // ============================================================
-    // 👨‍🏫 TEACHERS / STAFF - UPDATED FOR NEW ROLES
+    // 💰 SPONSORSHIP
+    // ============================================================
+
+    window.showEditSponsorshipModal = function() {
+      if (!canAdd('sponsorship') && !canEdit('sponsorship')) { 
+        showToast('Only Admin and Director can edit sponsorship', 'error'); 
+        return; 
+      }
+      const html = `
+        <div class="form-group"><label>Student *</label>
+          <select id="sp_student">
+            ${studentsCache.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>Sponsorship Type</label>
+            <select id="sp_type">
+              <option value="Self Sponsored">Self Sponsored</option>
+              <option value="Organization">Organization</option>
+              <option value="Government">Government</option>
+              <option value="NGO">NGO</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Sponsor Name</label><input type="text" id="sp_name" placeholder="e.g., The Smith Foundation"></div>
+          <div class="form-group"><label>Sponsor Contact</label><input type="text" id="sp_contact" placeholder="Phone or Email"></div>
+          <div class="form-group"><label>Notes</label><input type="text" id="sp_notes" placeholder="Any additional information"></div>
+        </div>
+        <button class="btn btn-success" onclick="saveSponsorship()" style="width:100%;margin-top:16px;">Save Sponsorship</button>
+      `;
+      openModal('✏️ Edit Student Sponsorship', html);
+    };
+
+    window.saveSponsorship = async function() {
+      const studentId = document.getElementById('sp_student').value;
+      const type = document.getElementById('sp_type').value;
+      const name = document.getElementById('sp_name').value.trim();
+      const contact = document.getElementById('sp_contact').value.trim();
+      const notes = document.getElementById('sp_notes').value.trim();
+
+      if (!studentId) { showToast('Please select a student', 'error'); return; }
+
+      try {
+        await updateDoc(doc(db, 'students', studentId), {
+          sponsorshipType: type,
+          sponsorName: name,
+          sponsorContact: contact,
+          sponsorNotes: notes
+        });
+        await addAuditLog('UPDATE_SPONSORSHIP', `Updated sponsorship for ${studentsCache.find(s => s.id === studentId)?.firstName || ''}`);
+        showToast('Sponsorship updated successfully!');
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderSponsorship = function() {
+      document.getElementById('sponsorshipTableBody').innerHTML = studentsCache.map(s => `
+        <tr>
+          <td>${s.firstName} ${s.lastName}</td>
+          <td>${s.class}</td>
+          <td><span class="badge ${s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored' ? 'badge-success' : 'badge-info'}">${s.sponsorshipType || 'Self Sponsored'}</span></td>
+          <td>${s.sponsorName || '-'}</td>
+          <td>${s.sponsorContact || '-'}</td>
+          <td>${s.sponsorNotes || '-'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students found</td></tr>';
+    };
+
+    // ============================================================
+    // 📝 GRADES
+    // ============================================================
+
+    window.showAddGradeModal = function(editId) {
+      if (!canAdd('grades')) { showToast('You do not have permission to add grades', 'error'); return; }
+      const grade = editId ? gradesCache.find(g => g.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="g_student">
+              ${studentsCache.map(s => `
+                <option value="${s.id}" ${grade?.studentId === s.id ? 'selected' : ''}>
+                  ${s.firstName} ${s.lastName} (${s.class})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Subject *</label>
+            <select id="g_subject">
+              ${SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Term *</label>
+            <select id="g_term">
+              <option value="Term 1" ${grade?.term === 'Term 1' ? 'selected' : ''}>Term 1</option>
+              <option value="Term 2" ${grade?.term === 'Term 2' ? 'selected' : ''}>Term 2</option>
+              <option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Test 1 (/30)</label>
+            <input type="number" id="g_test1" value="${grade?.test1 || 0}" min="0" max="30">
+          </div>
+          <div class="form-group"><label>Test 2 (/30)</label>
+            <input type="number" id="g_test2" value="${grade?.test2 || 0}" min="0" max="30">
+          </div>
+          <div class="form-group"><label>Exam (/70)</label>
+            <input type="number" id="g_exam" value="${grade?.exam || 0}" min="0" max="70">
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Save'} Grade
+        </button>
+      `;
+      openModal(editId ? 'Edit Grade' : 'Add Grade', html);
+    };
+
+    window.saveGrade = async function(editId) {
+      const studentId = document.getElementById('g_student').value;
+      const subject = document.getElementById('g_subject').value;
+      const term = document.getElementById('g_term').value;
+      const test1 = parseInt(document.getElementById('g_test1').value) || 0;
+      const test2 = parseInt(document.getElementById('g_test2').value) || 0;
+      const exam = parseInt(document.getElementById('g_exam').value) || 0;
+
+      if (!studentId || !subject || !term) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, subject, term, test1, test2, exam };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) {
+          await updateDoc(doc(db, 'grades', editId), data);
+          showToast('Grade updated!');
+        } else {
+          data.recordedBy = currentUser?.email || 'unknown';
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'grades'), data);
+          showToast(`Grade added for ${student?.firstName} ${student?.lastName}`);
+        }
+        await addAuditLog(editId ? 'UPDATE_GRADE' : 'ADD_GRADE', `${subject} - ${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderGrades = function() {
+      const classFilter = document.getElementById('gradeClassFilter').value;
+      const subjectFilter = document.getElementById('gradeSubjectFilter').value;
+      const termFilter = document.getElementById('gradeTermFilter').value;
+
+      const classSelect = document.getElementById('gradeClassFilter');
+      if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
+
+      const subjectSelect = document.getElementById('gradeSubjectFilter');
+      if (subjectSelect.options.length <= 1) {
+        subjectSelect.innerHTML = '<option value="">All Subjects</option>' +
+          SUBJECTS.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
+
+      let filtered = gradesCache;
+      if (classFilter) {
+        filtered = filtered.filter(g => {
+          const s = studentsCache.find(st => st.id === g.studentId);
+          return s && s.class === classFilter;
+        });
+      }
+      if (subjectFilter) filtered = filtered.filter(g => g.subject === subjectFilter);
+      if (termFilter) filtered = filtered.filter(g => g.term === termFilter);
+
+      const canEditGrades = canEdit('grades');
+      const canDeleteGrades = canDeleteSpecific('grades');
+
+      document.getElementById('gradesTableBody').innerHTML = filtered.map(g => {
+        const student = studentsCache.find(s => s.id === g.studentId);
+        const total = (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0);
+        return `
+          <tr>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${g.subject}</td>
+            <td>${g.term}</td>
+            <td>${g.test1 || 0}</td>
+            <td>${g.test2 || 0}</td>
+            <td>${g.exam || 0}</td>
+            <td><strong>${total}</strong></td>
+            <td>${getGradeBadge(total)}</td>
+            <td>
+              ${canEditGrades ? `<button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>` : ''}
+              ${canDeleteGrades ? `<button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No grades found</td></tr>';
+    };
+
+    window.deleteGrade = async function(id) {
+      if (!confirm('Delete this grade record?')) return;
+      try { await deleteDoc(doc(db, 'grades', id)); await addAuditLog('DELETE_GRADE', 'Deleted grade record'); showToast('Grade deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 📋 STUDENT ATTENDANCE
+    // ============================================================
+
+    window.showAddAttendanceModal = function(editId) {
+      if (!canAdd('attendance')) { showToast('You do not have permission to mark attendance', 'error'); return; }
+      
+      const existing = editId ? attendanceCache.find(a => a.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
+      
+      let html = `
+        <div class="form-group"><label>Date</label><input type="date" id="attDate" value="${existing?.date || today}"></div>
+        <div class="form-group"><label>Student *</label>
+          <select id="attStudent">
+            ${studentsCache.map(s => `<option value="${s.id}" ${existing?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Status *</label>
+          <select id="attStatus">
+            <option value="Present" ${existing?.status === 'Present' ? 'selected' : ''}>Present</option>
+            <option value="Absent" ${existing?.status === 'Absent' ? 'selected' : ''}>Absent</option>
+            <option value="Late" ${existing?.status === 'Late' ? 'selected' : ''}>Late</option>
+            <option value="Excused" ${existing?.status === 'Excused' ? 'selected' : ''}>Excused</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Reason</label>
+          <input type="text" id="attReason" value="${existing?.reason || ''}" placeholder="Reason for absence">
+        </div>
+        <button class="btn btn-success" onclick="saveAttendance('${editId || ''}')" style="width:100%;margin-top:16px;">
+          ${editId ? 'Update' : 'Save'} Attendance
+        </button>
+      `;
+      openModal(editId ? 'Edit Attendance' : 'Mark Attendance', html);
+    };
+
+    window.saveAttendance = async function(editId) {
+      const date = document.getElementById('attDate').value;
+      const studentId = document.getElementById('attStudent').value;
+      const status = document.getElementById('attStatus').value;
+      const reason = document.getElementById('attReason').value.trim();
+
+      if (!date || !studentId || !status) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, date, status, reason, markedBy: currentUser?.email || 'unknown' };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'attendance', editId), data);
+          await addAuditLog('UPDATE_ATTENDANCE', `Updated attendance for ${studentsCache.find(s => s.id === studentId)?.firstName || ''}`);
+          showToast('Attendance updated!');
+        } else {
+          const id = `${studentId}_${date}`;
+          await setDoc(doc(db, 'attendance', id), data);
+          await addAuditLog('ADD_ATTENDANCE', `Marked attendance for ${studentsCache.find(s => s.id === studentId)?.firstName || ''}`);
+          showToast('Attendance saved!');
+        }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderAttendance = function() {
+      const date = document.getElementById('attendanceDateFilter').value;
+      const classFilter = document.getElementById('attendanceClassFilter').value;
+
+      const classSelect = document.getElementById('attendanceClassFilter');
+      if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
+
+      if (!date) document.getElementById('attendanceDateFilter').value = new Date().toISOString().split('T')[0];
+
+      let filtered = attendanceCache;
+      const currentDate = document.getElementById('attendanceDateFilter').value;
+      if (currentDate) filtered = filtered.filter(a => a.date === currentDate);
+      if (classFilter) filtered = filtered.filter(a => { const s = studentsCache.find(st => st.id === a.studentId); return s && s.class === classFilter; });
+
+      const canEditAtt = canEdit('attendance') || canDeleteSpecific('attendance');
+      const canDeleteAtt = canDeleteSpecific('attendance');
+
+      document.getElementById('attendanceTableBody').innerHTML = filtered.map(a => {
+        const student = studentsCache.find(s => s.id === a.studentId);
+        return `
+          <tr>
+            <td>${formatDate(a.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td><span class="badge ${a.status === 'Present' ? 'badge-success' : a.status === 'Absent' ? 'badge-danger' : 'badge-warning'}">${a.status}</span></td>
+            <td>${a.reason || '-'}</td>
+            <td>${a.markedBy || '-'}</td>
+            <td>
+              ${canEditAtt ? `<button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal('${a.id}')">Edit</button>` : ''}
+              ${canDeleteAtt ? `<button class="btn btn-danger btn-sm" onclick="deleteAttendance('${a.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No attendance records for this date</td></tr>';
+    };
+
+    window.deleteAttendance = async function(id) {
+      if (!canDeleteSpecific('attendance')) { showToast('You do not have permission to delete attendance', 'error'); return; }
+      if (!confirm('Delete this attendance record permanently?')) return;
+      try {
+        await deleteDoc(doc(db, 'attendance', id));
+        await addAuditLog('DELETE_ATTENDANCE', 'Deleted attendance record');
+        showToast('Attendance record deleted');
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 📈 CLASS PERFORMANCE
+    // ============================================================
+
+    window.renderClassPerformance = function() {
+      const classSelect = document.getElementById('performanceClassSelect');
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = '<option value="">Select a class...</option>' + CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+
+      const className = document.getElementById('performanceClassSelect').value;
+      const term = document.getElementById('performanceTermSelect').value;
+
+      if (!className) {
+        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Select a class to view performance</td></tr>';
+        return;
+      }
+
+      const students = studentsCache.filter(s => s.class === className);
+      const studentIds = students.map(s => s.id);
+      let grades = gradesCache.filter(g => studentIds.includes(g.studentId));
+      if (term) grades = grades.filter(g => g.term === term);
+
+      if (!grades.length) {
+        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No grades found for this class</td></tr>';
+        return;
+      }
+
+      const subjectData = {};
+      grades.forEach(g => {
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push((g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+      });
+      const subjects = Object.keys(subjectData);
+      const averages = subjects.map(s => Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length));
+
+      destroyChart('perfSubjectChart');
+      chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
+        type: 'bar',
+        data: { labels: subjects, datasets: [{ data: averages, backgroundColor: averages.map(getGradeColor) }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+
+      const studentAverages = students.map(s => {
+        const sg = grades.filter(g => g.studentId === s.id);
+        if (!sg.length) return { student: s, avg: 0, passes: 0, fails: 0, total: 0 };
+        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        const passes = scores.filter(s => isPass(s)).length;
+        const fails = scores.filter(s => !isPass(s)).length;
+        return { student: s, avg, passes, fails, total: scores.length };
+      });
+
+      const sorted = [...studentAverages].sort((a, b) => b.avg - a.avg);
+
+      const gradeDist = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      sorted.forEach(s => { const grade = getLetterGrade(s.avg); gradeDist[grade]++; });
+
+      destroyChart('perfGradeChart');
+      chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
+        type: 'bar',
+        data: { labels: ['A', 'B', 'C', 'D', 'F'], datasets: [{ data: [gradeDist.A, gradeDist.B, gradeDist.C, gradeDist.D, gradeDist.F], backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+
+      const passCount = sorted.filter(s => s.avg >= 50).length;
+      const failCount = sorted.filter(s => s.avg < 50).length;
+
+      destroyChart('perfPassFailChart');
+      chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
+        type: 'doughnut',
+        data: { labels: ['✅ Pass', '❌ Fail'], datasets: [{ data: [passCount, failCount], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      destroyChart('perfStudentChart');
+      chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
+        type: 'bar',
+        data: { labels: sorted.map(s => s.student.firstName), datasets: [{ data: sorted.map(s => s.avg), backgroundColor: sorted.map(s => getGradeColor(s.avg)) }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+
+      document.getElementById('perfRankingsBody').innerHTML = sorted.map((s, index) => `
+        <tr class="${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}">
+          <td>${index + 1}</td>
+          <td>${s.student.firstName} ${s.student.lastName}</td>
+          <td><strong>${s.avg}%</strong></td>
+          <td>${getGradeBadge(s.avg)}</td>
+          <td>${s.passes}</td>
+          <td>${s.fails}</td>
+        </tr>
+      `).join('');
+    };
+
+    // ============================================================
+    // ⚠️ WARNINGS
+    // ============================================================
+
+    window.showAddWarningModal = function(editId) {
+      if (!canAdd('warnings')) { showToast('Only Admin and Principal can issue warnings', 'error'); return; }
+      const warning = editId ? warningsCache.find(w => w.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="w_student">${studentsCache.map(s => `<option value="${s.id}" ${warning?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="w_date" value="${warning?.date || new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="w_reason" rows="3">${warning?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveWarning('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Issue'} Warning</button>
+      `;
+      openModal(editId ? 'Edit Warning' : 'Issue Warning', html);
+    };
+
+    window.saveWarning = async function(editId) {
+      const studentId = document.getElementById('w_student').value;
+      const date = document.getElementById('w_date').value;
+      const reason = document.getElementById('w_reason').value.trim();
+      if (!studentId || !date || !reason) { showToast('Please fill all fields', 'error'); return; }
+      const data = { studentId, date, reason };
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'warnings', editId), data); showToast('Warning updated'); }
+        else { data.issuedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'warnings'), data); showToast(`Warning issued to ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_WARNING' : 'ADD_WARNING', `${student?.firstName} ${student?.lastName} - ${reason}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderWarnings = function() {
+      const canEditWarnings = canEdit('warnings');
+      const canDeleteWarnings = canDeleteSpecific('warnings');
+      document.getElementById('warningsTableBody').innerHTML = warningsCache.map(w => {
+        const student = studentsCache.find(s => s.id === w.studentId);
+        return `
+          <tr>
+            <td>${formatDate(w.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${w.reason}</td>
+            <td>${w.issuedBy || '-'}</td>
+            <td>
+              ${canEditWarnings ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
+              ${canDeleteWarnings ? `<button class="btn btn-danger btn-sm" onclick="deleteWarning('${w.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No warnings found</td></tr>';
+    };
+
+    window.deleteWarning = async function(id) {
+      if (!confirm('Delete this warning?')) return;
+      try { await deleteDoc(doc(db, 'warnings', id)); await addAuditLog('DELETE_WARNING', 'Deleted warning'); showToast('Warning deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 🚫 SUSPENSIONS
+    // ============================================================
+
+    window.showAddSuspensionModal = function(editId) {
+      if (!canAdd('suspensions')) { showToast('Only Admin and Principal can add suspensions', 'error'); return; }
+      const suspension = editId ? suspensionsCache.find(s => s.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="su_student">${studentsCache.map(s => `<option value="${s.id}" ${suspension?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="su_date" value="${suspension?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Duration *</label><input type="text" id="su_duration" value="${suspension?.duration || ''}" placeholder="e.g., 3 days"></div>
+          <div class="form-group"><label>Status</label>
+            <select id="su_status"><option value="Active" ${suspension?.status === 'Active' ? 'selected' : ''}>Active</option><option value="Completed" ${suspension?.status === 'Completed' ? 'selected' : ''}>Completed</option><option value="Appealed" ${suspension?.status === 'Appealed' ? 'selected' : ''}>Appealed</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="su_reason" rows="3">${suspension?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveSuspension('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Suspension</button>
+      `;
+      openModal(editId ? 'Edit Suspension' : 'Add Suspension', html);
+    };
+
+    window.saveSuspension = async function(editId) {
+      const studentId = document.getElementById('su_student').value;
+      const date = document.getElementById('su_date').value;
+      const duration = document.getElementById('su_duration').value.trim();
+      const status = document.getElementById('su_status').value;
+      const reason = document.getElementById('su_reason').value.trim();
+      if (!studentId || !date || !duration || !reason) { showToast('Please fill all fields', 'error'); return; }
+      const data = { studentId, date, duration, status, reason };
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'suspensions', editId), data); showToast('Suspension updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'suspensions'), data); showToast(`Suspension added for ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_SUSPENSION' : 'ADD_SUSPENSION', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderSuspensions = function() {
+      const canEditSuspensions = canEdit('suspensions');
+      const canDeleteSuspensions = canDeleteSpecific('suspensions');
+      document.getElementById('suspensionsTableBody').innerHTML = suspensionsCache.map(s => {
+        const student = studentsCache.find(st => st.id === s.studentId);
+        return `
+          <tr>
+            <td>${formatDate(s.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${s.reason}</td>
+            <td>${s.duration}</td>
+            <td><span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></td>
+            <td>
+              ${canEditSuspensions ? `<button class="btn btn-primary btn-sm" onclick="showAddSuspensionModal('${s.id}')">Edit</button>` : ''}
+              ${canDeleteSuspensions ? `<button class="btn btn-danger btn-sm" onclick="deleteSuspension('${s.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No suspensions found</td></tr>';
+    };
+
+    window.deleteSuspension = async function(id) {
+      if (!confirm('Delete this suspension?')) return;
+      try { await deleteDoc(doc(db, 'suspensions', id)); await addAuditLog('DELETE_SUSPENSION', 'Deleted suspension'); showToast('Suspension deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // ❌ EXPULSIONS
+    // ============================================================
+
+    window.showAddExpulsionModal = function(editId) {
+      if (!canAdd('expulsions')) { showToast('Only Admin and Principal can record expulsions', 'error'); return; }
+      const expulsion = editId ? expulsionsCache.find(e => e.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="e_student">${studentsCache.map(s => `<option value="${s.id}" ${expulsion?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="e_date" value="${expulsion?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Approved By</label><input type="text" id="e_approvedBy" value="${expulsion?.approvedBy || ''}"></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="e_reason" rows="3">${expulsion?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveExpulsion('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Record'} Expulsion</button>
+      `;
+      openModal(editId ? 'Edit Expulsion' : 'Record Expulsion', html);
+    };
+
+    window.saveExpulsion = async function(editId) {
+      const studentId = document.getElementById('e_student').value;
+      const date = document.getElementById('e_date').value;
+      const approvedBy = document.getElementById('e_approvedBy').value.trim();
+      const reason = document.getElementById('e_reason').value.trim();
+      if (!studentId || !date || !reason) { showToast('Please fill all required fields', 'error'); return; }
+      const data = { studentId, date, approvedBy, reason };
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'expulsions', editId), data); showToast('Expulsion updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'expulsions'), data); showToast(`Expulsion recorded for ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_EXPULSION' : 'ADD_EXPULSION', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderExpulsions = function() {
+      const canEditExpulsions = canEdit('expulsions');
+      const canDeleteExpulsions = canDeleteSpecific('expulsions');
+      document.getElementById('expulsionsTableBody').innerHTML = expulsionsCache.map(e => {
+        const student = studentsCache.find(s => s.id === e.studentId);
+        return `
+          <tr>
+            <td>${formatDate(e.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${e.reason}</td>
+            <td>${e.approvedBy || '-'}</td>
+            <td>
+              ${canEditExpulsions ? `<button class="btn btn-primary btn-sm" onclick="showAddExpulsionModal('${e.id}')">Edit</button>` : ''}
+              ${canDeleteExpulsions ? `<button class="btn btn-danger btn-sm" onclick="deleteExpulsion('${e.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No expulsions found</td></tr>';
+    };
+
+    window.deleteExpulsion = async function(id) {
+      if (!confirm('Delete this expulsion record?')) return;
+      try { await deleteDoc(doc(db, 'expulsions', id)); await addAuditLog('DELETE_EXPULSION', 'Deleted expulsion'); showToast('Expulsion deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 🏥 CLINIC
+    // ============================================================
+
+    window.showAddClinicModal = function(editId) {
+      if (!canAdd('clinic')) { showToast('Only Doctor and Nurse can record clinic visits', 'error'); return; }
+      const visit = editId ? clinicCache.find(c => c.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="c_student">${studentsCache.map(s => `<option value="${s.id}" ${visit?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Date *</label><input type="date" id="c_date" value="${visit?.date || today}"></div>
+          <div class="form-group"><label>Doctor/Nurse *</label><input type="text" id="c_doctor" value="${visit?.doctor || ''}" placeholder="Full name">
+          </div>
+          <div class="form-group"><label>Condition Type *</label>
+            <select id="c_condition"><option value="">Select...</option>${CONDITIONS.map(c => `<option value="${c}" ${visit?.condition === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          </div>
+        </div>
+        <div class="form-group"><label>Complaint *</label><textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea></div>
+        <div class="form-group"><label>Diagnosis</label><textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea></div>
+        <div class="form-group"><label>Treatment / Medication</label><input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg"></div>
+        <div class="form-grid">
+          <div class="form-group"><label>Need Follow-Up?</label>
+            <select id="c_followUp" onchange="toggleFollowUpDate()">
+              <option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option>
+              <option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option>
+            </select>
+          </div>
+          <div class="form-group" id="followUpDateGroup" style="display:${visit?.followUp === 'Yes' ? 'block' : 'none'}">
+            <label>Follow-Up Date</label>
+            <input type="date" id="c_followUpDate" value="${visit?.followUpDate || ''}">
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
+      `;
+      openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
+      
+      window.toggleFollowUpDate = function() {
+        const val = document.getElementById('c_followUp').value;
+        document.getElementById('followUpDateGroup').style.display = val === 'Yes' ? 'block' : 'none';
+      };
+    };
+
+    window.saveClinic = async function(editId) {
+      const studentId = document.getElementById('c_student').value;
+      const date = document.getElementById('c_date').value;
+      const doctor = document.getElementById('c_doctor').value.trim();
+      const condition = document.getElementById('c_condition').value;
+      const complaint = document.getElementById('c_complaint').value.trim();
+      const diagnosis = document.getElementById('c_diagnosis').value.trim();
+      const medication = document.getElementById('c_medication').value.trim();
+      const followUp = document.getElementById('c_followUp').value;
+      const followUpDate = document.getElementById('c_followUpDate').value;
+
+      if (!studentId || !date || !doctor || !condition || !complaint) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication, followUp, followUpDate: followUp === 'Yes' ? followUpDate : '' };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'clinic', editId), data); showToast('Visit updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'clinic'), data); showToast(`Visit recorded for ${student?.firstName} ${student?.lastName}`); }
+        await addAuditLog(editId ? 'UPDATE_CLINIC' : 'ADD_CLINIC', `${student?.firstName} ${student?.lastName}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderClinic = function() {
+      const canEditClinic = canEdit('clinic');
+      const canDeleteClinic = canDeleteSpecific('clinic');
+
+      document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
+        const student = studentsCache.find(s => s.id === c.studentId);
+        const followUpBadge = c.followUp === 'Yes' ? 
+          `<span class="badge badge-warning">📅 ${c.followUpDate ? formatDate(c.followUpDate) : 'Scheduled'}</span>` : 
+          '<span class="badge badge-success">✅ No</span>';
+        
+        return `
+          <tr>
+            <td>${formatDate(c.date)}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${c.doctor || '-'}</td>
+            <td>${c.complaint || '-'}</td>
+            <td><span class="badge ${c.condition === 'Pre-existing Condition' ? 'badge-warning' : 'badge-info'}">${c.condition || '-'}</span></td>
+            <td>${c.diagnosis || '-'}</td>
+            <td>${c.medication || '-'}</td>
+            <td>${followUpBadge}</td>
+            <td>${c.followUp === 'Yes' ? formatDate(c.followUpDate) : '-'}</td>
+            <td>
+              ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
+              ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+    };
+
+    window.deleteClinic = async function(id) {
+      if (!confirm('Delete this clinic visit?')) return;
+      try { await deleteDoc(doc(db, 'clinic', id)); await addAuditLog('DELETE_CLINIC', 'Deleted clinic visit'); showToast('Visit deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // ⭐ PREFECTS
+    // ============================================================
+
+    window.showAddPrefectModal = function(editId) {
+      if (!canAdd('prefects')) { showToast('Only Admin and Principal can add prefects', 'error'); return; }
+      const prefect = editId ? prefectsCache.find(p => p.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="p_student">${studentsCache.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Prefect Role *</label>
+            <select id="p_role">${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Department *</label>
+            <select id="p_department">${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${prefect?.department === d ? 'selected' : ''}>${d}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Assigned Date</label><input type="date" id="p_date" value="${prefect?.date || new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="p_notes" rows="2">${prefect?.notes || ''}</textarea></div>
+        <button class="btn btn-success" onclick="savePrefect('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Prefect</button>
+      `;
+      openModal(editId ? 'Edit Prefect' : 'Add Prefect Role', html);
+    };
+
+    window.savePrefect = async function(editId) {
+      const studentId = document.getElementById('p_student').value;
+      const role = document.getElementById('p_role').value;
+      const department = document.getElementById('p_department').value;
+      const date = document.getElementById('p_date').value;
+      const notes = document.getElementById('p_notes').value.trim();
+
+      if (!studentId || !role || !department) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, role, department, date, notes };
+
+      try {
+        const student = studentsCache.find(s => s.id === studentId);
+        if (editId) { await updateDoc(doc(db, 'prefects', editId), data); showToast('Prefect updated'); }
+        else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'prefects'), data); showToast(`Prefect role assigned to ${student?.firstName} ${student?.lastName}`); }
+        await updateDoc(doc(db, 'students', studentId), { isPrefect: 'Yes', prefectRole: role, prefectDepartment: department });
+        await addAuditLog(editId ? 'UPDATE_PREFECT' : 'ADD_PREFECT', `${student?.firstName} ${student?.lastName} - ${role}`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.renderPrefects = function() {
+      const deptFilter = document.getElementById('prefectDeptFilter').value;
+      let filtered = prefectsCache;
+      if (deptFilter) filtered = filtered.filter(p => p.department === deptFilter);
+
+      const canEditPrefects = canEdit('prefects');
+      const canDeletePrefects = canDeleteSpecific('prefects');
+
+      document.getElementById('prefectsTableBody').innerHTML = filtered.map(p => {
+        const student = studentsCache.find(s => s.id === p.studentId);
+        return `
+          <tr>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td><span class="badge badge-gold">${p.role}</span></td>
+            <td>${p.department}</td>
+            <td>${formatDate(p.date)}</td>
+            <td>
+              ${canEditPrefects ? `<button class="btn btn-primary btn-sm" onclick="showAddPrefectModal('${p.id}')">Edit</button>` : ''}
+              ${canDeletePrefects ? `<button class="btn btn-danger btn-sm" onclick="deletePrefect('${p.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No prefects found</td></tr>';
+    };
+
+    window.deletePrefect = async function(id) {
+      if (!confirm('Remove this prefect role?')) return;
+      try {
+        const prefect = prefectsCache.find(p => p.id === id);
+        await deleteDoc(doc(db, 'prefects', id));
+        if (prefect?.studentId) {
+          const student = studentsCache.find(s => s.id === prefect.studentId);
+          if (student) await updateDoc(doc(db, 'students', prefect.studentId), { isPrefect: 'No', prefectRole: '', prefectDepartment: '' });
+        }
+        await addAuditLog('DELETE_PREFECT', 'Removed prefect role');
+        showToast('Prefect role removed');
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 👨‍🏫 STAFF RECORDS - WITH NEW ROLES
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -1666,7 +2563,6 @@
         `<option value="${t.value}" ${teacher?.type === t.value ? 'selected' : ''}>${t.label}</option>`
       ).join('');
 
-      // Build specialization options based on selected type
       const getSpecializationOptions = (type) => {
         const specs = STAFF_SPECIALIZATIONS[type] || [];
         return specs.map(s => `<option value="${s}" ${teacher?.specialization === s ? 'selected' : ''}>${s}</option>`).join('');
@@ -1865,7 +2761,7 @@
     };
 
     // ============================================================
-    // 📅 TEACHER ATTENDANCE - UPDATED FOR STAFF TYPES
+    // 📅 STAFF ATTENDANCE
     // ============================================================
 
     window.showTeacherAttendanceModal = function() {
@@ -1882,7 +2778,7 @@
           <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;flex-wrap:wrap;">
             <span style="flex:1;min-width:150px;font-size:0.8em;">
               ${t.name}
-              <span style="font-size:0.7em;color:#888;">${getStaffTypeBadge(t.type)}</span>
+              ${getStaffTypeBadge(t.type)}
             </span>
             <select id="ta_status_${t.id}" style="width:100px;padding:4px;font-size:0.8em;" onchange="toggleTeacherReason('${t.id}')">
               <option value="Present">Present</option>
@@ -2004,45 +2900,434 @@
     };
 
     // ============================================================
-    // The rest of the functions (Students, Grades, Attendance, etc.)
-    // remain the same as in the original code.
-    // For brevity, I'm including placeholders here.
+    // 📊 ANALYTICS
     // ============================================================
 
-    // Placeholder functions to prevent errors - these would be fully implemented
-    window.showAddStudentModal = function() { showToast('Student management loaded', 'info'); };
-    window.renderStudents = function() { document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;">Students loaded</td></tr>'; };
-    window.renderSponsorship = function() { document.getElementById('sponsorshipTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Sponsorship data loaded</td></tr>'; };
-    window.showAddGradeModal = function() { showToast('Grade management loaded', 'info'); };
-    window.renderGrades = function() { document.getElementById('gradesTableBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Grades loaded</td></tr>'; };
-    window.showAddAttendanceModal = function() { showToast('Attendance management loaded', 'info'); };
-    window.renderAttendance = function() { document.getElementById('attendanceTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Attendance loaded</td></tr>'; };
-    window.renderClassPerformance = function() { document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Select a class</td></tr>'; };
-    window.showAddWarningModal = function() { showToast('Warning management loaded', 'info'); };
-    window.renderWarnings = function() { document.getElementById('warningsTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Warnings loaded</td></tr>'; };
-    window.showAddSuspensionModal = function() { showToast('Suspension management loaded', 'info'); };
-    window.renderSuspensions = function() { document.getElementById('suspensionsTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Suspensions loaded</td></tr>'; };
-    window.showAddExpulsionModal = function() { showToast('Expulsion management loaded', 'info'); };
-    window.renderExpulsions = function() { document.getElementById('expulsionsTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Expulsions loaded</td></tr>'; };
-    window.showAddClinicModal = function() { showToast('Clinic management loaded', 'info'); };
-    window.renderClinic = function() { document.getElementById('clinicTableBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Clinic visits loaded</td></tr>'; };
-    window.showAddPrefectModal = function() { showToast('Prefect management loaded', 'info'); };
-    window.renderPrefects = function() { document.getElementById('prefectsTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Prefects loaded</td></tr>'; };
-    window.renderAnalytics = function() { document.getElementById('analyticsStudentSelect').innerHTML = '<option value="">Select a student...</option>'; };
-    window.loadAnalyticsData = function() { showToast('Analytics data loaded', 'info'); };
-    window.showAddUserModal = function() { showToast('User management loaded', 'info'); };
-    window.renderUsers = function() { document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Users loaded</td></tr>'; };
-    window.renderAudit = function() { document.getElementById('auditLogContent').innerHTML = '<div style="text-align:center;padding:20px;color:#999;">Audit logs loaded</div>'; };
-    window.populateAuditFilter = function() { };
-    window.addAuditLog = async function(action, details) { console.log('📝 Audit:', action, details); };
-    window.printStudentReport = function() { showToast('Print preview ready', 'info'); };
-    window.printAllStudents = function() { showToast('Printing all students...', 'info'); };
-    window.printCurrentClass = function() { showToast('Printing class report...', 'info'); };
-    window.shareStudentLink = function() { showToast('Link copied to clipboard!', 'info'); };
-    window.shareCurrentClass = function() { showToast('Class link copied to clipboard!', 'info'); };
-    window.shareCurrentView = function() { showToast('Page link copied to clipboard!', 'info'); };
-    window.editSponsorship = function() { showToast('Sponsorship editor opened', 'info'); };
-    window.showEditSponsorshipModal = function() { showToast('Sponsorship editor opened', 'info'); };
+    function renderAnalytics() {
+      const studentSelect = document.getElementById('analyticsStudentSelect');
+      if (studentSelect.options.length <= 1) {
+        const current = studentSelect.value;
+        studentSelect.innerHTML = '<option value="">Select a student...</option>' +
+          studentsCache.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('');
+        if (current) studentSelect.value = current;
+      }
+
+      const classSelect = document.getElementById('analyticsClassSelect');
+      if (classSelect.options.length <= 1) {
+        const current = classSelect.value;
+        classSelect.innerHTML = '<option value="">Select a class...</option>' +
+          CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (current) classSelect.value = current;
+      }
+    }
+
+    window.loadAnalyticsData = function() {
+      const studentId = document.getElementById('analyticsStudentSelect').value;
+      const className = document.getElementById('analyticsClassSelect').value;
+      
+      if (!studentId && !className) {
+        showToast('⚠️ Please select a student or class first', 'warning');
+        return;
+      }
+
+      document.getElementById('analyticsLoading').style.display = 'block';
+      
+      setTimeout(() => {
+        try {
+          destroyChart('analyticsStudentChart');
+          destroyChart('analyticsTrendChart');
+          destroyChart('analyticsAttendanceChart');
+          destroyChart('analyticsClassChart');
+          destroyChart('analyticsComparisonChart');
+          
+          if (studentId) {
+            renderStudentAnalytics(studentId);
+            renderStudentAttendanceAnalytics(studentId);
+          }
+          
+          if (className) {
+            renderClassAnalytics(className);
+          }
+          
+          document.getElementById('analyticsLoading').style.display = 'none';
+          showToast('✅ Data loaded successfully!', 'success');
+        } catch (err) {
+          console.error('Analytics error:', err);
+          document.getElementById('analyticsLoading').style.display = 'none';
+          showToast('❌ Error loading data: ' + err.message, 'error');
+        }
+      }, 300);
+    };
+
+    function renderStudentAnalytics(studentId) {
+      const grades = gradesCache.filter(g => g.studentId === studentId);
+      
+      const subjectData = {};
+      grades.forEach(g => {
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push((g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+      });
+      const subjects = Object.keys(subjectData);
+      const averages = subjects.map(s => Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length));
+
+      destroyChart('analyticsStudentChart');
+      if (subjects.length) {
+        chartInstances['analyticsStudentChart'] = new Chart(document.getElementById('analyticsStudentChart'), {
+          type: 'bar',
+          data: { labels: subjects, datasets: [{ data: averages, backgroundColor: averages.map(getGradeColor) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+
+      const terms = ['Term 1', 'Term 2', 'Term 3'];
+      const termAverages = terms.map(term => {
+        const tg = grades.filter(g => g.term === term);
+        if (!tg.length) return null;
+        return Math.round(tg.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / tg.length);
+      });
+      const validTerms = terms.filter((_, i) => termAverages[i] !== null);
+      const validAverages = termAverages.filter(v => v !== null);
+
+      destroyChart('analyticsTrendChart');
+      if (validTerms.length) {
+        chartInstances['analyticsTrendChart'] = new Chart(document.getElementById('analyticsTrendChart'), {
+          type: 'line',
+          data: { labels: validTerms, datasets: [{ data: validAverages, borderColor: '#2e86c1', fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: validAverages.map(getGradeColor), backgroundColor: 'rgba(46, 134, 193, 0.1)' }] },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+        });
+      }
+    }
+
+    function renderClassAnalytics(className) {
+      const students = studentsCache.filter(s => s.class === className);
+      const studentIds = students.map(s => s.id);
+      const grades = gradesCache.filter(g => studentIds.includes(g.studentId));
+
+      const subjectData = {};
+      grades.forEach(g => {
+        if (!subjectData[g.subject]) subjectData[g.subject] = [];
+        subjectData[g.subject].push((g.test1 || 0) + (g.test2 || 0) + (g.exam || 0));
+      });
+      const subjects = Object.keys(subjectData);
+      const averages = subjects.map(s => Math.round(subjectData[s].reduce((a, b) => a + b, 0) / subjectData[s].length));
+
+      destroyChart('analyticsClassChart');
+      if (subjects.length) {
+        chartInstances['analyticsClassChart'] = new Chart(document.getElementById('analyticsClassChart'), {
+          type: 'bar',
+          data: { labels: subjects, datasets: [{ data: averages, backgroundColor: averages.map(getGradeColor) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+
+      const studentAverages = students.map(s => {
+        const sg = grades.filter(g => g.studentId === s.id);
+        if (!sg.length) return 0;
+        return Math.round(sg.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.exam || 0), 0) / sg.length);
+      });
+
+      destroyChart('analyticsComparisonChart');
+      if (students.length && studentAverages.some(a => a > 0)) {
+        chartInstances['analyticsComparisonChart'] = new Chart(document.getElementById('analyticsComparisonChart'), {
+          type: 'bar',
+          data: { labels: students.map(s => s.firstName), datasets: [{ data: studentAverages, backgroundColor: studentAverages.map(getGradeColor) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      }
+    }
+
+    function renderStudentAttendanceAnalytics(studentId) {
+      if (!studentId) return;
+      
+      const attendance = attendanceCache.filter(a => a.studentId === studentId);
+      const summaryContainer = document.getElementById('analyticsAttendanceSummary');
+      const container = document.getElementById('analyticsAttendanceContainer');
+      const legendContainer = document.getElementById('analyticsAttendanceLegend');
+      
+      if (!attendance.length) {
+        if (summaryContainer) summaryContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No attendance records found</div>';
+        if (container) container.innerHTML = '';
+        if (legendContainer) legendContainer.innerHTML = '';
+        return;
+      }
+
+      const total = attendance.length;
+      const present = attendance.filter(a => a.status === 'Present').length;
+      const absent = attendance.filter(a => a.status === 'Absent').length;
+      const late = attendance.filter(a => a.status === 'Late').length;
+      const excused = attendance.filter(a => a.status === 'Excused').length;
+      
+      const presentPercent = Math.round((present / total) * 100);
+      const absentPercent = Math.round((absent / total) * 100);
+      const latePercent = Math.round((late / total) * 100);
+      const excusedPercent = Math.round((excused / total) * 100);
+
+      const statusColors = { 'Present': '#27ae60', 'Absent': '#e74c3c', 'Late': '#f39c12', 'Excused': '#3498db' };
+      const statusEmojis = { 'Present': '✅', 'Absent': '❌', 'Late': '⏰', 'Excused': '📝' };
+
+      if (summaryContainer) {
+        summaryContainer.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:15px;padding:15px;background:#f8f9fa;border-radius:8px;">
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#27ae60;">${presentPercent}%</div><div style="font-size:12px;color:#888;">✅ Present</div><div style="font-size:16px;font-weight:600;color:#27ae60;">${present}/${total}</div></div>
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#e74c3c;">${absentPercent}%</div><div style="font-size:12px;color:#888;">❌ Absent</div><div style="font-size:16px;font-weight:600;color:#e74c3c;">${absent}/${total}</div></div>
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#f39c12;">${latePercent}%</div><div style="font-size:12px;color:#888;">⏰ Late</div><div style="font-size:16px;font-weight:600;color:#f39c12;">${late}/${total}</div></div>
+            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#3498db;">${excusedPercent}%</div><div style="font-size:12px;color:#888;">📝 Excused</div><div style="font-size:16px;font-weight:600;color:#3498db;">${excused}/${total}</div></div>
+          </div>
+        `;
+      }
+
+      const sorted = [...attendance].sort((a, b) => a.date.localeCompare(b.date));
+      const displayData = sorted.slice(-30);
+      const labels = displayData.map(d => formatDate(d.date));
+      const statuses = displayData.map(d => d.status);
+      const colors = displayData.map(d => statusColors[d.status] || '#95a5a6');
+      const emojis = displayData.map(d => statusEmojis[d.status] || '📅');
+
+      const canvasId = 'analyticsAttendanceChart';
+      if (container) {
+        container.innerHTML = `<canvas id="${canvasId}" style="height:200px;"></canvas>`;
+        const canvas = document.getElementById(canvasId);
+        
+        if (canvas) {
+          if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+            delete chartInstances[canvasId];
+          }
+
+          chartInstances[canvasId] = new Chart(canvas, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                data: statuses.map(() => 1),
+                backgroundColor: colors,
+                borderColor: colors.map(c => c),
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 0.6
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const index = context.dataIndex;
+                      return `${emojis[index]} ${statuses[index]} - ${labels[index]}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: { beginAtZero: true, max: 1.5, grid: { display: false }, ticks: { display: false } },
+                x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 30, font: { size: 9 } } }
+              }
+            }
+          });
+        }
+      }
+
+      if (legendContainer) {
+        legendContainer.innerHTML = `
+          <div style="display:flex;justify-content:center;gap:15px;flex-wrap:wrap;margin-top:10px;font-size:12px;">
+            <span><span style="display:inline-block;width:12px;height:12px;background:#27ae60;border-radius:3px;"></span> Present ✅</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#e74c3c;border-radius:3px;"></span> Absent ❌</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#f39c12;border-radius:3px;"></span> Late ⏰</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#3498db;border-radius:3px;"></span> Excused 📝</span>
+          </div>
+        `;
+      }
+    }
+
+    // ============================================================
+    // 👥 USER MANAGEMENT
+    // ============================================================
+
+    window.showAddUserModal = function(editId) {
+      if (!canAdd('users')) { showToast('You do not have permission to manage users', 'error'); return; }
+      const user = editId ? usersCache.find(u => u.id === editId) : null;
+      const roleOptions = ROLES.map(r => `<option value="${r}" ${user?.role === r ? 'selected' : ''}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join('');
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Email *</label><input type="email" id="u_email" value="${user?.email || ''}" ${user ? 'readonly' : ''}></div>
+          <div class="form-group"><label>Full Name *</label><input type="text" id="u_name" value="${user?.fullName || ''}"></div>
+          ${!user ? `<div class="form-group"><label>Password * (min 6 chars)</label><input type="text" id="u_password" placeholder="Enter temporary password"></div>` : ''}
+          <div class="form-group"><label>Role *</label>
+            <select id="u_role">${roleOptions}</select>
+          </div>
+          <div class="form-group"><label>Class (for teachers)</label>
+            <select id="u_class"><option value="">None</option>${CLASSES.map(c => `<option value="${c}" ${user?.class === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveUser('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Create'} User</button>
+      `;
+      openModal(editId ? 'Edit User' : 'Add User', html);
+    };
+
+    window.saveUser = async function(editId) {
+      const email = document.getElementById('u_email').value.trim();
+      const name = document.getElementById('u_name').value.trim();
+      const role = document.getElementById('u_role').value;
+      const classValue = document.getElementById('u_class').value;
+      if (!email || !name || !role) { showToast('Please fill all required fields', 'error'); return; }
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'users', editId), { fullName: name, role, class: classValue });
+          await addAuditLog('UPDATE_USER', `${name} (${role})`);
+          showToast('User updated');
+        } else {
+          const password = document.getElementById('u_password').value;
+          if (!password || password.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+          const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+          await setDoc(doc(db, 'users', cred.user.uid), { email, fullName: name, role, class: classValue, createdAt: serverTimestamp(), loginCount: 0 });
+          await signOut(secondaryAuth);
+          await addAuditLog('ADD_USER', `${name} (${role})`);
+          showToast(`User ${email} created successfully`);
+        }
+        closeModal();
+      } catch (err) { showToast(friendlyAuthError(err.code) || err.message, 'error'); }
+    };
+
+    window.renderUsers = function() {
+      document.getElementById('usersTableBody').innerHTML = usersCache.map(u => `
+        <tr>
+          <td>${u.email || u.id}</td>
+          <td>${u.fullName || '-'}</td>
+          <td><span class="badge badge-primary">${u.role || 'user'}</span></td>
+          <td>${u.class || '-'}</td>
+          <td>${formatTimestamp(u.lastLogin)}</td>
+          <td>
+            <button class="btn btn-primary btn-sm" onclick="showAddUserModal('${u.id}')">Edit</button>
+            ${u.id !== currentUser?.uid ? `<button class="btn btn-warning btn-sm" onclick="resetUserPassword('${u.id}')">Reset</button><button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Del</button>` : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No users found</td></tr>';
+    };
+
+    window.resetUserPassword = async function(userId) {
+      const user = usersCache.find(u => u.id === userId);
+      if (!user || !user.email) { showToast('User has no email address', 'error'); return; }
+      if (!confirm(`Send password reset email to ${user.email}?`)) return;
+      try { await sendPasswordResetEmail(auth, user.email); await addAuditLog('RESET_PASSWORD', user.email); showToast(`Reset email sent to ${user.email}`); } catch (err) { showToast(friendlyAuthError(err.code) || 'Error sending reset email', 'error'); }
+    };
+
+    window.deleteUser = async function(userId) {
+      if (!confirm('Delete this user permanently?')) return;
+      try { const user = usersCache.find(u => u.id === userId); await deleteDoc(doc(db, 'users', userId)); await addAuditLog('DELETE_USER', user?.email || userId); showToast('User deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // 🔍 AUDIT LOG
+    // ============================================================
+
+    function populateAuditFilter() {
+      const select = document.getElementById('auditUserFilter');
+      if (!select) return;
+      const current = select.value;
+      const users = [...new Set(auditCache.map(a => a.user).filter(Boolean))];
+      select.innerHTML = '<option value="">All Users</option>' + users.map(u => `<option value="${u}">${u}</option>`).join('');
+      if (current && users.includes(current)) select.value = current;
+    }
+
+    function renderAudit() {
+      const filter = document.getElementById('auditUserFilter').value;
+      let logs = auditCache;
+
+      if (filter) {
+        logs = logs.filter(a => a.user === filter);
+      }
+
+      document.getElementById('auditLogContent').innerHTML = logs.slice(0, 100).map(a => `
+        <div class="log-entry" style="padding:10px 14px;border-left:3px solid var(--primary-light);margin-bottom:8px;background:#f8f9fa;border-radius:0 6px 6px 0;">
+          <strong>${a.user || 'system'}</strong>
+          <span class="badge badge-info">${a.role || 'user'}</span>
+          — <strong>${a.action}</strong>: ${a.details || ''}
+          <div style="color:#999;font-size:0.8em;">${formatTimestamp(a.time)}</div>
+        </div>
+      `).join('') || '<div style="text-align:center;color:#999;padding:20px;">No audit logs found</div>';
+    }
+
+    async function addAuditLog(action, details) {
+      try {
+        const userEmail = currentUser?.email || 'system';
+        const userRole = currentUser?.role || 'system';
+        const userName = currentUser?.fullName || userEmail;
+        await addDoc(collection(db, 'auditLog'), { 
+          user: userName,
+          email: userEmail,
+          role: userRole, 
+          action, 
+          details: details || '', 
+          time: serverTimestamp() 
+        });
+      } catch (err) { 
+        console.warn('Failed to write audit log:', err); 
+      }
+    }
+
+    // ============================================================
+    // 🖨️ PRINT & SHARE FUNCTIONS
+    // ============================================================
+
+    window.printStudentReport = function(studentId) {
+      showToast('📄 Opening print preview...', 'info');
+    };
+
+    window.printAllStudents = function() {
+      if (!studentsCache.length) { showToast('No students to print', 'warning'); return; }
+      showToast('📄 Printing all students...', 'info');
+    };
+
+    window.printCurrentClass = function() {
+      const className = document.getElementById('performanceClassSelect').value;
+      if (!className) { showToast('Please select a class', 'warning'); return; }
+      showToast('📄 Printing class report...', 'info');
+    };
+
+    window.shareStudentLink = function(studentId) {
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) { showToast('Student not found', 'error'); return; }
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'student');
+      url.searchParams.set('id', studentId);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString())
+          .then(() => showToast('📋 Student link copied to clipboard!'))
+          .catch(() => { prompt('Copy this link to share:', url.toString()); });
+      } else {
+        prompt('Copy this link to share:', url.toString());
+      }
+    };
+
+    window.shareCurrentClass = function() {
+      const className = document.getElementById('performanceClassSelect').value;
+      if (!className) { showToast('Please select a class', 'warning'); return; }
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'class');
+      url.searchParams.set('class', className);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString())
+          .then(() => showToast('📋 Class link copied to clipboard!'))
+          .catch(() => { prompt('Copy this link to share:', url.toString()); });
+      } else {
+        prompt('Copy this link to share:', url.toString());
+      }
+    };
+
+    window.shareCurrentView = function() {
+      const url = new URL(window.location.href);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString())
+          .then(() => showToast('📋 Page link copied to clipboard!'))
+          .catch(() => { prompt('Copy this link to share:', url.toString()); });
+      } else {
+        prompt('Copy this link to share:', url.toString());
+      }
+    };
 
     // ============================================================
     // 🚀 INITIALIZATION
@@ -2060,8 +3345,6 @@
       console.log('📚 Version 8.5.0 - Cloud Synced');
       console.log('💡 Made with ❤️ for education');
       console.log('👔 New Staff Roles: HRIO, Nutritionist, Lab Technician, Radiographer');
-      console.log('📚 Subjects included:', SUBJECTS.join(', '));
-      console.log('🏠 Dorms available:', DORMS.join(', '));
     });
   </script>
 </body>
