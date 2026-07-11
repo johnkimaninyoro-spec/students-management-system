@@ -8,6 +8,9 @@
   <!-- Chart.js for analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   
+  <!-- html2canvas for page sharing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -85,6 +88,7 @@
       display: none;
     }
 
+    /* Print Styles - Complete Data Printing */
     @media print {
       .print-watermark {
         display: block;
@@ -92,11 +96,11 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%) rotate(-30deg);
-        opacity: 0.08;
+        opacity: 0.06;
         pointer-events: none;
         z-index: 9999;
-        max-width: 400px;
-        max-height: 400px;
+        max-width: 500px;
+        max-height: 500px;
       }
       
       .print-watermark img {
@@ -109,33 +113,107 @@
         align-items: center;
         justify-content: center;
         gap: 15px;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #1a5276;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #1a5276;
       }
 
       .print-header-logo img {
-        height: 50px;
+        height: 60px;
         width: auto;
       }
 
       .print-header-logo .print-school-name {
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 700;
         color: #1a5276;
       }
 
       .print-header-logo .print-motto {
-        font-size: 12px;
+        font-size: 14px;
         color: #666;
-        letter-spacing: 1px;
+        letter-spacing: 2px;
       }
 
+      .print-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a5276;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ddd;
+      }
+
+      .print-footer {
+        text-align: center;
+        font-size: 11px;
+        color: #999;
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+      }
+
+      .print-date {
+        text-align: right;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 10px;
+      }
+
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+        margin-bottom: 10px;
+      }
+
+      .print-table th {
+        background: #1a5276 !important;
+        color: white !important;
+        padding: 6px 8px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      .print-table td {
+        padding: 5px 8px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .print-table tr:nth-child(even) {
+        background: #f8f9fa;
+      }
+
+      .print-table .badge {
+        padding: 1px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .print-table .badge-success { background: #d5f5e3; color: #27ae60; }
+      .print-table .badge-danger { background: #fadbd8; color: #e74c3c; }
+      .print-table .badge-warning { background: #fdebd0; color: #f39c12; }
+      .print-table .badge-info { background: #d6eaf8; color: #2e86c1; }
+      .print-table .badge-primary { background: #d6eaf8; color: #1a5276; }
+      .print-table .badge-gold { background: #f9e79f; color: #8e6b00; }
+      .print-table .badge-purple { background: #e8daef; color: #8e44ad; }
+
+      .no-print { display: none !important; }
       .sidebar, .top-bar, .btn, .no-print, .menu-toggle, .toast-container { display: none !important; }
-      .content-area { max-height: none !important; padding: 20px !important; overflow: visible !important; }
-      .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+      .content-area { max-height: none !important; padding: 15px !important; overflow: visible !important; }
+      .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 15px !important; padding: 15px !important; }
       .tab-content { display: block !important; }
       .tab-content:not(.active) { display: none !important; }
+      .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .stat-card { border: 1px solid #ddd; padding: 5px; }
+      .chart-container { display: none !important; }
+      .charts-grid { display: none !important; }
+      table { page-break-inside: avoid; }
+      tr { page-break-inside: avoid; }
+      .print-page-break { page-break-after: always; }
     }
 
     .print-header-logo {
@@ -203,7 +281,16 @@
       margin-bottom: 2px;
     }
 
-    .stat-card .filter-badge {
+    .stat-card.active-filter {
+      background: #d6eaf8 !important;
+      border-color: #2e86c1 !important;
+    }
+
+    .stat-card.active-filter .filter-badge {
+      display: inline-block;
+    }
+
+    .filter-badge {
       display: none;
       position: absolute;
       bottom: 2px;
@@ -213,10 +300,6 @@
       color: white;
       padding: 1px 6px;
       border-radius: 10px;
-    }
-
-    .stat-card.active-filter .filter-badge {
-      display: inline-block;
     }
 
     @media (max-width: 768px) {
@@ -389,14 +472,14 @@
     .btn-outline { background: transparent; border: 2px solid var(--primary-light); color: var(--primary-light); }
     .btn-outline:hover { background: var(--primary-light); color: white; }
     .btn-sm { padding: 4px 12px; font-size: 0.75em; }
-
-    .share-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-print { background: #34495e; color: white; }
     .btn-print:hover { background: #2c3e50; }
     .btn-share { background: #3498db; color: white; }
     .btn-share:hover { background: #2980b9; }
     .btn-pdf { background: #e74c3c; color: white; }
     .btn-pdf:hover { background: #c0392b; }
+
+    .share-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
     .table-container { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
@@ -551,6 +634,64 @@
       margin-top: 2px;
       line-height: 1.2;
     }
+
+    /* Print Preview Modal Styles */
+    .print-preview-modal .modal {
+      max-width: 95%;
+      max-height: 90vh;
+    }
+
+    .print-preview-modal .modal-body {
+      max-height: 70vh;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .share-loading {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .share-loading .spinner {
+      width: 40px;
+      height: 40px;
+      border-width: 4px;
+    }
+
+    .share-preview-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .share-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .share-actions .btn {
+      min-width: 120px;
+      justify-content: center;
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+    }
+
+    .prefect-role-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.7em;
+      font-weight: 600;
+    }
+    .prefect-role-badge.head { background: #f9e79f; color: #8e6b00; }
+    .prefect-role-badge.deputy { background: #d6eaf8; color: #1a5276; }
+    .prefect-role-badge.class { background: #d5f5e3; color: #1a7a3a; }
+    .prefect-role-badge.assistant { background: #fdebd0; color: #a04000; }
   </style>
 </head>
 <body>
@@ -653,11 +794,14 @@
         <div class="nav-item" id="auditNav" style="display:none;" onclick="showTab('audit')" data-tab="audit"><span class="icon">🔍</span> Audit Log</div>
       </div>
 
-      <div class="content-area">
+      <div class="content-area" id="contentArea">
         <!-- DASHBOARD -->
         <div class="tab-content active" id="tab-dashboard">
           <div class="card">
-            <div class="card-header"><h2>📊 Dashboard Overview</h2><span style="font-size:0.8em;color:var(--gray);">Click any card to view filtered data</span></div>
+            <div class="card-header">
+              <h2>📊 Dashboard Overview</h2>
+              <span style="font-size:0.8em;color:var(--gray);">Click any card to view filtered data</span>
+            </div>
             <div class="stats-grid" id="dashboardStats"></div>
           </div>
           <div class="card">
@@ -682,8 +826,8 @@
             <div class="card-header">
               <h2>👩‍🎓 Student Records</h2>
               <div class="share-btn-group no-print">
-                <button class="btn btn-print btn-sm" onclick="printAllStudents()">🖨️ Print All</button>
-                <button class="btn btn-share btn-sm" onclick="shareCurrentView()">📤 Share</button>
+                <button class="btn btn-print btn-sm" onclick="printTab('students')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('students')">📤 Share</button>
                 <button class="btn btn-primary" id="addStudentBtn" onclick="showAddStudentModal()">+ Add Student</button>
                 <span id="filterBadge" style="display:none;margin-left:10px;">
                   <span class="badge badge-info" id="activeFilterLabel"></span>
@@ -698,9 +842,9 @@
               <div class="form-group"><label>Gender</label><select id="studentGenderFilter" onchange="renderStudents()"><option value="">All</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
             </div>
             <div class="table-container">
-              <table>
+              <table id="studentsTable">
                 <thead>
-                  <tr><th>Photo</th><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Dorm</th><th>Sponsorship</th><th>Prefect</th><th>Role</th><th>Department</th><th>Parent/Guardian</th><th>Actions</th></tr>
+                  <tr><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Dorm</th><th>Sponsorship</th><th>Prefect</th><th>Role</th><th>Department</th><th>Parent/Guardian</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="studentTableBody"></tbody>
               </table>
@@ -713,11 +857,14 @@
           <div class="card">
             <div class="card-header">
               <h2>💰 Sponsored Students</h2>
-              <span style="font-size:0.85em;color:var(--gray);">Showing students with active sponsorship only</span>
-              <button class="btn btn-primary" id="editSponsorshipBtn" onclick="showEditSponsorshipModal()">✏️ Edit Sponsorship</button>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('sponsorship')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('sponsorship')">📤 Share</button>
+                <button class="btn btn-primary" id="editSponsorshipBtn" onclick="showEditSponsorshipModal()">✏️ Edit Sponsorship</button>
+              </div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Student</th><th>Class</th><th>Sponsor Type</th><th>Sponsor Name</th><th>Contact</th><th>Notes</th></tr></thead>
+              <table id="sponsorshipTable"><thead><tr><th>Student</th><th>Class</th><th>Sponsor Type</th><th>Sponsor Name</th><th>Contact</th><th>Notes</th></tr></thead>
               <tbody id="sponsorshipTableBody"></tbody></table>
             </div>
           </div>
@@ -726,14 +873,21 @@
         <!-- GRADES -->
         <div class="tab-content" id="tab-grades">
           <div class="card">
-            <div class="card-header"><h2>📝 Student Grades</h2><button class="btn btn-primary" id="addGradeBtn" onclick="showAddGradeModal()">+ Add Grade</button></div>
+            <div class="card-header">
+              <h2>📝 Student Grades</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('grades')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('grades')">📤 Share</button>
+                <button class="btn btn-primary" id="addGradeBtn" onclick="showAddGradeModal()">+ Add Grade</button>
+              </div>
+            </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Class</label><select id="gradeClassFilter" onchange="renderGrades()"><option value="">All Classes</option></select></div>
               <div class="form-group"><label>Subject</label><select id="gradeSubjectFilter" onchange="renderGrades()"><option value="">All Subjects</option></select></div>
               <div class="form-group"><label>Term</label><select id="gradeTermFilter" onchange="renderGrades()"><option value="">All Terms</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Test 1</th><th>Test 2</th><th>Exam</th><th>Total</th><th>Grade</th><th>Actions</th></tr></thead>
+              <table id="gradesTable"><thead><tr><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Test 1</th><th>Test 2</th><th>Exam</th><th>Total</th><th>Grade</th><th>Actions</th></tr></thead>
               <tbody id="gradesTableBody"></tbody></table>
             </div>
           </div>
@@ -742,13 +896,20 @@
         <!-- STUDENT ATTENDANCE -->
         <div class="tab-content" id="tab-attendance">
           <div class="card">
-            <div class="card-header"><h2>📋 Student Attendance</h2><button class="btn btn-primary" id="addAttendanceBtn" onclick="showAddAttendanceModal()">+ Mark Attendance</button></div>
+            <div class="card-header">
+              <h2>📋 Student Attendance</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('attendance')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('attendance')">📤 Share</button>
+                <button class="btn btn-primary" id="addAttendanceBtn" onclick="showAddAttendanceModal()">+ Mark Attendance</button>
+              </div>
+            </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Date</label><input type="date" id="attendanceDateFilter" onchange="renderAttendance()"></div>
               <div class="form-group"><label>Class</label><select id="attendanceClassFilter" onchange="renderAttendance()"><option value="">All Classes</option></select></div>
             </div>
             <div class="table-container">
-              <table>
+              <table id="attendanceTable">
                 <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th><th>Reason</th><th>Marked By</th><th>Actions</th></tr></thead>
                 <tbody id="attendanceTableBody"></tbody>
               </table>
@@ -762,8 +923,8 @@
             <div class="card-header">
               <h2>📈 Class Performance Analytics</h2>
               <div class="share-btn-group no-print">
-                <button class="btn btn-print btn-sm" onclick="printCurrentClass()">🖨️ Print Class Report</button>
-                <button class="btn btn-share btn-sm" onclick="shareCurrentClass()">📤 Share Class</button>
+                <button class="btn btn-print btn-sm" onclick="printTab('classPerformance')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('classPerformance')">📤 Share</button>
               </div>
             </div>
             <div class="form-row" style="margin-bottom:16px;">
@@ -780,7 +941,7 @@
           <div class="card">
             <div class="card-header"><h3>🏆 Student Rankings</h3></div>
             <div class="table-container">
-              <table><thead><tr><th>Rank</th><th>Student</th><th>Average Score</th><th>Grade</th><th>Passed</th><th>Failed</th></tr></thead>
+              <table id="rankingsTable"><thead><tr><th>Rank</th><th>Student</th><th>Average Score</th><th>Grade</th><th>Passed</th><th>Failed</th></tr></thead>
               <tbody id="perfRankingsBody"></tbody></table>
             </div>
           </div>
@@ -789,9 +950,16 @@
         <!-- WARNINGS -->
         <div class="tab-content" id="tab-warnings">
           <div class="card">
-            <div class="card-header"><h2>⚠️ Warning Letters</h2><button class="btn btn-primary" id="addWarningBtn" onclick="showAddWarningModal()">+ Issue Warning</button></div>
+            <div class="card-header">
+              <h2>⚠️ Warning Letters</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('warnings')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('warnings')">📤 Share</button>
+                <button class="btn btn-primary" id="addWarningBtn" onclick="showAddWarningModal()">+ Issue Warning</button>
+              </div>
+            </div>
             <div class="table-container">
-              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Issued By</th><th>Actions</th></tr></thead>
+              <table id="warningsTable"><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Issued By</th><th>Actions</th></tr></thead>
               <tbody id="warningsTableBody"></tbody></table>
             </div>
           </div>
@@ -800,9 +968,16 @@
         <!-- SUSPENSIONS -->
         <div class="tab-content" id="tab-suspensions">
           <div class="card">
-            <div class="card-header"><h2>🚫 Suspensions</h2><button class="btn btn-primary" id="addSuspensionBtn" onclick="showAddSuspensionModal()">+ Add Suspension</button></div>
+            <div class="card-header">
+              <h2>🚫 Suspensions</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('suspensions')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('suspensions')">📤 Share</button>
+                <button class="btn btn-primary" id="addSuspensionBtn" onclick="showAddSuspensionModal()">+ Add Suspension</button>
+              </div>
+            </div>
             <div class="table-container">
-              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
+              <table id="suspensionsTable"><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody id="suspensionsTableBody"></tbody></table>
             </div>
           </div>
@@ -811,9 +986,16 @@
         <!-- EXPULSIONS -->
         <div class="tab-content" id="tab-expulsions">
           <div class="card">
-            <div class="card-header"><h2>❌ Expulsions</h2><button class="btn btn-primary" id="addExpulsionBtn" onclick="showAddExpulsionModal()">+ Record Expulsion</button></div>
+            <div class="card-header">
+              <h2>❌ Expulsions</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('expulsions')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('expulsions')">📤 Share</button>
+                <button class="btn btn-primary" id="addExpulsionBtn" onclick="showAddExpulsionModal()">+ Record Expulsion</button>
+              </div>
+            </div>
             <div class="table-container">
-              <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Approved By</th><th>Actions</th></tr></thead>
+              <table id="expulsionsTable"><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Approved By</th><th>Actions</th></tr></thead>
               <tbody id="expulsionsTableBody"></tbody></table>
             </div>
           </div>
@@ -822,9 +1004,16 @@
         <!-- CLINIC -->
         <div class="tab-content" id="tab-clinic">
           <div class="card">
-            <div class="card-header"><h2>🏥 Clinic Visits</h2><button class="btn btn-primary" id="addClinicBtn" onclick="showAddClinicModal()">+ Record Visit</button></div>
+            <div class="card-header">
+              <h2>🏥 Clinic Visits</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('clinic')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('clinic')">📤 Share</button>
+                <button class="btn btn-primary" id="addClinicBtn" onclick="showAddClinicModal()">+ Record Visit</button>
+              </div>
+            </div>
             <div class="table-container">
-              <table>
+              <table id="clinicTable">
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
                 <tbody id="clinicTableBody"></tbody>
               </table>
@@ -835,7 +1024,14 @@
         <!-- PREFECTS -->
         <div class="tab-content" id="tab-prefects">
           <div class="card">
-            <div class="card-header"><h2>⭐ Prefect Roles</h2><button class="btn btn-primary" id="addPrefectBtn" onclick="showAddPrefectModal()">+ Add Prefect Role</button></div>
+            <div class="card-header">
+              <h2>⭐ Prefect Roles</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('prefects')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('prefects')">📤 Share</button>
+                <button class="btn btn-primary" id="addPrefectBtn" onclick="showAddPrefectModal()">+ Add Prefect Role</button>
+              </div>
+            </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Department</label><select id="prefectDeptFilter" onchange="renderPrefects()">
                 <option value="">All Departments</option>
@@ -847,7 +1043,7 @@
               </select></div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Student</th><th>Class</th><th>Prefect Role</th><th>Department</th><th>Assigned Date</th><th>Actions</th></tr></thead>
+              <table id="prefectsTable"><thead><tr><th>Student</th><th>Class</th><th>Prefect Role</th><th>Department</th><th>Assigned Date</th><th>Actions</th></tr></thead>
               <tbody id="prefectsTableBody"></tbody></table>
             </div>
           </div>
@@ -856,7 +1052,14 @@
         <!-- TEACHER RECORDS -->
         <div class="tab-content" id="tab-teachers">
           <div class="card">
-            <div class="card-header"><h2>👨‍🏫 Teacher Records</h2><button class="btn btn-primary" id="addTeacherBtn" onclick="showAddTeacherModal()">+ Add Teacher</button></div>
+            <div class="card-header">
+              <h2>👨‍🏫 Teacher Records</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('teachers')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('teachers')">📤 Share</button>
+                <button class="btn btn-primary" id="addTeacherBtn" onclick="showAddTeacherModal()">+ Add Teacher</button>
+              </div>
+            </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Teacher Type</label>
                 <select id="teacherTypeFilter" onchange="renderTeachers()">
@@ -874,7 +1077,7 @@
               </div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Name</th><th>Employee ID</th><th>Type</th><th>Specialization</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr></thead>
+              <table id="teachersTable"><thead><tr><th>Name</th><th>Employee ID</th><th>Type</th><th>Specialization</th><th>Subjects</th><th>Classes</th><th>Class Teacher</th><th>Dorm Role</th><th>Dorm</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody id="teachersTableBody"></tbody></table>
             </div>
           </div>
@@ -883,7 +1086,14 @@
         <!-- TEACHERS ATTENDANCE -->
         <div class="tab-content" id="tab-teacherAttendance">
           <div class="card">
-            <div class="card-header"><h2>📅 Teachers Attendance</h2><button class="btn btn-primary" id="addTeacherAttBtn" onclick="showTeacherAttendanceModal()">+ Mark Attendance</button></div>
+            <div class="card-header">
+              <h2>📅 Teachers Attendance</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('teacherAttendance')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('teacherAttendance')">📤 Share</button>
+                <button class="btn btn-primary" id="addTeacherAttBtn" onclick="showTeacherAttendanceModal()">+ Mark Attendance</button>
+              </div>
+            </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Date</label><input type="date" id="teacherAttDate" onchange="renderTeacherAttendance()"></div>
               <div class="form-group"><label>Teacher</label><select id="teacherAttFilter" onchange="renderTeacherAttendance()"><option value="">All Teachers</option></select></div>
@@ -896,7 +1106,7 @@
               </div>
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Date</th><th>Teacher</th><th>Type</th><th>Status</th><th>Reason</th><th>Lessons Today</th><th>Lessons/Week</th><th>Marked By</th><th>Actions</th></tr></thead>
+              <table id="teacherAttendanceTable"><thead><tr><th>Date</th><th>Teacher</th><th>Type</th><th>Status</th><th>Reason</th><th>Lessons Today</th><th>Lessons/Week</th><th>Marked By</th><th>Actions</th></tr></thead>
               <tbody id="teacherAttendanceBody"></tbody></table>
             </div>
           </div>
@@ -908,7 +1118,8 @@
             <div class="card-header">
               <h2>🔧 Classroom Maintenance Reports</h2>
               <div class="share-btn-group no-print">
-                <button class="btn btn-print btn-sm" onclick="printMaintenanceReport()">🖨️ Print Report</button>
+                <button class="btn btn-print btn-sm" onclick="printTab('maintenance')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('maintenance')">📤 Share</button>
                 <button class="btn btn-primary" id="addMaintenanceBtn" onclick="showAddMaintenanceModal()">+ Add Report</button>
               </div>
             </div>
@@ -941,7 +1152,7 @@
             </div>
             <div class="stats-grid" id="maintenanceStats"></div>
             <div class="table-container">
-              <table>
+              <table id="maintenanceTable">
                 <thead>
                   <tr><th>Date Reported</th><th>Class</th><th>Reported By</th><th>Issue Type</th><th>Description</th><th>Damaged By</th><th>Status</th><th>Resolved Date</th><th>Actions</th></tr>
                 </thead>
@@ -957,6 +1168,8 @@
             <div class="card-header">
               <h2>📈 Analytics & Charts</h2>
               <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('analytics')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('analytics')">📤 Share</button>
                 <button class="btn btn-success" id="analyticsLoadBtn" onclick="loadAnalyticsData()" style="font-size:0.9em;">
                   📊 Load Data
                 </button>
@@ -1010,9 +1223,16 @@
         <!-- USERS -->
         <div class="tab-content" id="tab-users">
           <div class="card">
-            <div class="card-header"><h2>👥 User Management</h2><button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button></div>
+            <div class="card-header">
+              <h2>👥 User Management</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('users')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('users')">📤 Share</button>
+                <button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button>
+              </div>
+            </div>
             <div class="table-container">
-              <table><thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Class</th><th>Last Login</th><th>Actions</th></tr></thead>
+              <table id="usersTable"><thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Class</th><th>Last Login</th><th>Actions</th></tr></thead>
               <tbody id="usersTableBody"></tbody></table>
             </div>
           </div>
@@ -1021,7 +1241,13 @@
         <!-- AUDIT LOG -->
         <div class="tab-content" id="tab-audit">
           <div class="card">
-            <div class="card-header"><h2>🔍 Audit Log</h2></div>
+            <div class="card-header">
+              <h2>🔍 Audit Log</h2>
+              <div class="share-btn-group no-print">
+                <button class="btn btn-print btn-sm" onclick="printTab('audit')">🖨️ Print</button>
+                <button class="btn btn-share btn-sm" onclick="shareTab('audit')">📤 Share</button>
+              </div>
+            </div>
             <div class="form-group" style="max-width:300px;">
               <label>Filter by User</label>
               <select id="auditUserFilter" onchange="renderAudit()">
@@ -1040,6 +1266,17 @@
     <div class="modal">
       <div class="modal-header"><h2 id="modalTitle">Modal</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
       <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Share/Print Preview Modal -->
+  <div class="modal-overlay print-preview-modal" id="shareModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="shareModalTitle">📤 Share / Print</h2>
+        <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('show')">&times;</button>
+      </div>
+      <div id="shareModalBody" style="max-height:70vh;overflow-y:auto;padding:10px;"></div>
     </div>
   </div>
 
@@ -1239,35 +1476,561 @@
     }
 
     // ============================================================
+    // PRINT & SHARE FUNCTIONS
+    // ============================================================
+
+    function getTabTitle(tab) {
+      const titles = {
+        'students': 'Student Records',
+        'sponsorship': 'Sponsored Students',
+        'grades': 'Student Grades',
+        'attendance': 'Student Attendance',
+        'classPerformance': 'Class Performance',
+        'warnings': 'Warning Letters',
+        'suspensions': 'Suspensions',
+        'expulsions': 'Expulsions',
+        'clinic': 'Clinic Visits',
+        'prefects': 'Prefect Roles',
+        'teachers': 'Teacher Records',
+        'teacherAttendance': 'Teachers Attendance',
+        'maintenance': 'Classroom Maintenance',
+        'analytics': 'Analytics & Charts',
+        'users': 'User Management',
+        'audit': 'Audit Log',
+        'dashboard': 'Dashboard'
+      };
+      return titles[tab] || tab;
+    }
+
+    function getTableData(tab) {
+      const data = {
+        'students': { rows: studentsCache, columns: ['Adm No.', 'Name', 'Class', 'Gender', 'Status', 'Dorm', 'Sponsorship', 'Prefect', 'Role', 'Department', 'Parent/Guardian'] },
+        'sponsorship': { rows: studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored'), columns: ['Student', 'Class', 'Sponsor Type', 'Sponsor Name', 'Contact', 'Notes'] },
+        'grades': { rows: gradesCache, columns: ['Student', 'Class', 'Subject', 'Term', 'Test 1', 'Test 2', 'Exam', 'Total', 'Grade'] },
+        'attendance': { rows: attendanceCache, columns: ['Date', 'Student', 'Class', 'Status', 'Reason', 'Marked By'] },
+        'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Issued By'] },
+        'suspensions': { rows: suspensionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Duration', 'Status'] },
+        'expulsions': { rows: expulsionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Approved By'] },
+        'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor/Nurse', 'Complaint', 'Condition', 'Diagnosis', 'Medication', 'Follow-Up', 'Follow-Up Date'] },
+        'prefects': { rows: prefectsCache, columns: ['Student', 'Class', 'Prefect Role', 'Department', 'Assigned Date'] },
+        'teachers': { rows: teachersCache, columns: ['Name', 'Employee ID', 'Type', 'Specialization', 'Subjects', 'Classes', 'Class Teacher', 'Dorm Role', 'Dorm', 'Status'] },
+        'teacherAttendance': { rows: teacherAttCache, columns: ['Date', 'Teacher', 'Type', 'Status', 'Reason', 'Lessons Today', 'Lessons/Week', 'Marked By'] },
+        'maintenance': { rows: maintenanceCache, columns: ['Date Reported', 'Class', 'Reported By', 'Issue Type', 'Description', 'Damaged By', 'Status', 'Resolved Date'] },
+        'users': { rows: usersCache, columns: ['Email', 'Name', 'Role', 'Class', 'Last Login'] },
+      };
+      return data[tab] || { rows: [], columns: [] };
+    }
+
+    window.printTab = function(tab) {
+      const title = getTabTitle(tab);
+      const data = getTableData(tab);
+      
+      if (data.rows.length === 0) {
+        showToast('No data to print for ' + title, 'warning');
+        return;
+      }
+
+      // Create print content
+      const printWindow = window.open('', '_blank');
+      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      
+      let tableRows = data.rows.map(row => {
+        let cells = '';
+        if (tab === 'students') {
+          cells = `
+            <td>${row.admNo || ''}</td>
+            <td>${row.firstName || ''} ${row.lastName || ''}</td>
+            <td>${row.class || ''}</td>
+            <td>${row.gender || ''}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.dorm || '-'}</td>
+            <td>${row.sponsorshipType || '-'}</td>
+            <td>${row.isPrefect === 'Yes' ? '⭐ Yes' : '-'}</td>
+            <td>${row.prefectRole || '-'}</td>
+            <td>${row.prefectDepartment || '-'}</td>
+            <td>${row.parent || '-'}</td>
+          `;
+        } else if (tab === 'sponsorship') {
+          cells = `
+            <td>${row.firstName || ''} ${row.lastName || ''}</td>
+            <td>${row.class || ''}</td>
+            <td>${row.sponsorshipType || ''}</td>
+            <td>${row.sponsorName || '-'}</td>
+            <td>${row.sponsorContact || '-'}</td>
+            <td>${row.sponsorNotes || '-'}</td>
+          `;
+        } else if (tab === 'grades') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          const total = (row.test1 || 0) + (row.test2 || 0) + (row.exam || 0);
+          cells = `
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.subject || ''}</td>
+            <td>${row.term || ''}</td>
+            <td>${row.test1 || 0}</td>
+            <td>${row.test2 || 0}</td>
+            <td>${row.exam || 0}</td>
+            <td><strong>${total}</strong></td>
+            <td>${getLetterGrade(total)}</td>
+          `;
+        } else if (tab === 'attendance') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.reason || '-'}</td>
+            <td>${row.markedBy || '-'}</td>
+          `;
+        } else if (tab === 'warnings') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.reason || ''}</td>
+            <td>${row.issuedBy || '-'}</td>
+          `;
+        } else if (tab === 'suspensions') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.reason || ''}</td>
+            <td>${row.duration || ''}</td>
+            <td>${row.status || ''}</td>
+          `;
+        } else if (tab === 'expulsions') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.reason || ''}</td>
+            <td>${row.approvedBy || '-'}</td>
+          `;
+        } else if (tab === 'clinic') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${row.doctor || '-'}</td>
+            <td>${row.complaint || '-'}</td>
+            <td>${row.condition || '-'}</td>
+            <td>${row.diagnosis || '-'}</td>
+            <td>${row.medication || '-'}</td>
+            <td>${row.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
+            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
+          `;
+        } else if (tab === 'prefects') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.role || ''}</td>
+            <td>${row.department || ''}</td>
+            <td>${formatDate(row.date)}</td>
+          `;
+        } else if (tab === 'teachers') {
+          cells = `
+            <td>${row.name || ''}</td>
+            <td>${row.empId || ''}</td>
+            <td>${row.type || ''}</td>
+            <td>${row.specialization || '-'}</td>
+            <td>${(row.subjects || []).join(', ') || '-'}</td>
+            <td>${(row.classes || []).join(', ') || '-'}</td>
+            <td>${row.classTeacher || '-'}</td>
+            <td>${row.dormRole || '-'}</td>
+            <td>${row.dorm || '-'}</td>
+            <td>${row.status || ''}</td>
+          `;
+        } else if (tab === 'teacherAttendance') {
+          const teacher = teachersCache.find(t => t.id === row.teacherId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${teacher?.name || 'Unknown'}</td>
+            <td>${teacher?.type || ''}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.reason || '-'}</td>
+            <td>${row.lessonsToday || 0}</td>
+            <td>${row.lessonsWeek || 0}</td>
+            <td>${row.markedBy || '-'}</td>
+          `;
+        } else if (tab === 'maintenance') {
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${row.class || ''}</td>
+            <td>${row.reportedBy || '-'}</td>
+            <td>${row.issueType || ''}</td>
+            <td>${row.description || ''}</td>
+            <td>${row.damagedBy || 'Unknown'}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.status === 'Resolved' ? formatDate(row.resolvedDate) : '-'}</td>
+          `;
+        } else if (tab === 'users') {
+          cells = `
+            <td>${row.email || row.id}</td>
+            <td>${row.fullName || '-'}</td>
+            <td>${row.role || 'user'}</td>
+            <td>${row.class || '-'}</td>
+            <td>${formatTimestamp(row.lastLogin)}</td>
+          `;
+        }
+        return `<tr>${cells}</tr>`;
+      }).join('');
+
+      const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join('');
+
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>${title} - Mara Christian High School</title>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #1a5276; padding-bottom: 15px; }
+            .header h1 { color: #1a5276; font-size: 24px; margin: 0; }
+            .header .sub { color: #666; font-size: 14px; }
+            .header .date { color: #999; font-size: 12px; margin-top: 5px; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+            th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; font-weight: 600; }
+            td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
+            tr:nth-child(even) { background: #f8f9fa; }
+            .footer { text-align: center; font-size: 11px; color: #999; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
+            .badge { padding: 1px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; display: inline-block; }
+            .badge-success { background: #d5f5e3; color: #27ae60; }
+            .badge-danger { background: #fadbd8; color: #e74c3c; }
+            .badge-warning { background: #fdebd0; color: #f39c12; }
+            .badge-info { background: #d6eaf8; color: #2e86c1; }
+            .badge-primary { background: #d6eaf8; color: #1a5276; }
+            .badge-gold { background: #f9e79f; color: #8e6b00; }
+            .badge-purple { background: #e8daef; color: #8e44ad; }
+            @media print {
+              body { padding: 10px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Mara Christian High School</h1>
+            <div class="sub">${title}</div>
+            <div class="date">Generated on: ${today}</div>
+          </div>
+          <table>
+            <thead><tr>${tableHeaders}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+          <div class="footer">
+            <p>Mara Christian High School - Educating For Eternity</p>
+            <p>This is a system-generated report. Total records: ${data.rows.length}</p>
+          </div>
+          <script>
+            window.onload = function() { window.print(); }
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
+
+    window.shareTab = function(tab) {
+      const title = getTabTitle(tab);
+      const data = getTableData(tab);
+      
+      if (data.rows.length === 0) {
+        showToast('No data to share for ' + title, 'warning');
+        return;
+      }
+
+      const modal = document.getElementById('shareModal');
+      const body = document.getElementById('shareModalBody');
+      const titleEl = document.getElementById('shareModalTitle');
+      titleEl.textContent = `📤 Share: ${title}`;
+
+      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      
+      let tableRows = data.rows.map(row => {
+        let cells = '';
+        if (tab === 'students') {
+          cells = `
+            <td>${row.admNo || ''}</td>
+            <td>${row.firstName || ''} ${row.lastName || ''}</td>
+            <td>${row.class || ''}</td>
+            <td>${row.gender || ''}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.dorm || '-'}</td>
+            <td>${row.sponsorshipType || '-'}</td>
+            <td>${row.isPrefect === 'Yes' ? '⭐ Yes' : '-'}</td>
+            <td>${row.prefectRole || '-'}</td>
+            <td>${row.prefectDepartment || '-'}</td>
+            <td>${row.parent || '-'}</td>
+          `;
+        } else if (tab === 'sponsorship') {
+          cells = `
+            <td>${row.firstName || ''} ${row.lastName || ''}</td>
+            <td>${row.class || ''}</td>
+            <td>${row.sponsorshipType || ''}</td>
+            <td>${row.sponsorName || '-'}</td>
+            <td>${row.sponsorContact || '-'}</td>
+            <td>${row.sponsorNotes || '-'}</td>
+          `;
+        } else if (tab === 'grades') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          const total = (row.test1 || 0) + (row.test2 || 0) + (row.exam || 0);
+          cells = `
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.subject || ''}</td>
+            <td>${row.term || ''}</td>
+            <td>${row.test1 || 0}</td>
+            <td>${row.test2 || 0}</td>
+            <td>${row.exam || 0}</td>
+            <td><strong>${total}</strong></td>
+            <td>${getLetterGrade(total)}</td>
+          `;
+        } else if (tab === 'attendance') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.reason || '-'}</td>
+            <td>${row.markedBy || '-'}</td>
+          `;
+        } else if (tab === 'warnings') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.reason || ''}</td>
+            <td>${row.issuedBy || '-'}</td>
+          `;
+        } else if (tab === 'suspensions') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.reason || ''}</td>
+            <td>${row.duration || ''}</td>
+            <td>${row.status || ''}</td>
+          `;
+        } else if (tab === 'expulsions') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.reason || ''}</td>
+            <td>${row.approvedBy || '-'}</td>
+          `;
+        } else if (tab === 'clinic') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${row.doctor || '-'}</td>
+            <td>${row.complaint || '-'}</td>
+            <td>${row.condition || '-'}</td>
+            <td>${row.diagnosis || '-'}</td>
+            <td>${row.medication || '-'}</td>
+            <td>${row.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
+            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
+          `;
+        } else if (tab === 'prefects') {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          cells = `
+            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+            <td>${student?.class || '-'}</td>
+            <td>${row.role || ''}</td>
+            <td>${row.department || ''}</td>
+            <td>${formatDate(row.date)}</td>
+          `;
+        } else if (tab === 'teachers') {
+          cells = `
+            <td>${row.name || ''}</td>
+            <td>${row.empId || ''}</td>
+            <td>${row.type || ''}</td>
+            <td>${row.specialization || '-'}</td>
+            <td>${(row.subjects || []).join(', ') || '-'}</td>
+            <td>${(row.classes || []).join(', ') || '-'}</td>
+            <td>${row.classTeacher || '-'}</td>
+            <td>${row.dormRole || '-'}</td>
+            <td>${row.dorm || '-'}</td>
+            <td>${row.status || ''}</td>
+          `;
+        } else if (tab === 'teacherAttendance') {
+          const teacher = teachersCache.find(t => t.id === row.teacherId);
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${teacher?.name || 'Unknown'}</td>
+            <td>${teacher?.type || ''}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.reason || '-'}</td>
+            <td>${row.lessonsToday || 0}</td>
+            <td>${row.lessonsWeek || 0}</td>
+            <td>${row.markedBy || '-'}</td>
+          `;
+        } else if (tab === 'maintenance') {
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${row.class || ''}</td>
+            <td>${row.reportedBy || '-'}</td>
+            <td>${row.issueType || ''}</td>
+            <td>${row.description || ''}</td>
+            <td>${row.damagedBy || 'Unknown'}</td>
+            <td>${row.status || ''}</td>
+            <td>${row.status === 'Resolved' ? formatDate(row.resolvedDate) : '-'}</td>
+          `;
+        } else if (tab === 'users') {
+          cells = `
+            <td>${row.email || row.id}</td>
+            <td>${row.fullName || '-'}</td>
+            <td>${row.role || 'user'}</td>
+            <td>${row.class || '-'}</td>
+            <td>${formatTimestamp(row.lastLogin)}</td>
+          `;
+        }
+        return `<tr>${cells}</tr>`;
+      }).join('');
+
+      const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join('');
+
+      body.innerHTML = `
+        <div class="share-preview-content" id="shareContent">
+          <div style="text-align:center;margin-bottom:15px;">
+            <h2 style="color:#1a5276;margin:0;">Mara Christian High School</h2>
+            <p style="color:#666;font-size:14px;margin:2px 0;">${title}</p>
+            <p style="color:#999;font-size:12px;">Generated on: ${today}</p>
+          </div>
+          <div style="max-height:400px;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+              <thead><tr style="background:#1a5276;color:white;">${tableHeaders}</tr></thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>
+          <div style="text-align:center;font-size:11px;color:#999;margin-top:15px;padding-top:10px;border-top:1px solid #ddd;">
+            <p>Mara Christian High School - Educating For Eternity</p>
+            <p>Total records: ${data.rows.length}</p>
+          </div>
+        </div>
+        <div class="share-actions no-print">
+          <button class="btn btn-print" onclick="printShareContent()">🖨️ Print</button>
+          <button class="btn btn-share" onclick="downloadShareContent()">📥 Download as Image</button>
+          <button class="btn btn-success" onclick="shareContentViaEmail()">📧 Share via Email</button>
+          <button class="btn btn-danger" onclick="document.getElementById('shareModal').classList.remove('show')">Close</button>
+        </div>
+      `;
+
+      modal.classList.add('show');
+
+      // Store the content for print function
+      window._shareContent = document.getElementById('shareContent');
+    };
+
+    window.printShareContent = function() {
+      const content = document.getElementById('shareContent');
+      if (!content) return;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Mara Christian High School - Share</title>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; }
+            td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
+            tr:nth-child(even) { background: #f8f9fa; }
+            .header { text-align: center; margin-bottom: 15px; }
+            .header h2 { color: #1a5276; margin: 0; }
+            .footer { text-align: center; font-size: 11px; color: #999; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; }
+            @media print { body { padding: 10px; } }
+          </style>
+        </head>
+        <body>
+          ${content.innerHTML}
+          <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
+
+    window.downloadShareContent = function() {
+      const content = document.getElementById('shareContent');
+      if (!content) return;
+
+      showToast('📸 Generating image...', 'info');
+      
+      html2canvas(content, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `MCHS_Share_${new Date().toISOString().slice(0,10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('✅ Image downloaded successfully!', 'success');
+      }).catch(err => {
+        console.error('Error generating image:', err);
+        showToast('❌ Error generating image. Try printing instead.', 'error');
+      });
+    };
+
+    window.shareContentViaEmail = function() {
+      const content = document.getElementById('shareContent');
+      if (!content) return;
+
+      // Get the text content from the table
+      const rows = content.querySelectorAll('tbody tr');
+      let textData = '';
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const rowData = Array.from(cells).map(cell => cell.textContent.trim()).join(' | ');
+        textData += rowData + '\n';
+      });
+
+      const subject = encodeURIComponent('Mara Christian High School - Data Share');
+      const body = encodeURIComponent(
+        `Mara Christian High School\n\n` +
+        `Data Share\n` +
+        `Generated: ${new Date().toLocaleString()}\n\n` +
+        `${textData}\n\n` +
+        `---\nMara Christian High School - Educating For Eternity`
+      );
+
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      showToast('📧 Email client opened', 'info');
+    };
+
+    // ============================================================
     // STUDENT FILTER FUNCTIONS
     // ============================================================
 
-    function applyStudentFilter(filterType, filterValue) {
-      // Clear existing filter for the same type
-      studentFilter[filterType] = filterValue;
-      
-      // Update the filter dropdowns to match
+    function applyStudentFilter(filterType, filterValue, filterLabel) {
       if (filterType === 'status') {
+        studentFilter.status = filterValue;
         document.getElementById('studentStatusFilter').value = filterValue;
       } else if (filterType === 'gender') {
+        studentFilter.gender = filterValue;
         document.getElementById('studentGenderFilter').value = filterValue;
       }
       
-      // Show the filter badge
       const filterBadge = document.getElementById('filterBadge');
-      const filterLabel = document.getElementById('activeFilterLabel');
+      const filterLabelEl = document.getElementById('activeFilterLabel');
       
       if (filterValue) {
         filterBadge.style.display = 'inline-block';
-        const labelMap = {
-          'Boarder': '🏠 Boarders',
-          'Day Scholar': '🚶 Day Scholars',
-          'Male': '👦 Boys',
-          'Female': '👧 Girls'
-        };
-        filterLabel.textContent = labelMap[filterValue] || filterValue;
+        filterLabelEl.textContent = filterLabel || filterValue;
         
-        // Highlight the active filter on dashboard
         document.querySelectorAll('.stat-card').forEach(card => {
           card.classList.remove('active-filter');
           const label = card.querySelector('.stat-label')?.textContent || '';
@@ -1286,7 +2049,6 @@
         });
       }
       
-      // Re-render students
       renderStudents();
     }
 
@@ -1303,28 +2065,27 @@
     };
 
     // ============================================================
-    // DASHBOARD NAVIGATION - CLICKABLE CARDS
+    // DASHBOARD NAVIGATION
     // ============================================================
 
-    // Map dashboard card labels to tab names and filters
     const cardActions = {
-      'Total Students': { tab: 'students', filter: null },
-      'Boys': { tab: 'students', filter: { type: 'gender', value: 'Male' } },
-      'Girls': { tab: 'students', filter: { type: 'gender', value: 'Female' } },
-      'Present Today': { tab: 'attendance', filter: null },
-      'Avg Grade': { tab: 'grades', filter: null },
-      'Warnings': { tab: 'warnings', filter: null },
-      'Suspensions': { tab: 'suspensions', filter: null },
-      'Expulsions': { tab: 'expulsions', filter: null },
-      'Clinic Visits': { tab: 'clinic', filter: null },
-      'Sponsored': { tab: 'sponsorship', filter: null },
-      'Prefects': { tab: 'prefects', filter: null },
-      'Boarders': { tab: 'students', filter: { type: 'status', value: 'Boarder' } },
-      'Day Scholars': { tab: 'students', filter: { type: 'status', value: 'Day Scholar' } },
-      'Total Teachers': { tab: 'teachers', filter: null },
-      'Teaching Staff': { tab: 'teachers', filter: null },
-      'Clinicians': { tab: 'teachers', filter: null },
-      'Pending Maintenance': { tab: 'maintenance', filter: null }
+      'Total Students': { tab: 'students', filter: null, label: null },
+      'Boys': { tab: 'students', filter: { type: 'gender', value: 'Male' }, label: '👦 Boys' },
+      'Girls': { tab: 'students', filter: { type: 'gender', value: 'Female' }, label: '👧 Girls' },
+      'Present Today': { tab: 'attendance', filter: null, label: null },
+      'Avg Grade': { tab: 'grades', filter: null, label: null },
+      'Warnings': { tab: 'warnings', filter: null, label: null },
+      'Suspensions': { tab: 'suspensions', filter: null, label: null },
+      'Expulsions': { tab: 'expulsions', filter: null, label: null },
+      'Clinic Visits': { tab: 'clinic', filter: null, label: null },
+      'Sponsored': { tab: 'sponsorship', filter: null, label: null },
+      'Prefects': { tab: 'prefects', filter: null, label: null },
+      'Boarders': { tab: 'students', filter: { type: 'status', value: 'Boarder' }, label: '🏠 Boarders' },
+      'Day Scholars': { tab: 'students', filter: { type: 'status', value: 'Day Scholar' }, label: '🚶 Day Scholars' },
+      'Total Teachers': { tab: 'teachers', filter: null, label: null },
+      'Teaching Staff': { tab: 'teachers', filter: null, label: null },
+      'Clinicians': { tab: 'teachers', filter: null, label: null },
+      'Pending Maintenance': { tab: 'maintenance', filter: null, label: null }
     };
 
     window.navigateToTab = function(label) {
@@ -1334,11 +2095,9 @@
         return;
       }
       
-      // If there's a filter, apply it before switching tabs
       if (action.filter && action.tab === 'students') {
-        applyStudentFilter(action.filter.type, action.filter.value);
+        applyStudentFilter(action.filter.type, action.filter.value, action.label);
       } else if (action.tab === 'students') {
-        // Clear filters if clicking "Total Students"
         clearStudentFilter();
       }
       
@@ -1371,14 +2130,14 @@
 
     window.loadSampleData = function() {
       const sampleStudents = [
-        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored' },
-        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization' },
-        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored' },
-        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO' },
-        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government' },
-        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored' },
-        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored' },
-        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored' },
+        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics' },
+        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', isPrefect: 'No' },
+        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline' },
+        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect' },
+        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', isPrefect: 'No' },
+        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect' },
+        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports' },
+        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', isPrefect: 'No' },
       ];
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
@@ -1403,6 +2162,20 @@
           status: Math.random() > 0.2 ? 'Present' : 'Absent',
           markedBy: 'Test Admin'
         });
+      });
+
+      // Create prefects from student data
+      sampleStudents.forEach(s => {
+        if (s.isPrefect === 'Yes') {
+          prefectsCache.push({
+            id: `prefect_${s.admNo}`,
+            studentId: s.id,
+            role: s.prefectRole,
+            department: s.prefectDepartment,
+            date: today,
+            notes: 'Auto-assigned from student record'
+          });
+        }
       });
 
       const sampleMaintenance = [
@@ -1435,6 +2208,7 @@
       renderSponsorship();
       renderGrades();
       renderAttendance();
+      renderPrefects();
       renderMaintenance();
     };
 
@@ -1796,19 +2570,19 @@
           <span class="stat-icon">👩‍🎓</span>
           <div class="stat-number">${total}</div>
           <div class="stat-label">Total Students</div>
-          <div class="click-hint">Click to view</div>
+          <div class="click-hint">Click to view all</div>
         </div>
         <div class="stat-card" style="border-top-color:#3498db;" onclick="navigateToTab('Boys')" data-tab="students">
           <span class="stat-icon">👦</span>
           <div class="stat-number">${male}</div>
           <div class="stat-label">Boys</div>
-          <div class="click-hint">Click to view boys only</div>
+          <div class="click-hint">All boys (boarders & day scholars)</div>
         </div>
         <div class="stat-card" style="border-top-color:#e91e8c;" onclick="navigateToTab('Girls')" data-tab="students">
           <span class="stat-icon">👧</span>
           <div class="stat-number">${female}</div>
           <div class="stat-label">Girls</div>
-          <div class="click-hint">Click to view girls only</div>
+          <div class="click-hint">All girls (boarders & day scholars)</div>
         </div>
         <div class="stat-card" style="border-top-color:#27ae60;" onclick="navigateToTab('Present Today')" data-tab="attendance">
           <span class="stat-icon">✅</span>
@@ -1862,13 +2636,13 @@
           <span class="stat-icon">🏠</span>
           <div class="stat-number">${boarders}</div>
           <div class="stat-label">Boarders</div>
-          <div class="click-hint">Click to view boarders only</div>
+          <div class="click-hint">All boarders (boys & girls)</div>
         </div>
         <div class="stat-card" style="border-top-color:#f39c12;" onclick="navigateToTab('Day Scholars')" data-tab="students">
           <span class="stat-icon">🚶</span>
           <div class="stat-number">${dayScholars}</div>
           <div class="stat-label">Day Scholars</div>
-          <div class="click-hint">Click to view day scholars only</div>
+          <div class="click-hint">All day scholars (boys & girls)</div>
         </div>
         <div class="stat-card" style="border-top-color:#e67e22;" onclick="navigateToTab('Pending Maintenance')" data-tab="maintenance">
           <span class="stat-icon">🔧</span>
@@ -1961,7 +2735,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS (With Filtering)
+    // 👩‍🎓 STUDENTS
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -1981,6 +2755,8 @@
           <div class="form-group"><label>Location</label><input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira"></div>
           <div class="form-group"><label>🏠 Dorm</label><select id="s_dorm">${dormSelectHtml(student?.dorm || '')}</select></div>
           <div class="form-group"><label>Is Prefect?</label><select id="s_isPrefect"><option value="No" ${student?.isPrefect !== 'Yes' ? 'selected' : ''}>No</option><option value="Yes" ${student?.isPrefect === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
+          <div class="form-group"><label>Prefect Role</label><select id="s_prefectRole"><option value="">None</option>${PREFECT_ROLES.map(r => `<option value="${r}" ${student?.prefectRole === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Prefect Department</label><select id="s_prefectDept"><option value="">None</option>${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${student?.prefectDepartment === d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
           <div class="form-group"><label>Sponsorship Type</label><select id="s_sponsorshipType"><option value="Self Sponsored" ${student?.sponsorshipType === 'Self Sponsored' ? 'selected' : ''}>Self Sponsored</option><option value="Organization" ${student?.sponsorshipType === 'Organization' ? 'selected' : ''}>Organization</option><option value="Government" ${student?.sponsorshipType === 'Government' ? 'selected' : ''}>Government</option><option value="NGO" ${student?.sponsorshipType === 'NGO' ? 'selected' : ''}>NGO</option><option value="Other" ${student?.sponsorshipType === 'Other' ? 'selected' : ''}>Other</option></select></div>
           <div class="form-group"><label>Sponsor Name</label><input type="text" id="s_sponsorName" value="${student?.sponsorName || ''}" placeholder="e.g., The Smith Foundation"></div>
           <div class="form-group"><label>Sponsor Contact</label><input type="text" id="s_sponsorContact" value="${student?.sponsorContact || ''}" placeholder="Phone or Email"></div>
@@ -2001,6 +2777,10 @@
       const lastName = document.getElementById('s_lastName').value.trim();
       if (!admNo || !firstName || !lastName) { showToast('Please fill all required fields', 'error'); return; }
 
+      const isPrefect = document.getElementById('s_isPrefect').value;
+      const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
+      const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
+
       const data = {
         admNo, firstName, lastName,
         class: document.getElementById('s_class').value,
@@ -2009,7 +2789,9 @@
         status: document.getElementById('s_status').value,
         location: document.getElementById('s_location').value,
         dorm: document.getElementById('s_dorm').value || '',
-        isPrefect: document.getElementById('s_isPrefect').value,
+        isPrefect: isPrefect,
+        prefectRole: prefectRole,
+        prefectDepartment: prefectDepartment,
         sponsorshipType: document.getElementById('s_sponsorshipType').value,
         sponsorName: document.getElementById('s_sponsorName').value,
         sponsorContact: document.getElementById('s_sponsorContact').value,
@@ -2023,10 +2805,45 @@
       try {
         if (editId) {
           await updateDoc(doc(db, 'students', editId), data);
+          // Update prefects collection if applicable
+          if (isPrefect === 'Yes') {
+            const existingPref = prefectsCache.find(p => p.studentId === editId);
+            if (existingPref) {
+              await updateDoc(doc(db, 'prefects', existingPref.id), {
+                role: prefectRole,
+                department: prefectDepartment,
+                date: new Date().toISOString().split('T')[0]
+              });
+            } else {
+              await addDoc(collection(db, 'prefects'), {
+                studentId: editId,
+                role: prefectRole,
+                department: prefectDepartment,
+                date: new Date().toISOString().split('T')[0],
+                notes: 'Added from student record'
+              });
+            }
+          } else {
+            // Remove from prefects if not a prefect
+            const existingPref = prefectsCache.find(p => p.studentId === editId);
+            if (existingPref) {
+              await deleteDoc(doc(db, 'prefects', existingPref.id));
+            }
+          }
           showToast('✅ Student updated successfully!');
         } else {
           data.createdAt = serverTimestamp();
-          await addDoc(collection(db, 'students'), data);
+          const docRef = await addDoc(collection(db, 'students'), data);
+          // Add to prefects if applicable
+          if (isPrefect === 'Yes') {
+            await addDoc(collection(db, 'prefects'), {
+              studentId: docRef.id,
+              role: prefectRole,
+              department: prefectDepartment,
+              date: new Date().toISOString().split('T')[0],
+              notes: 'Added from student record'
+            });
+          }
           showToast('✅ Student added successfully!');
         }
         closeModal();
@@ -2046,26 +2863,19 @@
 
       let filtered = studentsCache;
       
-      // Apply search
       if (search) filtered = filtered.filter(s => 
         s.firstName.toLowerCase().includes(search) || 
         s.lastName.toLowerCase().includes(search) || 
         (s.admNo || '').toLowerCase().includes(search)
       );
       
-      // Apply class filter
       if (classFilter) filtered = filtered.filter(s => s.class === classFilter);
-      
-      // Apply status filter (from dropdown or dashboard click)
       if (statusFilter) filtered = filtered.filter(s => s.status === statusFilter);
-      
-      // Apply gender filter (from dropdown or dashboard click)
       if (genderFilter) filtered = filtered.filter(s => s.gender === genderFilter);
 
       const canEditStudents = canEdit('students');
       const canDeleteStudents = canDeleteSpecific('students');
 
-      // Update filter badge if filters are active
       const filterBadge = document.getElementById('filterBadge');
       const filterLabel = document.getElementById('activeFilterLabel');
       
@@ -2082,7 +2892,6 @@
 
       document.getElementById('studentTableBody').innerHTML = filtered.map(s => `
         <tr>
-          <td><span style="font-size:24px;">👤</span></td>
           <td><strong>${s.admNo}</strong></td>
           <td>${s.firstName} ${s.lastName}</td>
           <td>${s.class}</td>
@@ -2105,6 +2914,12 @@
     window.deleteStudent = async function(id) {
       if (!confirm('Delete this student permanently?')) return;
       try {
+        const student = studentsCache.find(s => s.id === id);
+        // Remove from prefects if exists
+        const prefect = prefectsCache.find(p => p.studentId === id);
+        if (prefect) {
+          await deleteDoc(doc(db, 'prefects', prefect.id));
+        }
         await deleteDoc(doc(db, 'students', id));
         showToast('Student deleted');
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
@@ -2157,7 +2972,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES (Abbreviated)
+    // 📝 GRADES
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -2245,7 +3060,7 @@
     };
 
     // ============================================================
-    // 📋 STUDENT ATTENDANCE (Abbreviated)
+    // 📋 STUDENT ATTENDANCE
     // ============================================================
 
     window.showAddAttendanceModal = function(editId) {
@@ -2322,7 +3137,7 @@
     };
 
     // ============================================================
-    // 📈 CLASS PERFORMANCE (Abbreviated)
+    // 📈 CLASS PERFORMANCE
     // ============================================================
 
     window.renderClassPerformance = function() {
@@ -2369,7 +3184,7 @@
     };
 
     // ============================================================
-    // ⚠️ WARNINGS (Abbreviated)
+    // ⚠️ WARNINGS
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
@@ -2424,7 +3239,7 @@
     };
 
     // ============================================================
-    // 🚫 SUSPENSIONS (Abbreviated)
+    // 🚫 SUSPENSIONS
     // ============================================================
 
     window.showAddSuspensionModal = function(editId) {
@@ -2484,7 +3299,7 @@
     };
 
     // ============================================================
-    // ❌ EXPULSIONS (Abbreviated)
+    // ❌ EXPULSIONS
     // ============================================================
 
     window.showAddExpulsionModal = function(editId) {
@@ -2541,7 +3356,7 @@
     };
 
     // ============================================================
-    // 🏥 CLINIC (Abbreviated)
+    // 🏥 CLINIC
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
@@ -2627,7 +3442,7 @@
     };
 
     // ============================================================
-    // ⭐ PREFECTS (Abbreviated)
+    // ⭐ PREFECTS (Auto-populated from student records)
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
@@ -2635,9 +3450,15 @@
       const prefect = editId ? prefectsCache.find(p => p.id === editId) : null;
       const html = `
         <div class="form-grid">
-          <div class="form-group"><label>Student *</label><select id="p_student">${studentsCache.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
-          <div class="form-group"><label>Prefect Role *</label><select id="p_role">${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
-          <div class="form-group"><label>Department *</label><select id="p_department">${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${prefect?.department === d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Student *</label>
+            <select id="p_student">${studentsCache.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Prefect Role *</label>
+            <select id="p_role">${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Department *</label>
+            <select id="p_department">${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${prefect?.department === d ? 'selected' : ''}>${d}</option>`).join('')}</select>
+          </div>
           <div class="form-group"><label>Assigned Date</label><input type="date" id="p_date" value="${prefect?.date || new Date().toISOString().split('T')[0]}"></div>
         </div>
         <div class="form-group"><label>Notes</label><textarea id="p_notes" rows="2">${prefect?.notes || ''}</textarea></div>
@@ -2658,26 +3479,87 @@
       const data = { studentId, role, department, date, notes };
 
       try {
-        if (editId) { await updateDoc(doc(db, 'prefects', editId), data); showToast('Prefect updated'); }
-        else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'prefects'), data); showToast('Prefect added'); }
-        await updateDoc(doc(db, 'students', studentId), { isPrefect: 'Yes', prefectRole: role, prefectDepartment: department });
+        if (editId) { 
+          await updateDoc(doc(db, 'prefects', editId), data); 
+          showToast('Prefect updated');
+        } else { 
+          data.createdAt = serverTimestamp(); 
+          await addDoc(collection(db, 'prefects'), data); 
+          showToast('Prefect added');
+        }
+        // Update the student record
+        await updateDoc(doc(db, 'students', studentId), { 
+          isPrefect: 'Yes', 
+          prefectRole: role, 
+          prefectDepartment: department 
+        });
         closeModal();
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
     window.renderPrefects = function() {
-      document.getElementById('prefectsTableBody').innerHTML = prefectsCache.map(p => {
+      const deptFilter = document.getElementById('prefectDeptFilter').value;
+      
+      // Get prefects from student records (isPrefect === 'Yes')
+      const prefectStudents = studentsCache.filter(s => s.isPrefect === 'Yes');
+      
+      // Create prefect entries from student data
+      let prefectData = prefectStudents.map(s => ({
+        id: `prefect_${s.id}`,
+        studentId: s.id,
+        student: s,
+        role: s.prefectRole || 'Class Prefect',
+        department: s.prefectDepartment || 'Class Prefect',
+        date: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      }));
+      
+      // Also include any prefects from the prefects collection that might not be in student records
+      prefectsCache.forEach(p => {
         const student = studentsCache.find(s => s.id === p.studentId);
+        if (student && student.isPrefect !== 'Yes') {
+          // Update the student record
+          updateDoc(doc(db, 'students', p.studentId), { 
+            isPrefect: 'Yes', 
+            prefectRole: p.role, 
+            prefectDepartment: p.department 
+          });
+        }
+        if (!prefectData.find(pd => pd.studentId === p.studentId)) {
+          const student = studentsCache.find(s => s.id === p.studentId);
+          if (student) {
+            prefectData.push({
+              id: p.id,
+              studentId: p.studentId,
+              student: student,
+              role: p.role || 'Class Prefect',
+              department: p.department || 'Class Prefect',
+              date: p.date || new Date().toISOString().split('T')[0]
+            });
+          }
+        }
+      });
+      
+      let filtered = prefectData;
+      if (deptFilter) filtered = filtered.filter(p => p.department === deptFilter);
+
+      const canEditPrefects = canEdit('prefects');
+      const canDeletePrefects = canDeleteSpecific('prefects');
+
+      document.getElementById('prefectsTableBody').innerHTML = filtered.map(p => {
+        const student = p.student;
+        const roleClass = p.role === 'Head Prefect' ? 'head' : 
+                          p.role === 'Deputy Head Prefect' ? 'deputy' :
+                          p.role === 'Class Prefect' ? 'class' : 'assistant';
         return `
           <tr>
             <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
             <td>${student?.class || '-'}</td>
-            <td><span class="badge badge-gold">${p.role}</span></td>
+            <td><span class="prefect-role-badge ${roleClass}">${p.role}</span></td>
             <td>${p.department}</td>
             <td>${formatDate(p.date)}</td>
             <td>
-              <button class="btn btn-primary btn-sm" onclick="showAddPrefectModal('${p.id}')">Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="deletePrefect('${p.id}')">Del</button>
+              ${canEditPrefects ? `<button class="btn btn-primary btn-sm" onclick="showAddPrefectModal('${p.id}')">Edit</button>` : ''}
+              ${canDeletePrefects ? `<button class="btn btn-danger btn-sm" onclick="deletePrefect('${p.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
@@ -2690,14 +3572,18 @@
         const prefect = prefectsCache.find(p => p.id === id);
         await deleteDoc(doc(db, 'prefects', id));
         if (prefect?.studentId) {
-          await updateDoc(doc(db, 'students', prefect.studentId), { isPrefect: 'No', prefectRole: '', prefectDepartment: '' });
+          await updateDoc(doc(db, 'students', prefect.studentId), { 
+            isPrefect: 'No', 
+            prefectRole: '', 
+            prefectDepartment: '' 
+          });
         }
         showToast('Prefect role removed');
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHER RECORDS (Abbreviated)
+    // 👨‍🏫 TEACHER RECORDS
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -2777,7 +3663,7 @@
     };
 
     // ============================================================
-    // 📅 TEACHERS ATTENDANCE (Abbreviated)
+    // 📅 TEACHERS ATTENDANCE
     // ============================================================
 
     window.showTeacherAttendanceModal = function() {
@@ -2871,7 +3757,7 @@
     };
 
     // ============================================================
-    // 🔧 CLASSROOM MAINTENANCE (Abbreviated)
+    // 🔧 CLASSROOM MAINTENANCE
     // ============================================================
 
     window.showAddMaintenanceModal = function(editId) {
@@ -3099,7 +3985,7 @@
     };
 
     // ============================================================
-    // 📊 ANALYTICS (Abbreviated)
+    // 📊 ANALYTICS
     // ============================================================
 
     function renderAnalytics() {
@@ -3338,7 +4224,7 @@
     }
 
     // ============================================================
-    // 👥 USER MANAGEMENT (Abbreviated)
+    // 👥 USER MANAGEMENT
     // ============================================================
 
     window.showAddUserModal = function(editId) {
@@ -3450,7 +4336,7 @@
     }
 
     // ============================================================
-    // 🖨️ PRINT & SHARE FUNCTIONS
+    // 🖨️ PRINT & SHARE FUNCTIONS (Global)
     // ============================================================
 
     window.printStudentReport = function(studentId) { showToast('📄 Opening print preview...', 'info'); };
@@ -3460,30 +4346,17 @@
     window.shareStudentLink = function(studentId) {
       const student = studentsCache.find(s => s.id === studentId);
       if (!student) { showToast('Student not found', 'error'); return; }
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', 'student');
-      url.searchParams.set('id', studentId);
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 Student link copied!')).catch(() => { prompt('Copy this link:', url.toString()); });
-      } else { prompt('Copy this link:', url.toString()); }
+      shareTab('students');
     };
 
     window.shareCurrentClass = function() {
       const className = document.getElementById('performanceClassSelect').value;
       if (!className) { showToast('Please select a class', 'warning'); return; }
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', 'class');
-      url.searchParams.set('class', className);
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 Class link copied!')).catch(() => { prompt('Copy this link:', url.toString()); });
-      } else { prompt('Copy this link:', url.toString()); }
+      shareTab('classPerformance');
     };
 
     window.shareCurrentView = function() {
-      const url = new URL(window.location.href);
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 Page link copied!')).catch(() => { prompt('Copy this link:', url.toString()); });
-      } else { prompt('Copy this link:', url.toString()); }
+      shareTab(activeTab);
     };
 
     // ============================================================
@@ -3499,10 +4372,13 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 13.0.0 - Smart Dashboard Filtering');
+      console.log('📚 Version 14.0.0 - Full Data Printing & Sharing');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📊 Click Boarders, Day Scholars, Boys, or Girls to filter student records');
+      console.log('📊 Click cards to filter student records');
+      console.log('🖨️ Print any tab data with full formatting');
+      console.log('📤 Share any tab data via image, email, or print');
+      console.log('⭐ Prefects auto-populated from student records');
     });
   </script>
 </body>
