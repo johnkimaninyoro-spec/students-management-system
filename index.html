@@ -88,7 +88,6 @@
       display: none;
     }
 
-    /* Print Styles */
     @media print {
       .print-watermark {
         display: block;
@@ -636,7 +635,6 @@
       line-height: 1.2;
     }
 
-    /* Print Preview Modal Styles */
     .print-preview-modal .modal {
       max-width: 95%;
       max-height: 90vh;
@@ -1047,8 +1045,7 @@
             <div class="table-container">
               <table id="clinicTable">
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
-                <tbody id="clinicTableBody"></tbody>
-              </table>
+                <tbody id="clinicTableBody"></tbody></table>
             </div>
           </div>
         </div>
@@ -2256,7 +2253,6 @@
         });
       });
 
-      // Create prefects from student data
       sampleStudents.forEach(s => {
         if (s.isPrefect === 'Yes') {
           prefectsCache.push({
@@ -2270,7 +2266,6 @@
         }
       });
 
-      // Sample maintenance reports
       const sampleMaintenance = [
         {
           class: 'Grade 7 East',
@@ -2300,7 +2295,6 @@
       
       sampleMaintenance.forEach(m => maintenanceCache.push({ id: `sample_maint_${Math.random().toString(36).substr(2, 6)}`, ...m }));
       
-      // Sample maintenance staff
       const maintenanceStaff = [
         { name: 'John Maina', empId: 'MNT-001', type: 'maintenance', specialization: 'Electrician', status: 'Active' },
         { name: 'Peter Ochieng', empId: 'MNT-002', type: 'maintenance', specialization: 'Plumber', status: 'Active' },
@@ -2424,26 +2418,29 @@
       const role = currentUser?.role || '';
       const isAdmin = role === 'admin';
       const isDirector = role === 'director';
+      const isTeacher = role === 'teacher';
       const isMaintenance = role === 'maintenance';
       
       document.getElementById('adminSection').style.display = (isAdmin || isDirector) ? 'block' : 'none';
       document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
       document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
 
-      // Show maintenance department nav for admin, director, and maintenance staff
       const maintDeptNav = document.getElementById('maintenanceDeptNav');
       if (maintDeptNav) {
         maintDeptNav.style.display = (isAdmin || isDirector || isMaintenance) ? 'flex' : 'none';
       }
 
+      // STUDENT PERMISSIONS - Teachers can add, edit, delete students
       const addStudentBtn = document.getElementById('addStudentBtn');
-      if (addStudentBtn) addStudentBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
+      if (addStudentBtn) {
+        addStudentBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
+      }
 
       const addGradeBtn = document.getElementById('addGradeBtn');
-      if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
+      if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
 
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
-      if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
+      if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
 
       const addWarningBtn = document.getElementById('addWarningBtn');
       if (addWarningBtn) addWarningBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
@@ -2468,7 +2465,7 @@
 
       const addMaintenanceBtn = document.getElementById('addMaintenanceBtn');
       if (addMaintenanceBtn) {
-        addMaintenanceBtn.style.display = (isAdmin || isDirector || isMaintenance) ? 'inline-block' : 'none';
+        addMaintenanceBtn.style.display = (isAdmin || isDirector || isMaintenance || isTeacher) ? 'inline-block' : 'none';
       }
 
       const addMaintenanceDeptBtn = document.getElementById('addMaintenanceDeptBtn');
@@ -2481,6 +2478,7 @@
       if (!currentUser) return false;
       const role = currentUser.role;
       if (role === 'admin' || role === 'director') return true;
+      if (role === 'teacher' && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
       if (role === 'maintenance' && tab === 'maintenanceDept') return true;
       return false;
     }
@@ -2489,6 +2487,7 @@
       if (!currentUser) return false;
       const role = currentUser.role;
       if (role === 'admin' || role === 'director') return true;
+      if (role === 'teacher' && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
       if (role === 'maintenance' && (tab === 'maintenance' || tab === 'maintenanceDept')) return true;
       return false;
     }
@@ -2497,6 +2496,7 @@
       if (!currentUser) return false;
       const role = currentUser.role;
       if (role === 'admin' || role === 'director') return true;
+      if (role === 'teacher' && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
       return false;
     }
 
@@ -2876,7 +2876,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS
+    // 👩‍🎓 STUDENTS - Teacher CRUD Permissions
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -3050,6 +3050,10 @@
     };
 
     window.deleteStudent = async function(id) {
+      if (!canDeleteSpecific('students')) {
+        showToast('You do not have permission to delete students', 'error');
+        return;
+      }
       if (!confirm('Delete this student permanently?')) return;
       try {
         const student = studentsCache.find(s => s.id === id);
@@ -3109,7 +3113,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES
+    // 📝 GRADES - Teacher CRUD Permissions
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -3138,7 +3142,6 @@
       
       openModal(editId ? 'Edit Grade' : 'Add Grade', html);
       
-      // Update total score display
       setTimeout(() => {
         ['g_test1', 'g_test2', 'g_test3', 'g_exam'].forEach(id => {
           document.getElementById(id).addEventListener('input', updateTotalScore);
@@ -3199,6 +3202,9 @@
       if (termFilter) filtered = filtered.filter(g => g.term === termFilter);
       if (examTypeFilter) filtered = filtered.filter(g => g.examType === examTypeFilter);
 
+      const canEditGrades = canEdit('grades');
+      const canDeleteGrades = canDeleteSpecific('grades');
+
       document.getElementById('gradesTableBody').innerHTML = filtered.map(g => {
         const student = studentsCache.find(s => s.id === g.studentId);
         const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
@@ -3217,8 +3223,8 @@
             <td><strong>${total}</strong></td>
             <td>${getGradeBadge(total)}</td>
             <td>
-              <button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>
+              ${canEditGrades ? `<button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>` : ''}
+              ${canDeleteGrades ? `<button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
@@ -3226,12 +3232,16 @@
     };
 
     window.deleteGrade = async function(id) {
+      if (!canDeleteSpecific('grades')) {
+        showToast('You do not have permission to delete grades', 'error');
+        return;
+      }
       if (!confirm('Delete this grade record?')) return;
       try { await deleteDoc(doc(db, 'grades', id)); showToast('Grade deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
     // ============================================================
-    // 📋 STUDENT ATTENDANCE
+    // 📋 STUDENT ATTENDANCE - Teacher CRUD Permissions
     // ============================================================
 
     window.showAddAttendanceModal = function(editId) {
@@ -3283,6 +3293,9 @@
       if (currentDate) filtered = filtered.filter(a => a.date === currentDate);
       if (classFilter) filtered = filtered.filter(a => { const s = studentsCache.find(st => st.id === a.studentId); return s && s.class === classFilter; });
 
+      const canEditAtt = canEdit('attendance');
+      const canDeleteAtt = canDeleteSpecific('attendance');
+
       document.getElementById('attendanceTableBody').innerHTML = filtered.map(a => {
         const student = studentsCache.find(s => s.id === a.studentId);
         return `
@@ -3294,8 +3307,8 @@
             <td>${a.reason || '-'}</td>
             <td>${a.markedBy || '-'}</td>
             <td>
-              <button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal('${a.id}')">Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteAttendance('${a.id}')">Del</button>
+              ${canEditAtt ? `<button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal('${a.id}')">Edit</button>` : ''}
+              ${canDeleteAtt ? `<button class="btn btn-danger btn-sm" onclick="deleteAttendance('${a.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
@@ -3303,6 +3316,10 @@
     };
 
     window.deleteAttendance = async function(id) {
+      if (!canDeleteSpecific('attendance')) {
+        showToast('You do not have permission to delete attendance', 'error');
+        return;
+      }
       if (!confirm('Delete this attendance record?')) return;
       try { await deleteDoc(doc(db, 'attendance', id)); showToast('Attendance deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
@@ -3359,7 +3376,7 @@
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
-      if (!canAdd('warnings')) { showToast('Only Admin and Principal can issue warnings', 'error'); return; }
+      if (!canAdd('warnings')) { showToast('Only Admin and Director can issue warnings', 'error'); return; }
       const warning = editId ? warningsCache.find(w => w.id === editId) : null;
       const html = `
         <div class="form-grid">
@@ -3414,7 +3431,7 @@
     // ============================================================
 
     window.showAddSuspensionModal = function(editId) {
-      if (!canAdd('suspensions')) { showToast('Only Admin and Principal can add suspensions', 'error'); return; }
+      if (!canAdd('suspensions')) { showToast('Only Admin and Director can add suspensions', 'error'); return; }
       const suspension = editId ? suspensionsCache.find(s => s.id === editId) : null;
       const html = `
         <div class="form-grid">
@@ -3474,7 +3491,7 @@
     // ============================================================
 
     window.showAddExpulsionModal = function(editId) {
-      if (!canAdd('expulsions')) { showToast('Only Admin and Principal can record expulsions', 'error'); return; }
+      if (!canAdd('expulsions')) { showToast('Only Admin and Director can record expulsions', 'error'); return; }
       const expulsion = editId ? expulsionsCache.find(e => e.id === editId) : null;
       const html = `
         <div class="form-grid">
@@ -3617,7 +3634,7 @@
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
-      if (!canAdd('prefects')) { showToast('Only Admin and Principal can add prefects', 'error'); return; }
+      if (!canAdd('prefects')) { showToast('Only Admin and Director can add prefects', 'error'); return; }
       const prefect = editId ? prefectsCache.find(p => p.id === editId) : null;
       const html = `
         <div class="form-grid">
@@ -3945,7 +3962,6 @@
         `<option value="${c}" ${report?.class === c ? 'selected' : ''}>${c}</option>`
       ).join('');
       
-      // Get maintenance staff for assignment
       const maintStaff = teachersCache.filter(t => t.type === 'maintenance' && t.status === 'Active');
       const staffOptions = maintStaff.map(t => 
         `<option value="${t.id}" ${report?.assignedTo === t.id ? 'selected' : ''}>${t.name} (${t.specialization || 'Maintenance'})</option>`
@@ -4179,7 +4195,6 @@
       const typeFilter = document.getElementById('maintenanceDeptTypeFilter').value;
       const teamFilter = document.getElementById('maintenanceDeptTeamFilter').value;
       
-      // Populate team filter with maintenance staff
       const teamSelect = document.getElementById('maintenanceDeptTeamFilter');
       if (teamSelect.options.length <= 1) {
         const maintStaff = teachersCache.filter(t => t.type === 'maintenance' && t.status === 'Active');
@@ -4192,7 +4207,6 @@
       if (typeFilter) filtered = filtered.filter(m => m.issueType === typeFilter);
       if (teamFilter) filtered = filtered.filter(m => m.assignedTo === teamFilter);
       
-      // Stats
       const total = maintenanceCache.length;
       const pending = maintenanceCache.filter(m => m.status === 'Pending').length;
       const inProgress = maintenanceCache.filter(m => m.status === 'In Progress').length;
@@ -4642,9 +4656,10 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 15.0.0 - Complete Maintenance Department');
+      console.log('📚 Version 16.0.0 - Teacher CRUD Permissions');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
+      console.log('👩‍🏫 Teachers can now Add, Edit, and Delete Student Data');
       console.log('📊 Click cards to filter student records');
       console.log('🖨️ Print any tab data with full formatting');
       console.log('📤 Share any tab data via image, email, or print');
