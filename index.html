@@ -203,6 +203,22 @@
       margin-bottom: 2px;
     }
 
+    .stat-card .filter-badge {
+      display: none;
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.4em;
+      background: var(--primary-light);
+      color: white;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .stat-card.active-filter .filter-badge {
+      display: inline-block;
+    }
+
     @media (max-width: 768px) {
       .stats-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -467,6 +483,25 @@
       font-size: 24px;
     }
 
+    .filter-active {
+      background: #d6eaf8 !important;
+      border-color: #2e86c1 !important;
+    }
+
+    .filter-clear-btn {
+      margin-left: 10px;
+      font-size: 0.7em;
+      padding: 2px 10px;
+      border-radius: 12px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .filter-clear-btn:hover {
+      background: #c0392b;
+    }
+
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -280px; z-index: 999; height: calc(100vh - 70px); transition: left 0.3s; top: 70px; }
@@ -622,7 +657,7 @@
         <!-- DASHBOARD -->
         <div class="tab-content active" id="tab-dashboard">
           <div class="card">
-            <div class="card-header"><h2>📊 Dashboard Overview</h2><span style="font-size:0.8em;color:var(--gray);">Click any card to view details</span></div>
+            <div class="card-header"><h2>📊 Dashboard Overview</h2><span style="font-size:0.8em;color:var(--gray);">Click any card to view filtered data</span></div>
             <div class="stats-grid" id="dashboardStats"></div>
           </div>
           <div class="card">
@@ -650,12 +685,17 @@
                 <button class="btn btn-print btn-sm" onclick="printAllStudents()">🖨️ Print All</button>
                 <button class="btn btn-share btn-sm" onclick="shareCurrentView()">📤 Share</button>
                 <button class="btn btn-primary" id="addStudentBtn" onclick="showAddStudentModal()">+ Add Student</button>
+                <span id="filterBadge" style="display:none;margin-left:10px;">
+                  <span class="badge badge-info" id="activeFilterLabel"></span>
+                  <button class="filter-clear-btn" onclick="clearStudentFilter()">✕ Clear Filter</button>
+                </span>
               </div>
             </div>
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-group"><label>Search</label><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="studentSearch" placeholder="Search by name or admission..." oninput="renderStudents()"></div></div>
               <div class="form-group"><label>Class</label><select id="studentClassFilter" onchange="renderStudents()"><option value="">All Classes</option></select></div>
               <div class="form-group"><label>Status</label><select id="studentStatusFilter" onchange="renderStudents()"><option value="">All</option><option value="Boarder">Boarders</option><option value="Day Scholar">Day Scholars</option></select></div>
+              <div class="form-group"><label>Gender</label><select id="studentGenderFilter" onchange="renderStudents()"><option value="">All</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
             </div>
             <div class="table-container">
               <table>
@@ -1097,6 +1137,13 @@
     let prefectsCache = [], usersCache = [], auditCache = [];
     let maintenanceCache = [];
 
+    // Student filter state
+    let studentFilter = {
+      status: '',
+      gender: '',
+      class: ''
+    };
+
     function formatDate(dateStr) {
       if (!dateStr) return '-';
       try { const d = new Date(dateStr); return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return '-'; }
@@ -1192,35 +1239,111 @@
     }
 
     // ============================================================
+    // STUDENT FILTER FUNCTIONS
+    // ============================================================
+
+    function applyStudentFilter(filterType, filterValue) {
+      // Clear existing filter for the same type
+      studentFilter[filterType] = filterValue;
+      
+      // Update the filter dropdowns to match
+      if (filterType === 'status') {
+        document.getElementById('studentStatusFilter').value = filterValue;
+      } else if (filterType === 'gender') {
+        document.getElementById('studentGenderFilter').value = filterValue;
+      }
+      
+      // Show the filter badge
+      const filterBadge = document.getElementById('filterBadge');
+      const filterLabel = document.getElementById('activeFilterLabel');
+      
+      if (filterValue) {
+        filterBadge.style.display = 'inline-block';
+        const labelMap = {
+          'Boarder': '🏠 Boarders',
+          'Day Scholar': '🚶 Day Scholars',
+          'Male': '👦 Boys',
+          'Female': '👧 Girls'
+        };
+        filterLabel.textContent = labelMap[filterValue] || filterValue;
+        
+        // Highlight the active filter on dashboard
+        document.querySelectorAll('.stat-card').forEach(card => {
+          card.classList.remove('active-filter');
+          const label = card.querySelector('.stat-label')?.textContent || '';
+          if (label === filterValue || 
+              (filterValue === 'Boarder' && label === 'Boarders') ||
+              (filterValue === 'Day Scholar' && label === 'Day Scholars') ||
+              (filterValue === 'Male' && label === 'Boys') ||
+              (filterValue === 'Female' && label === 'Girls')) {
+            card.classList.add('active-filter');
+          }
+        });
+      } else {
+        filterBadge.style.display = 'none';
+        document.querySelectorAll('.stat-card').forEach(card => {
+          card.classList.remove('active-filter');
+        });
+      }
+      
+      // Re-render students
+      renderStudents();
+    }
+
+    window.clearStudentFilter = function() {
+      studentFilter = { status: '', gender: '', class: '' };
+      document.getElementById('studentStatusFilter').value = '';
+      document.getElementById('studentGenderFilter').value = '';
+      document.getElementById('filterBadge').style.display = 'none';
+      document.querySelectorAll('.stat-card').forEach(card => {
+        card.classList.remove('active-filter');
+      });
+      renderStudents();
+      showToast('✅ All filters cleared', 'info');
+    };
+
+    // ============================================================
     // DASHBOARD NAVIGATION - CLICKABLE CARDS
     // ============================================================
 
-    const cardToTabMap = {
-      'Total Students': 'students',
-      'Boys': 'students',
-      'Girls': 'students',
-      'Present Today': 'attendance',
-      'Avg Grade': 'grades',
-      'Warnings': 'warnings',
-      'Suspensions': 'suspensions',
-      'Expulsions': 'expulsions',
-      'Clinic Visits': 'clinic',
-      'Sponsored': 'sponsorship',
-      'Prefects': 'prefects',
-      'Boarders': 'students',
-      'Day Scholars': 'students',
-      'Total Teachers': 'teachers',
-      'Teaching Staff': 'teachers',
-      'Clinicians': 'teachers',
-      'Pending Maintenance': 'maintenance'
+    // Map dashboard card labels to tab names and filters
+    const cardActions = {
+      'Total Students': { tab: 'students', filter: null },
+      'Boys': { tab: 'students', filter: { type: 'gender', value: 'Male' } },
+      'Girls': { tab: 'students', filter: { type: 'gender', value: 'Female' } },
+      'Present Today': { tab: 'attendance', filter: null },
+      'Avg Grade': { tab: 'grades', filter: null },
+      'Warnings': { tab: 'warnings', filter: null },
+      'Suspensions': { tab: 'suspensions', filter: null },
+      'Expulsions': { tab: 'expulsions', filter: null },
+      'Clinic Visits': { tab: 'clinic', filter: null },
+      'Sponsored': { tab: 'sponsorship', filter: null },
+      'Prefects': { tab: 'prefects', filter: null },
+      'Boarders': { tab: 'students', filter: { type: 'status', value: 'Boarder' } },
+      'Day Scholars': { tab: 'students', filter: { type: 'status', value: 'Day Scholar' } },
+      'Total Teachers': { tab: 'teachers', filter: null },
+      'Teaching Staff': { tab: 'teachers', filter: null },
+      'Clinicians': { tab: 'teachers', filter: null },
+      'Pending Maintenance': { tab: 'maintenance', filter: null }
     };
 
     window.navigateToTab = function(label) {
-      const tab = cardToTabMap[label];
-      if (tab) {
-        showTab(tab);
-        showToast(`📊 Navigating to ${tab}`, 'info');
+      const action = cardActions[label];
+      if (!action) {
+        showToast('⚠️ No data view for this card', 'warning');
+        return;
       }
+      
+      // If there's a filter, apply it before switching tabs
+      if (action.filter && action.tab === 'students') {
+        applyStudentFilter(action.filter.type, action.filter.value);
+      } else if (action.tab === 'students') {
+        // Clear filters if clicking "Total Students"
+        clearStudentFilter();
+      }
+      
+      showTab(action.tab);
+      showToast(`📊 Navigating to ${action.tab}`, 'info');
     };
 
     // ============================================================
@@ -1254,6 +1377,8 @@
         { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO' },
         { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government' },
         { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored' },
+        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored' },
+        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored' },
       ];
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
@@ -1322,7 +1447,6 @@
       console.log('🔐 Login attempt:', { email, passwordLength: password.length });
       errorEl.textContent = '';
       
-      // Check for test login FIRST
       if (email === 'test@test.com' && password === 'test123') {
         window.testLogin();
         return;
@@ -1341,7 +1465,6 @@
       } catch (err) {
         console.error('❌ Login error:', err.code, err.message);
         errorEl.textContent = friendlyAuthError(err.code);
-        // Add test login hint
         if (errorEl.textContent.includes('Error')) {
           errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
         }
@@ -1679,13 +1802,13 @@
           <span class="stat-icon">👦</span>
           <div class="stat-number">${male}</div>
           <div class="stat-label">Boys</div>
-          <div class="click-hint">Click to view</div>
+          <div class="click-hint">Click to view boys only</div>
         </div>
         <div class="stat-card" style="border-top-color:#e91e8c;" onclick="navigateToTab('Girls')" data-tab="students">
           <span class="stat-icon">👧</span>
           <div class="stat-number">${female}</div>
           <div class="stat-label">Girls</div>
-          <div class="click-hint">Click to view</div>
+          <div class="click-hint">Click to view girls only</div>
         </div>
         <div class="stat-card" style="border-top-color:#27ae60;" onclick="navigateToTab('Present Today')" data-tab="attendance">
           <span class="stat-icon">✅</span>
@@ -1739,13 +1862,13 @@
           <span class="stat-icon">🏠</span>
           <div class="stat-number">${boarders}</div>
           <div class="stat-label">Boarders</div>
-          <div class="click-hint">Click to view</div>
+          <div class="click-hint">Click to view boarders only</div>
         </div>
         <div class="stat-card" style="border-top-color:#f39c12;" onclick="navigateToTab('Day Scholars')" data-tab="students">
           <span class="stat-icon">🚶</span>
           <div class="stat-number">${dayScholars}</div>
           <div class="stat-label">Day Scholars</div>
-          <div class="click-hint">Click to view</div>
+          <div class="click-hint">Click to view day scholars only</div>
         </div>
         <div class="stat-card" style="border-top-color:#e67e22;" onclick="navigateToTab('Pending Maintenance')" data-tab="maintenance">
           <span class="stat-icon">🔧</span>
@@ -1838,7 +1961,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // 👩‍🎓 STUDENTS
+    // 👩‍🎓 STUDENTS (With Filtering)
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -1916,14 +2039,46 @@
       const search = document.getElementById('studentSearch').value.toLowerCase();
       const classFilter = document.getElementById('studentClassFilter').value;
       const statusFilter = document.getElementById('studentStatusFilter').value;
+      const genderFilter = document.getElementById('studentGenderFilter').value;
 
       const classSelect = document.getElementById('studentClassFilter');
       if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
 
       let filtered = studentsCache;
-      if (search) filtered = filtered.filter(s => s.firstName.toLowerCase().includes(search) || s.lastName.toLowerCase().includes(search) || (s.admNo || '').toLowerCase().includes(search));
+      
+      // Apply search
+      if (search) filtered = filtered.filter(s => 
+        s.firstName.toLowerCase().includes(search) || 
+        s.lastName.toLowerCase().includes(search) || 
+        (s.admNo || '').toLowerCase().includes(search)
+      );
+      
+      // Apply class filter
       if (classFilter) filtered = filtered.filter(s => s.class === classFilter);
+      
+      // Apply status filter (from dropdown or dashboard click)
       if (statusFilter) filtered = filtered.filter(s => s.status === statusFilter);
+      
+      // Apply gender filter (from dropdown or dashboard click)
+      if (genderFilter) filtered = filtered.filter(s => s.gender === genderFilter);
+
+      const canEditStudents = canEdit('students');
+      const canDeleteStudents = canDeleteSpecific('students');
+
+      // Update filter badge if filters are active
+      const filterBadge = document.getElementById('filterBadge');
+      const filterLabel = document.getElementById('activeFilterLabel');
+      
+      if (statusFilter || genderFilter || classFilter) {
+        filterBadge.style.display = 'inline-block';
+        let labelParts = [];
+        if (statusFilter) labelParts.push(statusFilter === 'Boarder' ? '🏠 Boarders' : '🚶 Day Scholars');
+        if (genderFilter) labelParts.push(genderFilter === 'Male' ? '👦 Boys' : '👧 Girls');
+        if (classFilter) labelParts.push(`📚 ${classFilter}`);
+        filterLabel.textContent = labelParts.join(' + ');
+      } else {
+        filterBadge.style.display = 'none';
+      }
 
       document.getElementById('studentTableBody').innerHTML = filtered.map(s => `
         <tr>
@@ -1940,8 +2095,8 @@
           <td>${s.prefectDepartment || '-'}</td>
           <td>${s.parent || '-'}</td>
           <td>
-            <button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Del</button>
+            ${canEditStudents ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
+            ${canDeleteStudents ? `<button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Del</button>` : ''}
           </td>
         </tr>
       `).join('') || '<tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">No students found</td></tr>';
@@ -2002,7 +2157,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES
+    // 📝 GRADES (Abbreviated)
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -2090,7 +2245,7 @@
     };
 
     // ============================================================
-    // 📋 STUDENT ATTENDANCE
+    // 📋 STUDENT ATTENDANCE (Abbreviated)
     // ============================================================
 
     window.showAddAttendanceModal = function(editId) {
@@ -2167,7 +2322,7 @@
     };
 
     // ============================================================
-    // 📈 CLASS PERFORMANCE
+    // 📈 CLASS PERFORMANCE (Abbreviated)
     // ============================================================
 
     window.renderClassPerformance = function() {
@@ -2214,7 +2369,7 @@
     };
 
     // ============================================================
-    // ⚠️ WARNINGS
+    // ⚠️ WARNINGS (Abbreviated)
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
@@ -2269,7 +2424,7 @@
     };
 
     // ============================================================
-    // 🚫 SUSPENSIONS
+    // 🚫 SUSPENSIONS (Abbreviated)
     // ============================================================
 
     window.showAddSuspensionModal = function(editId) {
@@ -2329,7 +2484,7 @@
     };
 
     // ============================================================
-    // ❌ EXPULSIONS
+    // ❌ EXPULSIONS (Abbreviated)
     // ============================================================
 
     window.showAddExpulsionModal = function(editId) {
@@ -2386,7 +2541,7 @@
     };
 
     // ============================================================
-    // 🏥 CLINIC
+    // 🏥 CLINIC (Abbreviated)
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
@@ -2472,7 +2627,7 @@
     };
 
     // ============================================================
-    // ⭐ PREFECTS
+    // ⭐ PREFECTS (Abbreviated)
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
@@ -2542,7 +2697,7 @@
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHER RECORDS
+    // 👨‍🏫 TEACHER RECORDS (Abbreviated)
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -2622,7 +2777,7 @@
     };
 
     // ============================================================
-    // 📅 TEACHERS ATTENDANCE
+    // 📅 TEACHERS ATTENDANCE (Abbreviated)
     // ============================================================
 
     window.showTeacherAttendanceModal = function() {
@@ -2716,7 +2871,7 @@
     };
 
     // ============================================================
-    // 🔧 CLASSROOM MAINTENANCE
+    // 🔧 CLASSROOM MAINTENANCE (Abbreviated)
     // ============================================================
 
     window.showAddMaintenanceModal = function(editId) {
@@ -2944,7 +3099,7 @@
     };
 
     // ============================================================
-    // 📊 ANALYTICS
+    // 📊 ANALYTICS (Abbreviated)
     // ============================================================
 
     function renderAnalytics() {
@@ -3183,7 +3338,7 @@
     }
 
     // ============================================================
-    // 👥 USER MANAGEMENT
+    // 👥 USER MANAGEMENT (Abbreviated)
     // ============================================================
 
     window.showAddUserModal = function(editId) {
@@ -3344,10 +3499,10 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 12.0.0 - Clickable Dashboard Cards');
+      console.log('📚 Version 13.0.0 - Smart Dashboard Filtering');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📊 Click any dashboard card to navigate to its data');
+      console.log('📊 Click Boarders, Day Scholars, Boys, or Girls to filter student records');
     });
   </script>
 </body>
