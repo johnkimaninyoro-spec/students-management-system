@@ -467,18 +467,6 @@
       font-size: 24px;
     }
 
-    .maintenance-item {
-      display: inline-block;
-      padding: 2px 8px;
-      margin: 2px 4px 2px 0;
-      border-radius: 12px;
-      font-size: 0.75em;
-      font-weight: 500;
-    }
-    .maintenance-item.electrical { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-    .maintenance-item.furniture { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
-    .maintenance-item.whiteboard { background: #e8eaf6; color: #283593; border: 1px solid #9fa8da; }
-
     @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -280px; z-index: 999; height: calc(100vh - 70px); transition: left 0.3s; top: 70px; }
@@ -496,7 +484,6 @@
     .search-box input:focus { outline: none; border-color: var(--primary-light); }
     .search-box .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray); }
 
-    /* Dashboard Card Navigation Styles */
     .stat-card[data-tab] {
       cursor: pointer;
       position: relative;
@@ -1028,12 +1015,7 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script>
-    // ============================================================
-    // CONFIGURATION & CONSTANTS
-    // ============================================================
-
-    // Import Firebase modules
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import {
       getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
@@ -1114,10 +1096,6 @@
     let clinicCache = [], teachersCache = [], teacherAttCache = [];
     let prefectsCache = [], usersCache = [], auditCache = [];
     let maintenanceCache = [];
-
-    // ============================================================
-    // HELPER FUNCTIONS
-    // ============================================================
 
     function formatDate(dateStr) {
       if (!dateStr) return '-';
@@ -1217,7 +1195,6 @@
     // DASHBOARD NAVIGATION - CLICKABLE CARDS
     // ============================================================
 
-    // Map dashboard card labels to tab names
     const cardToTabMap = {
       'Total Students': 'students',
       'Boys': 'students',
@@ -1234,22 +1211,23 @@
       'Day Scholars': 'students',
       'Total Teachers': 'teachers',
       'Teaching Staff': 'teachers',
-      'Clinicians': 'teachers'
+      'Clinicians': 'teachers',
+      'Pending Maintenance': 'maintenance'
     };
 
-    function navigateToTab(label) {
+    window.navigateToTab = function(label) {
       const tab = cardToTabMap[label];
       if (tab) {
         showTab(tab);
         showToast(`📊 Navigating to ${tab}`, 'info');
       }
-    }
+    };
 
     // ============================================================
     // 🔐 AUTHENTICATION
     // ============================================================
 
-    function testLogin() {
+    window.testLogin = function() {
       console.log('🧪 TEST MODE: Logging in with test account');
       currentUser = { 
         uid: 'test123', 
@@ -1266,9 +1244,9 @@
       loadSampleData();
       showTab('dashboard');
       showToast('✅ Test login successful! (Demo Mode)', 'success');
-    }
+    };
 
-    function loadSampleData() {
+    window.loadSampleData = function() {
       const sampleStudents = [
         { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored' },
         { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization' },
@@ -1302,7 +1280,6 @@
         });
       });
 
-      // Sample maintenance reports
       const sampleMaintenance = [
         {
           class: 'Grade 7 East',
@@ -1334,7 +1311,7 @@
       renderGrades();
       renderAttendance();
       renderMaintenance();
-    }
+    };
 
     window.handleLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
@@ -1345,8 +1322,9 @@
       console.log('🔐 Login attempt:', { email, passwordLength: password.length });
       errorEl.textContent = '';
       
+      // Check for test login FIRST
       if (email === 'test@test.com' && password === 'test123') {
-        testLogin();
+        window.testLogin();
         return;
       }
       
@@ -1363,7 +1341,10 @@
       } catch (err) {
         console.error('❌ Login error:', err.code, err.message);
         errorEl.textContent = friendlyAuthError(err.code);
-        errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
+        // Add test login hint
+        if (errorEl.textContent.includes('Error')) {
+          errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
+        }
       } finally {
         btn.disabled = false;
         btn.textContent = 'Sign In';
@@ -2021,7 +2002,7 @@
     };
 
     // ============================================================
-    // 📝 GRADES (Abbreviated)
+    // 📝 GRADES
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -2109,7 +2090,7 @@
     };
 
     // ============================================================
-    // 📋 STUDENT ATTENDANCE (Abbreviated)
+    // 📋 STUDENT ATTENDANCE
     // ============================================================
 
     window.showAddAttendanceModal = function(editId) {
@@ -2186,7 +2167,7 @@
     };
 
     // ============================================================
-    // 📈 CLASS PERFORMANCE (Abbreviated)
+    // 📈 CLASS PERFORMANCE
     // ============================================================
 
     window.renderClassPerformance = function() {
@@ -2233,7 +2214,7 @@
     };
 
     // ============================================================
-    // ⚠️ WARNINGS (Abbreviated)
+    // ⚠️ WARNINGS
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
@@ -2288,7 +2269,7 @@
     };
 
     // ============================================================
-    // 🚫 SUSPENSIONS (Abbreviated)
+    // 🚫 SUSPENSIONS
     // ============================================================
 
     window.showAddSuspensionModal = function(editId) {
@@ -2348,7 +2329,7 @@
     };
 
     // ============================================================
-    // ❌ EXPULSIONS (Abbreviated)
+    // ❌ EXPULSIONS
     // ============================================================
 
     window.showAddExpulsionModal = function(editId) {
@@ -2405,7 +2386,7 @@
     };
 
     // ============================================================
-    // 🏥 CLINIC (Abbreviated)
+    // 🏥 CLINIC
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
@@ -2491,7 +2472,7 @@
     };
 
     // ============================================================
-    // ⭐ PREFECTS (Abbreviated)
+    // ⭐ PREFECTS
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
@@ -2561,7 +2542,7 @@
     };
 
     // ============================================================
-    // 👨‍🏫 TEACHER RECORDS (Abbreviated)
+    // 👨‍🏫 TEACHER RECORDS
     // ============================================================
 
     window.showAddTeacherModal = function(editId) {
@@ -2641,7 +2622,7 @@
     };
 
     // ============================================================
-    // 📅 TEACHERS ATTENDANCE (Abbreviated)
+    // 📅 TEACHERS ATTENDANCE
     // ============================================================
 
     window.showTeacherAttendanceModal = function() {
@@ -2806,7 +2787,6 @@
       
       openModal(editId ? 'Edit Maintenance Report' : 'Add Maintenance Report', html);
       
-      // Show/hide resolved date based on status
       setTimeout(() => {
         const statusSelect = document.getElementById('m_status');
         if (statusSelect) {
@@ -2887,7 +2867,6 @@
       if (statusFilter) filtered = filtered.filter(m => m.status === statusFilter);
       if (typeFilter) filtered = filtered.filter(m => m.issueType === typeFilter);
       
-      // Stats
       const total = maintenanceCache.length;
       const pending = maintenanceCache.filter(m => m.status === 'Pending').length;
       const inProgress = maintenanceCache.filter(m => m.status === 'In Progress').length;
@@ -2965,7 +2944,7 @@
     };
 
     // ============================================================
-    // 📊 ANALYTICS (Abbreviated)
+    // 📊 ANALYTICS
     // ============================================================
 
     function renderAnalytics() {
@@ -3204,7 +3183,7 @@
     }
 
     // ============================================================
-    // 👥 USER MANAGEMENT (Abbreviated)
+    // 👥 USER MANAGEMENT
     // ============================================================
 
     window.showAddUserModal = function(editId) {
