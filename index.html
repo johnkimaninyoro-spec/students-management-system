@@ -395,6 +395,9 @@
     .login-box .login-error { color: var(--danger); font-size: 0.85em; margin-top: 10px; min-height: 24px; }
     .login-box .login-footer { margin-top: 20px; text-align: center; font-size: 0.8em; color: var(--gray); }
     .login-box .test-login-hint { margin-top: 15px; padding: 12px; background: #f0f8ff; border-radius: 8px; font-size: 0.8em; color: #666; text-align: center; border: 1px dashed #3498db; }
+    .login-box .register-link { margin-top: 10px; text-align: center; font-size: 0.85em; }
+    .login-box .register-link a { color: var(--primary-light); text-decoration: none; font-weight: 600; }
+    .login-box .register-link a:hover { text-decoration: underline; }
 
     .app-container { display: none; min-height: 100vh; }
 
@@ -720,6 +723,18 @@
     .maintenance-team-badge.member { background: #e8daef; color: #8e44ad; }
     .maintenance-team-badge.admin { background: #d6eaf8; color: #1a5276; }
     .maintenance-team-badge.director { background: #f9e79f; color: #8e6b00; }
+
+    /* Signup Modal Styles */
+    .signup-form .form-group { margin-bottom: 15px; }
+    .signup-form .form-group label { display: block; font-weight: 600; font-size: 0.85em; color: var(--dark); margin-bottom: 5px; }
+    .signup-form .form-group input, .signup-form .form-group select { width: 100%; padding: 10px 14px; border: 2px solid #ddd; border-radius: 6px; font-size: 0.95em; transition: border 0.3s; }
+    .signup-form .form-group input:focus, .signup-form .form-group select:focus { outline: none; border-color: var(--primary-light); }
+    .signup-form .role-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+    .signup-form .role-selector .role-option { padding: 10px; border: 2px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
+    .signup-form .role-selector .role-option:hover { border-color: var(--primary-light); background: #f0f8ff; }
+    .signup-form .role-selector .role-option.selected { border-color: var(--primary-light); background: #d6eaf8; }
+    .signup-form .role-selector .role-option .role-icon { font-size: 24px; display: block; }
+    .signup-form .role-selector .role-option .role-name { font-size: 0.8em; font-weight: 600; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -749,6 +764,9 @@
       <div class="test-login-hint">
         <strong>💡 Test Login:</strong> test@test.com / test123<br>
         <small>Or use your Firebase credentials</small>
+      </div>
+      <div class="register-link">
+        Don't have an account? <a href="#" onclick="showSignupModal(); return false;">Register here</a>
       </div>
       <div class="login-footer">
         <p>Contact administrator for account access</p>
@@ -1560,544 +1578,319 @@
     }
 
     // ============================================================
-    // PRINT & SHARE FUNCTIONS
+    // 🔐 AUTHENTICATION - FIXED WITH AUTO-REGISTRATION
     // ============================================================
 
-    function getTabTitle(tab) {
-      const titles = {
-        'students': 'Student Records',
-        'sponsorship': 'Sponsored Students',
-        'grades': 'Student Grades',
-        'attendance': 'Student Attendance',
-        'classPerformance': 'Class Performance',
-        'warnings': 'Warning Letters',
-        'suspensions': 'Suspensions',
-        'expulsions': 'Expulsions',
-        'clinic': 'Clinic Visits',
-        'prefects': 'Prefect Roles',
-        'teachers': 'Teacher Records',
-        'teacherAttendance': 'Teachers Attendance',
-        'maintenance': 'Classroom Maintenance',
-        'maintenanceDept': 'Maintenance Department',
-        'analytics': 'Analytics & Charts',
-        'users': 'User Management',
-        'audit': 'Audit Log',
-        'dashboard': 'Dashboard'
-      };
-      return titles[tab] || tab;
-    }
-
-    function getTableData(tab) {
-      const data = {
-        'students': { rows: studentsCache, columns: ['Adm No.', 'Name', 'Class', 'Gender', 'Status', 'Dorm', 'Sponsorship', 'Prefect', 'Role', 'Department', 'Parent/Guardian'] },
-        'sponsorship': { rows: studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored'), columns: ['Student', 'Class', 'Sponsor Type', 'Sponsor Name', 'Contact', 'Notes'] },
-        'grades': { rows: gradesCache, columns: ['Student', 'Class', 'Subject', 'Term', 'Exam Type', 'Test 1', 'Test 2', 'Test 3', 'Final Exam', 'Total', 'Grade'] },
-        'attendance': { rows: attendanceCache, columns: ['Date', 'Student', 'Class', 'Status', 'Reason', 'Marked By'] },
-        'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Issued By'] },
-        'suspensions': { rows: suspensionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Duration', 'Status'] },
-        'expulsions': { rows: expulsionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Approved By'] },
-        'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor/Nurse', 'Complaint', 'Condition', 'Diagnosis', 'Medication', 'Follow-Up', 'Follow-Up Date'] },
-        'prefects': { rows: prefectsCache, columns: ['Student', 'Class', 'Prefect Role', 'Department', 'Assigned Date'] },
-        'teachers': { rows: teachersCache, columns: ['Name', 'Employee ID', 'Type', 'Specialization', 'Subjects', 'Classes', 'Class Teacher', 'Dorm Role', 'Dorm', 'Status'] },
-        'teacherAttendance': { rows: teacherAttCache, columns: ['Date', 'Teacher', 'Type', 'Status', 'Reason', 'Lessons Today', 'Lessons/Week', 'Marked By'] },
-        'maintenance': { rows: maintenanceCache, columns: ['Date Reported', 'Class', 'Reported By', 'Issue Type', 'Description', 'Damaged By', 'Assigned To', 'Status', 'Resolved Date'] },
-        'maintenanceDept': { rows: maintenanceCache, columns: ['Date', 'Class', 'Issue Type', 'Description', 'Reported By', 'Assigned To', 'Status', 'Notes'] },
-        'users': { rows: usersCache, columns: ['Email', 'Name', 'Role', 'Class', 'Last Login'] },
-      };
-      return data[tab] || { rows: [], columns: [] };
-    }
-
-    window.printTab = function(tab) {
-      const title = getTabTitle(tab);
-      const data = getTableData(tab);
-      
-      if (data.rows.length === 0) {
-        showToast('No data to print for ' + title, 'warning');
-        return;
-      }
-
-      const printWindow = window.open('', '_blank');
-      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      
-      let tableRows = data.rows.map(row => {
-        let cells = '';
-        if (tab === 'students') {
-          cells = `
-            <td>${row.admNo || ''}</td>
-            <td>${row.firstName || ''} ${row.lastName || ''}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.gender || ''}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.dorm || '-'}</td>
-            <td>${row.sponsorshipType || '-'}</td>
-            <td>${row.isPrefect === 'Yes' ? '⭐ Yes' : '-'}</td>
-            <td>${row.prefectRole || '-'}</td>
-            <td>${row.prefectDepartment || '-'}</td>
-            <td>${row.parent || '-'}</td>
-          `;
-        } else if (tab === 'sponsorship') {
-          cells = `
-            <td>${row.firstName || ''} ${row.lastName || ''}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.sponsorshipType || ''}</td>
-            <td>${row.sponsorName || '-'}</td>
-            <td>${row.sponsorContact || '-'}</td>
-            <td>${row.sponsorNotes || '-'}</td>
-          `;
-        } else if (tab === 'grades') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
-          cells = `
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.subject || ''}</td>
-            <td>${row.term || ''}</td>
-            <td>${row.examType || ''}</td>
-            <td>${row.test1 || 0}</td>
-            <td>${row.test2 || 0}</td>
-            <td>${row.test3 || 0}</td>
-            <td>${row.exam || 0}</td>
-            <td><strong>${total}</strong></td>
-            <td>${getLetterGrade(total)}</td>
-          `;
-        } else if (tab === 'attendance') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'warnings') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.issuedBy || '-'}</td>
-          `;
-        } else if (tab === 'suspensions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.duration || ''}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'expulsions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.approvedBy || '-'}</td>
-          `;
-        } else if (tab === 'clinic') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${row.doctor || '-'}</td>
-            <td>${row.complaint || '-'}</td>
-            <td>${row.condition || '-'}</td>
-            <td>${row.diagnosis || '-'}</td>
-            <td>${row.medication || '-'}</td>
-            <td>${row.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
-            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
-          `;
-        } else if (tab === 'prefects') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.role || ''}</td>
-            <td>${row.department || ''}</td>
-            <td>${formatDate(row.date)}</td>
-          `;
-        } else if (tab === 'teachers') {
-          cells = `
-            <td>${row.name || ''}</td>
-            <td>${row.empId || ''}</td>
-            <td>${row.type || ''}</td>
-            <td>${row.specialization || '-'}</td>
-            <td>${(row.subjects || []).join(', ') || '-'}</td>
-            <td>${(row.classes || []).join(', ') || '-'}</td>
-            <td>${row.classTeacher || '-'}</td>
-            <td>${row.dormRole || '-'}</td>
-            <td>${row.dorm || '-'}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'teacherAttendance') {
-          const teacher = teachersCache.find(t => t.id === row.teacherId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${teacher?.name || 'Unknown'}</td>
-            <td>${teacher?.type || ''}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.lessonsToday || 0}</td>
-            <td>${row.lessonsWeek || 0}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'maintenance' || tab === 'maintenanceDept') {
-          const teacher = teachersCache.find(t => t.id === row.assignedTo);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.issueType || ''}</td>
-            <td>${row.description || ''}</td>
-            <td>${row.reportedBy || '-'}</td>
-            <td>${teacher?.name || row.assignedTo || 'Unassigned'}</td>
-            <td>${row.status || ''}</td>
-            <td>${tab === 'maintenanceDept' ? (row.notes || '-') : (row.status === 'Resolved' ? formatDate(row.resolvedDate) : '-')}</td>
-          `;
-        } else if (tab === 'users') {
-          cells = `
-            <td>${row.email || row.id}</td>
-            <td>${row.fullName || '-'}</td>
-            <td>${row.role || 'user'}</td>
-            <td>${row.class || '-'}</td>
-            <td>${formatTimestamp(row.lastLogin)}</td>
-          `;
-        }
-        return `<tr>${cells}</tr>`;
-      }).join('');
-
-      const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join('');
-
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>${title} - Mara Christian High School</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
-            .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #1a5276; padding-bottom: 15px; }
-            .header h1 { color: #1a5276; font-size: 24px; margin: 0; }
-            .header .sub { color: #666; font-size: 14px; }
-            .header .date { color: #999; font-size: 12px; margin-top: 5px; }
-            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-            th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; font-weight: 600; }
-            td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
-            tr:nth-child(even) { background: #f8f9fa; }
-            .footer { text-align: center; font-size: 11px; color: #999; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
-            .badge { padding: 1px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; display: inline-block; }
-            .badge-success { background: #d5f5e3; color: #27ae60; }
-            .badge-danger { background: #fadbd8; color: #e74c3c; }
-            .badge-warning { background: #fdebd0; color: #f39c12; }
-            .badge-info { background: #d6eaf8; color: #2e86c1; }
-            .badge-primary { background: #d6eaf8; color: #1a5276; }
-            .badge-gold { background: #f9e79f; color: #8e6b00; }
-            .badge-purple { background: #e8daef; color: #8e44ad; }
-            @media print {
-              body { padding: 10px; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Mara Christian High School</h1>
-            <div class="sub">${title}</div>
-            <div class="date">Generated on: ${today}</div>
+    // Show signup modal
+    window.showSignupModal = function() {
+      const html = `
+        <div class="signup-form">
+          <p style="color:#666;margin-bottom:15px;">Create your account to access the system. Please use your school email.</p>
+          <div class="form-group">
+            <label>📧 Email Address *</label>
+            <input type="email" id="signupEmail" placeholder="your@email.com" value="">
           </div>
-          <table>
-            <thead><tr>${tableHeaders}</tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          <div class="footer">
-            <p>Mara Christian High School - Educating For Eternity</p>
-            <p>This is a system-generated report. Total records: ${data.rows.length}</p>
+          <div class="form-group">
+            <label>👤 Full Name *</label>
+            <input type="text" id="signupName" placeholder="Your full name" value="">
           </div>
-          <script>
-            window.onload = function() { window.print(); }
-          <\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-    };
-
-    window.shareTab = function(tab) {
-      const title = getTabTitle(tab);
-      const data = getTableData(tab);
-      
-      if (data.rows.length === 0) {
-        showToast('No data to share for ' + title, 'warning');
-        return;
-      }
-
-      const modal = document.getElementById('shareModal');
-      const body = document.getElementById('shareModalBody');
-      const titleEl = document.getElementById('shareModalTitle');
-      titleEl.textContent = `📤 Share: ${title}`;
-
-      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      
-      let tableRows = data.rows.map(row => {
-        let cells = '';
-        if (tab === 'students') {
-          cells = `
-            <td>${row.admNo || ''}</td>
-            <td>${row.firstName || ''} ${row.lastName || ''}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.gender || ''}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.dorm || '-'}</td>
-            <td>${row.sponsorshipType || '-'}</td>
-            <td>${row.isPrefect === 'Yes' ? '⭐ Yes' : '-'}</td>
-            <td>${row.prefectRole || '-'}</td>
-            <td>${row.prefectDepartment || '-'}</td>
-            <td>${row.parent || '-'}</td>
-          `;
-        } else if (tab === 'sponsorship') {
-          cells = `
-            <td>${row.firstName || ''} ${row.lastName || ''}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.sponsorshipType || ''}</td>
-            <td>${row.sponsorName || '-'}</td>
-            <td>${row.sponsorContact || '-'}</td>
-            <td>${row.sponsorNotes || '-'}</td>
-          `;
-        } else if (tab === 'grades') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
-          cells = `
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.subject || ''}</td>
-            <td>${row.term || ''}</td>
-            <td>${row.examType || ''}</td>
-            <td>${row.test1 || 0}</td>
-            <td>${row.test2 || 0}</td>
-            <td>${row.test3 || 0}</td>
-            <td>${row.exam || 0}</td>
-            <td><strong>${total}</strong></td>
-            <td>${getLetterGrade(total)}</td>
-          `;
-        } else if (tab === 'attendance') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'warnings') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.issuedBy || '-'}</td>
-          `;
-        } else if (tab === 'suspensions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.duration || ''}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'expulsions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.approvedBy || '-'}</td>
-          `;
-        } else if (tab === 'clinic') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${row.doctor || '-'}</td>
-            <td>${row.complaint || '-'}</td>
-            <td>${row.condition || '-'}</td>
-            <td>${row.diagnosis || '-'}</td>
-            <td>${row.medication || '-'}</td>
-            <td>${row.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
-            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
-          `;
-        } else if (tab === 'prefects') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.role || ''}</td>
-            <td>${row.department || ''}</td>
-            <td>${formatDate(row.date)}</td>
-          `;
-        } else if (tab === 'teachers') {
-          cells = `
-            <td>${row.name || ''}</td>
-            <td>${row.empId || ''}</td>
-            <td>${row.type || ''}</td>
-            <td>${row.specialization || '-'}</td>
-            <td>${(row.subjects || []).join(', ') || '-'}</td>
-            <td>${(row.classes || []).join(', ') || '-'}</td>
-            <td>${row.classTeacher || '-'}</td>
-            <td>${row.dormRole || '-'}</td>
-            <td>${row.dorm || '-'}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'teacherAttendance') {
-          const teacher = teachersCache.find(t => t.id === row.teacherId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${teacher?.name || 'Unknown'}</td>
-            <td>${teacher?.type || ''}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.lessonsToday || 0}</td>
-            <td>${row.lessonsWeek || 0}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'maintenance' || tab === 'maintenanceDept') {
-          const teacher = teachersCache.find(t => t.id === row.assignedTo);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.issueType || ''}</td>
-            <td>${row.description || ''}</td>
-            <td>${row.reportedBy || '-'}</td>
-            <td>${teacher?.name || row.assignedTo || 'Unassigned'}</td>
-            <td>${row.status || ''}</td>
-            <td>${tab === 'maintenanceDept' ? (row.notes || '-') : (row.status === 'Resolved' ? formatDate(row.resolvedDate) : '-')}</td>
-          `;
-        } else if (tab === 'users') {
-          cells = `
-            <td>${row.email || row.id}</td>
-            <td>${row.fullName || '-'}</td>
-            <td>${row.role || 'user'}</td>
-            <td>${row.class || '-'}</td>
-            <td>${formatTimestamp(row.lastLogin)}</td>
-          `;
-        }
-        return `<tr>${cells}</tr>`;
-      }).join('');
-
-      const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join('');
-
-      body.innerHTML = `
-        <div class="share-preview-content" id="shareContent">
-          <div style="text-align:center;margin-bottom:15px;">
-            <h2 style="color:#1a5276;margin:0;">Mara Christian High School</h2>
-            <p style="color:#666;font-size:14px;margin:2px 0;">${title}</p>
-            <p style="color:#999;font-size:12px;">Generated on: ${today}</p>
+          <div class="form-group">
+            <label>🔒 Password * (min 6 characters)</label>
+            <input type="password" id="signupPassword" placeholder="Create a password" value="">
           </div>
-          <div style="max-height:400px;overflow-y:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:11px;">
-              <thead><tr style="background:#1a5276;color:white;">${tableHeaders}</tr></thead>
-              <tbody>${tableRows}</tbody>
-            </table>
+          <div class="form-group">
+            <label>🔒 Confirm Password *</label>
+            <input type="password" id="signupConfirm" placeholder="Confirm your password" value="">
           </div>
-          <div style="text-align:center;font-size:11px;color:#999;margin-top:15px;padding-top:10px;border-top:1px solid #ddd;">
-            <p>Mara Christian High School - Educating For Eternity</p>
-            <p>Total records: ${data.rows.length}</p>
+          <div class="form-group">
+            <label>👔 Select Your Role</label>
+            <div class="role-selector">
+              <div class="role-option" onclick="selectRole(this, 'teacher')">
+                <span class="role-icon">👨‍🏫</span>
+                <span class="role-name">Teacher</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'admin')">
+                <span class="role-icon">👑</span>
+                <span class="role-name">Admin</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'director')">
+                <span class="role-icon">📋</span>
+                <span class="role-name">Director</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'nurse')">
+                <span class="role-icon">🏥</span>
+                <span class="role-name">Nurse</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'doctor')">
+                <span class="role-icon">👨‍⚕️</span>
+                <span class="role-name">Doctor</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'maintenance')">
+                <span class="role-icon">🔧</span>
+                <span class="role-name">Maintenance</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'secretary')">
+                <span class="role-icon">📝</span>
+                <span class="role-name">Secretary</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'hrio')">
+                <span class="role-icon">👔</span>
+                <span class="role-name">HRIO</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'nutritionist')">
+                <span class="role-icon">🍎</span>
+                <span class="role-name">Nutritionist</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'labtech')">
+                <span class="role-icon">🔬</span>
+                <span class="role-name">Lab Tech</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'radiographer')">
+                <span class="role-icon">📷</span>
+                <span class="role-name">Radiographer</span>
+              </div>
+              <div class="role-option" onclick="selectRole(this, 'principal')">
+                <span class="role-icon">🎓</span>
+                <span class="role-name">Principal</span>
+              </div>
+            </div>
+            <input type="hidden" id="signupRole" value="teacher">
           </div>
-        </div>
-        <div class="share-actions no-print">
-          <button class="btn btn-print" onclick="printShareContent()">🖨️ Print</button>
-          <button class="btn btn-share" onclick="downloadShareContent()">📥 Download as Image</button>
-          <button class="btn btn-success" onclick="shareContentViaEmail()">📧 Share via Email</button>
-          <button class="btn btn-danger" onclick="document.getElementById('shareModal').classList.remove('show')">Close</button>
+          <div class="form-group">
+            <label>Class (for teachers)</label>
+            <select id="signupClass">
+              <option value="">None</option>
+              ${CLASSES.map(c => `<option value="${c}">${c}</option>`).join('')}
+            </select>
+          </div>
+          <button class="btn btn-success" onclick="handleSignup()" style="width:100%;padding:14px;font-size:16px;">📝 Create Account</button>
+          <p style="text-align:center;margin-top:10px;font-size:0.8em;color:#666;">
+            By creating an account, you agree to use this system responsibly.
+          </p>
         </div>
       `;
-
-      modal.classList.add('show');
-      window._shareContent = document.getElementById('shareContent');
-    };
-
-    window.printShareContent = function() {
-      const content = document.getElementById('shareContent');
-      if (!content) return;
       
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>Mara Christian High School - Share</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; }
-            td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
-            tr:nth-child(even) { background: #f8f9fa; }
-            .header { text-align: center; margin-bottom: 15px; }
-            .header h2 { color: #1a5276; margin: 0; }
-            .footer { text-align: center; font-size: 11px; color: #999; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; }
-            @media print { body { padding: 10px; } }
-          </style>
-        </head>
-        <body>
-          ${content.innerHTML}
-          <script>window.onload = function() { window.print(); window.close(); }<\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-    };
-
-    window.downloadShareContent = function() {
-      const content = document.getElementById('shareContent');
-      if (!content) return;
-
-      showToast('📸 Generating image...', 'info');
+      openModal('📝 Create New Account', html);
       
-      html2canvas(content, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `MCHS_Share_${new Date().toISOString().slice(0,10)}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('✅ Image downloaded successfully!', 'success');
-      }).catch(err => {
-        console.error('Error generating image:', err);
-        showToast('❌ Error generating image. Try printing instead.', 'error');
-      });
+      // Store selected role
+      window.selectRole = function(el, role) {
+        document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('signupRole').value = role;
+      };
+      
+      // Select teacher by default
+      setTimeout(() => {
+        const defaultRole = document.querySelector('.role-option');
+        if (defaultRole) {
+          defaultRole.classList.add('selected');
+          document.getElementById('signupRole').value = 'teacher';
+        }
+      }, 100);
     };
 
-    window.shareContentViaEmail = function() {
-      const content = document.getElementById('shareContent');
-      if (!content) return;
+    // Handle signup
+    window.handleSignup = async function() {
+      const email = document.getElementById('signupEmail').value.trim();
+      const name = document.getElementById('signupName').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const confirm = document.getElementById('signupConfirm').value;
+      const role = document.getElementById('signupRole').value;
+      const classValue = document.getElementById('signupClass').value;
 
-      const rows = content.querySelectorAll('tbody tr');
-      let textData = '';
-      rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        const rowData = Array.from(cells).map(cell => cell.textContent.trim()).join(' | ');
-        textData += rowData + '\n';
-      });
+      if (!email || !name || !password || !confirm) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
 
-      const subject = encodeURIComponent('Mara Christian High School - Data Share');
-      const body = encodeURIComponent(
-        `Mara Christian High School\n\n` +
-        `Data Share\n` +
-        `Generated: ${new Date().toLocaleString()}\n\n` +
-        `${textData}\n\n` +
-        `---\nMara Christian High School - Educating For Eternity`
-      );
+      if (password.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+      }
 
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
-      showToast('📧 Email client opened', 'info');
+      if (password !== confirm) {
+        showToast('Passwords do not match', 'error');
+        return;
+      }
+
+      try {
+        // Create user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+
+        // Create user document in Firestore
+        await setDoc(doc(db, 'users', uid), {
+          email: email,
+          fullName: name,
+          role: role || 'teacher',
+          class: classValue || '',
+          createdAt: serverTimestamp(),
+          loginCount: 1,
+          lastLogin: serverTimestamp()
+        });
+
+        showToast('✅ Account created successfully! Please login.', 'success');
+        closeModal();
+        
+        // Pre-fill login form
+        document.getElementById('loginEmail').value = email;
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').textContent = 'Account created! Please login.';
+        
+      } catch (err) {
+        console.error('Signup error:', err);
+        showToast(friendlyAuthError(err.code) || 'Error creating account', 'error');
+      }
     };
+
+    // ============================================================
+    // LOGIN FUNCTION - FIXED
+    // ============================================================
+
+    window.handleLogin = async function() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+      const errorEl = document.getElementById('loginError');
+      
+      console.log('🔐 Login attempt:', { email, passwordLength: password.length });
+      errorEl.textContent = '';
+      
+      // Test mode login
+      if (email === 'test@test.com' && password === 'test123') {
+        window.testLogin();
+        return;
+      }
+      
+      if (!email) { errorEl.textContent = 'Please enter your email'; return; }
+      if (!password) { errorEl.textContent = 'Please enter your password'; return; }
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Signing in...';
+      
+      try {
+        console.log('📡 Attempting Firebase sign in...');
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log('✅ Login successful:', userCredential.user.email);
+      } catch (err) {
+        console.error('❌ Login error:', err.code, err.message);
+        
+        // If user doesn't exist, suggest signup
+        if (err.code === 'auth/user-not-found') {
+          errorEl.innerHTML = `
+            No account found with this email. 
+            <a href="#" onclick="showSignupModal(); return false;" style="color:var(--primary-light);font-weight:600;">Create an account</a>
+          `;
+        } else {
+          errorEl.textContent = friendlyAuthError(err.code);
+        }
+        
+        // Add test login hint
+        if (errorEl.textContent.includes('Error')) {
+          errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    };
+
+    // ============================================================
+    // TEST LOGIN
+    // ============================================================
+
+    window.testLogin = function() {
+      console.log('🧪 TEST MODE: Logging in with test account');
+      currentUser = { 
+        uid: 'test123', 
+        email: 'test@test.com', 
+        fullName: 'Test Admin', 
+        role: 'admin' 
+      };
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      document.getElementById('currentUserDisplay').textContent = 'Test Admin';
+      document.getElementById('currentRoleBadge').textContent = 'ADMIN';
+      isTestMode = true;
+      setupPermissions();
+      loadSampleData();
+      showTab('dashboard');
+      showToast('✅ Test login successful! (Demo Mode)', 'success');
+    };
+
+    // ============================================================
+    // LOGOUT
+    // ============================================================
+
+    window.handleLogout = async function() {
+      try {
+        if (!isTestMode) {
+          await signOut(auth);
+        }
+        currentUser = null;
+        isTestMode = false;
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
+        showToast('Logged out successfully');
+      } catch (err) {
+        showToast('Error logging out', 'error');
+      }
+    };
+
+    // ============================================================
+    // AUTH STATE CHANGED - FIXED
+    // ============================================================
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user && !isTestMode) {
+        try {
+          // Check if user document exists
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          
+          if (!snap.exists()) {
+            // Auto-create user document if it doesn't exist
+            const userData = {
+              email: user.email,
+              fullName: user.displayName || user.email?.split('@')[0] || 'User',
+              role: 'teacher', // Default role
+              class: '',
+              createdAt: serverTimestamp(),
+              loginCount: 1,
+              lastLogin: serverTimestamp()
+            };
+            await setDoc(doc(db, 'users', user.uid), userData);
+            currentUser = { uid: user.uid, ...userData };
+            showToast('✅ Account auto-created. Welcome!', 'info');
+          } else {
+            // Update login count
+            const data = snap.data();
+            currentUser = { uid: user.uid, email: user.email, ...data };
+            await updateDoc(doc(db, 'users', user.uid), {
+              lastLogin: serverTimestamp(),
+              loginCount: (data.loginCount || 0) + 1
+            });
+          }
+          
+          document.getElementById('loginPage').style.display = 'none';
+          document.getElementById('appContainer').style.display = 'block';
+          document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
+          document.getElementById('currentRoleBadge').textContent = (currentUser.role || '').toUpperCase();
+          setupPermissions();
+          startListeners();
+          showTab('dashboard');
+          showToast(`Welcome, ${currentUser.fullName || currentUser.email}!`);
+          
+        } catch (err) {
+          console.error('Error loading user profile:', err);
+          document.getElementById('loginError').textContent = 'Error loading profile. Try again.';
+        }
+      } else if (!user && !isTestMode) {
+        currentUser = null;
+        stopListeners();
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
+      }
+    });
 
     // ============================================================
     // STUDENT FILTER FUNCTIONS
@@ -2195,27 +1988,8 @@
     };
 
     // ============================================================
-    // 🔐 AUTHENTICATION
+    // LOAD SAMPLE DATA
     // ============================================================
-
-    window.testLogin = function() {
-      console.log('🧪 TEST MODE: Logging in with test account');
-      currentUser = { 
-        uid: 'test123', 
-        email: 'test@test.com', 
-        fullName: 'Test Admin', 
-        role: 'admin' 
-      };
-      document.getElementById('loginPage').style.display = 'none';
-      document.getElementById('appContainer').style.display = 'block';
-      document.getElementById('currentUserDisplay').textContent = 'Test Admin';
-      document.getElementById('currentRoleBadge').textContent = 'ADMIN';
-      isTestMode = true;
-      setupPermissions();
-      loadSampleData();
-      showTab('dashboard');
-      showToast('✅ Test login successful! (Demo Mode)', 'success');
-    };
 
     window.loadSampleData = function() {
       const sampleStudents = [
@@ -2316,99 +2090,6 @@
       renderMaintenanceDept();
     };
 
-    window.handleLogin = async function() {
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const btn = document.getElementById('loginBtn');
-      const errorEl = document.getElementById('loginError');
-      
-      console.log('🔐 Login attempt:', { email, passwordLength: password.length });
-      errorEl.textContent = '';
-      
-      if (email === 'test@test.com' && password === 'test123') {
-        window.testLogin();
-        return;
-      }
-      
-      if (!email) { errorEl.textContent = 'Please enter your email'; return; }
-      if (!password) { errorEl.textContent = 'Please enter your password'; return; }
-      
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Signing in...';
-      
-      try {
-        console.log('📡 Attempting Firebase sign in...');
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('✅ Login successful:', userCredential.user.email);
-      } catch (err) {
-        console.error('❌ Login error:', err.code, err.message);
-        errorEl.textContent = friendlyAuthError(err.code);
-        if (errorEl.textContent.includes('Error')) {
-          errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
-        }
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Sign In';
-      }
-    };
-
-    window.handleLogout = async function() {
-      try {
-        if (!isTestMode) {
-          await signOut(auth);
-        }
-        currentUser = null;
-        isTestMode = false;
-        document.getElementById('loginPage').style.display = 'flex';
-        document.getElementById('appContainer').style.display = 'none';
-        showToast('Logged out successfully');
-      } catch (err) {
-        showToast('Error logging out', 'error');
-      }
-    };
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user && !isTestMode) {
-        try {
-          const snap = await getDoc(doc(db, 'users', user.uid));
-          if (!snap.exists()) {
-            const userData = {
-              email: user.email,
-              fullName: user.displayName || user.email?.split('@')[0] || 'User',
-              role: 'admin',
-              createdAt: serverTimestamp(),
-              loginCount: 1
-            };
-            await setDoc(doc(db, 'users', user.uid), userData);
-            currentUser = { uid: user.uid, ...userData };
-          } else {
-            currentUser = { uid: user.uid, email: user.email, ...snap.data() };
-            await updateDoc(doc(db, 'users', user.uid), {
-              lastLogin: serverTimestamp(),
-              loginCount: (currentUser.loginCount || 0) + 1
-            });
-          }
-          
-          document.getElementById('loginPage').style.display = 'none';
-          document.getElementById('appContainer').style.display = 'block';
-          document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
-          document.getElementById('currentRoleBadge').textContent = (currentUser.role || '').toUpperCase();
-          setupPermissions();
-          startListeners();
-          showTab('dashboard');
-          showToast(`Welcome, ${currentUser.fullName || currentUser.email}!`);
-        } catch (err) {
-          console.error('Error loading user profile:', err);
-          document.getElementById('loginError').textContent = 'Error loading profile. Try again.';
-        }
-      } else if (!user && !isTestMode) {
-        currentUser = null;
-        stopListeners();
-        document.getElementById('loginPage').style.display = 'flex';
-        document.getElementById('appContainer').style.display = 'none';
-      }
-    });
-
     // ============================================================
     // 🔒 PERMISSIONS
     // ============================================================
@@ -2430,7 +2111,6 @@
         maintDeptNav.style.display = (isAdmin || isDirector || isMaintenance) ? 'flex' : 'none';
       }
 
-      // STUDENT PERMISSIONS - Teachers can add, edit, delete students
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) {
         addStudentBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
@@ -4656,16 +4336,14 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 16.0.0 - Teacher CRUD Permissions');
+      console.log('📚 Version 17.0.0 - Fixed Login & Signup');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('👩‍🏫 Teachers can now Add, Edit, and Delete Student Data');
+      console.log('📝 Create your own account with the Register link');
+      console.log('👩‍🏫 Teachers can Add, Edit, and Delete Student Data');
       console.log('📊 Click cards to filter student records');
       console.log('🖨️ Print any tab data with full formatting');
       console.log('📤 Share any tab data via image, email, or print');
-      console.log('⭐ Prefects auto-populated from student records');
-      console.log('🔧 Maintenance Department with role-based access');
-      console.log('📝 Grades: Test1, Test2, Test3, Final Exam with Exam Types');
     });
   </script>
 </body>
