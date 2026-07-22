@@ -1512,13 +1512,16 @@
       'Form 3 East', 'Form 3 West', 'Form 4 East', 'Form 4 West'
     ];
 
+    // UPDATED SUBJECTS - Added Literature, Home Science, Art & Craft, CSL
+    // Fixed "Cose Maths" to "Core Maths"
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
       'Biology', 'Chemistry', 'Physics',
       'KSL', 'Creative Arts & Sports (CA)',
-      'Cose Maths', 'Science', 'Social Studies',
+      'Core Maths', 'Science', 'Social Studies',
       'CRE', 'Agriculture', 'Business Studies',
-      'Computer Studies', 'History', 'Geography'
+      'Computer Studies', 'History', 'Geography',
+      'Literature', 'Home Science', 'Art & Craft', 'CSL'
     ];
 
     const DORMS = [
@@ -1662,7 +1665,7 @@
       } else if (type === 'maintenance') {
         return `<span class="staff-type-badge maintenance">🔧 Maintenance</span>`;
       } else {
-        return `<span class="staff-type-badge clinician">🏥 Clinician</span>`;
+        return `<span class="staff-type-badge clinician">🏥 Clinician</span>';
       }
     }
 
@@ -2771,26 +2774,59 @@
     // ============================================================
 
     window.loadSampleData = function() {
+      // UPDATED: Added more prefect roles with various departments
       const sampleStudents = [
         { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics' },
-        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', isPrefect: 'No' },
-        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline' },
+        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline' },
+        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports' },
         { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect' },
-        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', isPrefect: 'No' },
+        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation' },
         { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect' },
-        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports' },
-        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', isPrefect: 'No' },
+        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Dining Hall' },
+        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', isPrefect: 'No', prefectRole: '', prefectDepartment: '' },
+        { admNo: '2024-009', firstName: 'James', lastName: 'Odhiambo', class: 'Form 4 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Environment' },
+        { admNo: '2024-010', firstName: 'Grace', lastName: 'Akinyi', class: 'Form 4 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual' },
       ];
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
       
+      // UPDATED: Sample grades with new subjects
       const sampleGrades = [
         { studentId: 'sample_2024-001', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 15, test2: 18, test3: 20, exam: 45 },
         { studentId: 'sample_2024-001', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 50 },
+        { studentId: 'sample_2024-001', subject: 'Literature', term: 'Term 1', examType: 'Opener', test1: 16, test2: 19, test3: 17, exam: 42 },
+        { studentId: 'sample_2024-001', subject: 'Core Maths', term: 'Term 1', examType: 'Midterm', test1: 14, test2: 16, test3: 15, exam: 38 },
+        { studentId: 'sample_2024-001', subject: 'History', term: 'Term 1', examType: 'Opener', test1: 18, test2: 20, test3: 16, exam: 44 },
         { studentId: 'sample_2024-002', subject: 'Mathematics', term: 'Term 1', examType: 'End Term', test1: 12, test2: 14, test3: 10, exam: 30 },
         { studentId: 'sample_2024-002', subject: 'English', term: 'Term 1', examType: 'Opener', test1: 15, test2: 16, test3: 14, exam: 35 },
+        { studentId: 'sample_2024-002', subject: 'Home Science', term: 'Term 1', examType: 'Midterm', test1: 18, test2: 20, test3: 16, exam: 42 },
+        { studentId: 'sample_2024-002', subject: 'Art & Craft', term: 'Term 1', examType: 'Opener', test1: 20, test2: 22, test3: 18, exam: 48 },
         { studentId: 'sample_2024-003', subject: 'Mathematics', term: 'Term 1', examType: 'Midterm', test1: 22, test2: 20, test3: 24, exam: 55 },
         { studentId: 'sample_2024-003', subject: 'English', term: 'Term 1', examType: 'End Term', test1: 18, test2: 20, test3: 16, exam: 45 },
+        { studentId: 'sample_2024-003', subject: 'CSL', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 20, exam: 50 },
+        { studentId: 'sample_2024-003', subject: 'Core Maths', term: 'Term 1', examType: 'End Term', test1: 16, test2: 18, test3: 14, exam: 40 },
+        { studentId: 'sample_2024-003', subject: 'Geography', term: 'Term 1', examType: 'Opener', test1: 19, test2: 21, test3: 17, exam: 46 },
+        { studentId: 'sample_2024-004', subject: 'Kiswahili', term: 'Term 1', examType: 'Opener', test1: 16, test2: 18, test3: 15, exam: 40 },
+        { studentId: 'sample_2024-004', subject: 'CRE', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 48 },
+        { studentId: 'sample_2024-004', subject: 'Literature', term: 'Term 1', examType: 'End Term', test1: 14, test2: 16, test3: 13, exam: 35 },
+        { studentId: 'sample_2024-005', subject: 'Biology', term: 'Term 1', examType: 'Opener', test1: 18, test2: 20, test3: 16, exam: 44 },
+        { studentId: 'sample_2024-005', subject: 'Chemistry', term: 'Term 1', examType: 'Midterm', test1: 15, test2: 17, test3: 14, exam: 38 },
+        { studentId: 'sample_2024-005', subject: 'Physics', term: 'Term 1', examType: 'End Term', test1: 12, test2: 14, test3: 10, exam: 30 },
+        { studentId: 'sample_2024-006', subject: 'Business Studies', term: 'Term 1', examType: 'Opener', test1: 22, test2: 24, test3: 20, exam: 55 },
+        { studentId: 'sample_2024-006', subject: 'Agriculture', term: 'Term 1', examType: 'Midterm', test1: 18, test2: 20, test3: 16, exam: 42 },
+        { studentId: 'sample_2024-006', subject: 'Home Science', term: 'Term 1', examType: 'End Term', test1: 20, test2: 22, test3: 18, exam: 48 },
+        { studentId: 'sample_2024-007', subject: 'Computer Studies', term: 'Term 1', examType: 'Opener', test1: 24, test2: 26, test3: 22, exam: 58 },
+        { studentId: 'sample_2024-007', subject: 'Core Maths', term: 'Term 1', examType: 'Midterm', test1: 16, test2: 18, test3: 14, exam: 40 },
+        { studentId: 'sample_2024-007', subject: 'Art & Craft', term: 'Term 1', examType: 'End Term', test1: 22, test2: 24, test3: 20, exam: 52 },
+        { studentId: 'sample_2024-008', subject: 'KSL', term: 'Term 1', examType: 'Opener', test1: 18, test2: 20, test3: 16, exam: 44 },
+        { studentId: 'sample_2024-008', subject: 'Social Studies', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 48 },
+        { studentId: 'sample_2024-008', subject: 'CSL', term: 'Term 1', examType: 'End Term', test1: 16, test2: 18, test3: 14, exam: 38 },
+        { studentId: 'sample_2024-009', subject: 'Creative Arts & Sports (CA)', term: 'Term 1', examType: 'Opener', test1: 26, test2: 28, test3: 24, exam: 60 },
+        { studentId: 'sample_2024-009', subject: 'Science', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 48 },
+        { studentId: 'sample_2024-009', subject: 'Literature', term: 'Term 1', examType: 'End Term', test1: 18, test2: 20, test3: 16, exam: 42 },
+        { studentId: 'sample_2024-010', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 14, test2: 16, test3: 12, exam: 34 },
+        { studentId: 'sample_2024-010', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 16, test2: 18, test3: 14, exam: 38 },
+        { studentId: 'sample_2024-010', subject: 'Home Science', term: 'Term 1', examType: 'End Term', test1: 22, test2: 24, test3: 20, exam: 52 },
       ];
       
       sampleGrades.forEach(g => gradesCache.push({ id: `sample_${Math.random().toString(36).substr(2, 6)}`, ...g }));
@@ -2806,13 +2842,14 @@
         });
       });
 
+      // Create prefect records from student data
       sampleStudents.forEach(s => {
         if (s.isPrefect === 'Yes') {
           prefectsCache.push({
             id: `prefect_${s.admNo}`,
             studentId: s.id,
-            role: s.prefectRole,
-            department: s.prefectDepartment,
+            role: s.prefectRole || 'Class Prefect',
+            department: s.prefectDepartment || 'Class Prefect',
             date: today,
             notes: 'Auto-assigned from student record'
           });
@@ -3653,6 +3690,93 @@
     };
 
     // ============================================================
+    // SPONSORSHIP
+    // ============================================================
+
+    window.renderSponsorship = function() {
+      const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
+      document.getElementById('sponsorshipTableBody').innerHTML = sponsored.map(s => `
+        <tr>
+          <td>${s.firstName} ${s.lastName}</td>
+          <td>${s.class}</td>
+          <td><span class="badge badge-info">${s.sponsorshipType}</span></td>
+          <td>${s.sponsorName || '-'}</td>
+          <td>${s.sponsorContact || '-'}</td>
+          <td>${s.sponsorNotes || '-'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found</td></tr>';
+    };
+
+    window.showEditSponsorshipModal = function() {
+      if (!canEdit('sponsorship')) {
+        showToast('You do not have permission to edit sponsorships', 'error');
+        return;
+      }
+      
+      const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
+      if (!sponsored.length) {
+        showToast('No sponsored students to edit', 'warning');
+        return;
+      }
+
+      let html = `
+        <p style="color:#666;margin-bottom:10px;">Select a student to edit their sponsorship details:</p>
+        <div class="form-group">
+          <label>Select Student</label>
+          <select id="sponsorStudentSelect" onchange="loadSponsorshipData()">
+            <option value="">Select a student...</option>
+            ${sponsored.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+          </select>
+        </div>
+        <div id="sponsorEditForm" style="display:none;">
+          <div class="form-grid">
+            <div class="form-group"><label>Sponsor Type</label><select id="sp_editType"><option value="Organization">Organization</option><option value="Government">Government</option><option value="NGO">NGO</option><option value="Other">Other</option></select></div>
+            <div class="form-group"><label>Sponsor Name</label><input type="text" id="sp_editName" placeholder="Sponsor name"></div>
+            <div class="form-group"><label>Sponsor Contact</label><input type="text" id="sp_editContact" placeholder="Phone or Email"></div>
+          </div>
+          <div class="form-group"><label>Notes</label><textarea id="sp_editNotes" rows="2"></textarea></div>
+          <button class="btn btn-success" onclick="saveSponsorshipEdit()" style="width:100%;margin-top:10px;">💾 Save Changes</button>
+        </div>
+      `;
+      openModal('✏️ Edit Sponsorship', html);
+    };
+
+    window.loadSponsorshipData = function() {
+      const studentId = document.getElementById('sponsorStudentSelect').value;
+      const form = document.getElementById('sponsorEditForm');
+      if (!studentId) { form.style.display = 'none'; return; }
+      
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) { form.style.display = 'none'; return; }
+      
+      form.style.display = 'block';
+      document.getElementById('sp_editType').value = student.sponsorshipType || 'Organization';
+      document.getElementById('sp_editName').value = student.sponsorName || '';
+      document.getElementById('sp_editContact').value = student.sponsorContact || '';
+      document.getElementById('sp_editNotes').value = student.sponsorNotes || '';
+    };
+
+    window.saveSponsorshipEdit = async function() {
+      const studentId = document.getElementById('sponsorStudentSelect').value;
+      if (!studentId) { showToast('Please select a student', 'error'); return; }
+      
+      const data = {
+        sponsorshipType: document.getElementById('sp_editType').value,
+        sponsorName: document.getElementById('sp_editName').value.trim(),
+        sponsorContact: document.getElementById('sp_editContact').value.trim(),
+        sponsorNotes: document.getElementById('sp_editNotes').value.trim()
+      };
+      
+      try {
+        await updateDoc(doc(db, 'students', studentId), data);
+        showToast('✅ Sponsorship updated successfully!');
+        closeModal();
+      } catch (err) {
+        showToast('❌ Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
     // GRADES - Teacher CRUD Permissions
     // ============================================================
 
@@ -3735,6 +3859,11 @@
 
       const classSelect = document.getElementById('gradeClassFilter');
       if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
+
+      const subjectSelect = document.getElementById('gradeSubjectFilter');
+      if (subjectSelect.options.length <= 1) {
+        subjectSelect.innerHTML = '<option value="">All Subjects</option>' + SUBJECTS.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
 
       let filtered = gradesCache;
       if (classFilter) filtered = filtered.filter(g => { const s = studentsCache.find(st => st.id === g.studentId); return s && s.class === classFilter; });
@@ -3909,6 +4038,57 @@
           <td>${s.avg >= 50 ? '0' : '1'}</td>
         </tr>
       `).join('');
+
+      // Subject Averages Chart
+      const subjects = [...new Set(grades.map(g => g.subject))];
+      const subjectAverages = subjects.map(subj => {
+        const sg = grades.filter(g => g.subject === subj);
+        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+        return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      });
+
+      destroyChart('perfSubjectChart');
+      chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
+        type: 'bar',
+        data: { labels: subjects, datasets: [{ data: subjectAverages, backgroundColor: '#3498db' }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
+      });
+
+      // Student Performance Chart
+      const studentNames = sorted.slice(0, 10).map(s => `${s.student.firstName}`);
+      const studentAvgs = sorted.slice(0, 10).map(s => s.avg);
+
+      destroyChart('perfStudentChart');
+      chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
+        type: 'bar',
+        data: { labels: studentNames, datasets: [{ data: studentAvgs, backgroundColor: studentAvgs.map(a => a >= 50 ? '#27ae60' : '#e74c3c') }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
+      });
+
+      // Grade Distribution Chart
+      const gradeCounts = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      studentAverages.forEach(s => {
+        const grade = getLetterGrade(s.avg);
+        gradeCounts[grade]++;
+      });
+
+      destroyChart('perfGradeChart');
+      chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
+        type: 'doughnut',
+        data: { labels: ['A', 'B', 'C', 'D', 'F'], datasets: [{ data: [gradeCounts.A, gradeCounts.B, gradeCounts.C, gradeCounts.D, gradeCounts.F], backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      // Pass/Fail Ratio
+      const passed = studentAverages.filter(s => s.avg >= 50).length;
+      const failed = studentAverages.filter(s => s.avg < 50).length;
+
+      destroyChart('perfPassFailChart');
+      chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
+        type: 'doughnut',
+        data: { labels: ['✅ Passed', '❌ Failed'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
     };
 
     // ============================================================
@@ -4170,16 +4350,23 @@
     };
 
     // ============================================================
-    // PREFECTS
+    // PREFECTS - Auto-populated from student data
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
       if (!canAdd('prefects')) { showToast('Only Admin and Director can add prefects', 'error'); return; }
       const prefect = editId ? prefectsCache.find(p => p.id === editId) : null;
+      // Only show students who are not already prefects (or the current one if editing)
+      const availableStudents = studentsCache.filter(s => 
+        !prefectsCache.some(p => p.studentId === s.id && p.id !== editId) || s.id === prefect?.studentId
+      );
+      
       const html = `
         <div class="form-grid">
           <div class="form-group"><label>Student *</label>
-            <select id="p_student">${studentsCache.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+            <select id="p_student">
+              ${availableStudents.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+            </select>
           </div>
           <div class="form-group"><label>Prefect Role *</label>
             <select id="p_role">${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
@@ -4215,6 +4402,7 @@
           await addDoc(collection(db, 'prefects'), data); 
           showToast('Prefect added');
         }
+        // Update student record
         await updateDoc(doc(db, 'students', studentId), { 
           isPrefect: 'Yes', 
           prefectRole: role, 
@@ -4227,41 +4415,48 @@
     window.renderPrefects = function() {
       const deptFilter = document.getElementById('prefectDeptFilter').value;
       
+      // Build prefect list from student data and prefects cache
+      let prefectData = [];
+      
+      // First, get all students marked as prefects
       const prefectStudents = studentsCache.filter(s => s.isPrefect === 'Yes');
       
-      let prefectData = prefectStudents.map(s => ({
-        id: `prefect_${s.id}`,
-        studentId: s.id,
-        student: s,
-        role: s.prefectRole || 'Class Prefect',
-        department: s.prefectDepartment || 'Class Prefect',
-        date: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
-      }));
+      // Create entries from student data
+      prefectStudents.forEach(s => {
+        prefectData.push({
+          id: `prefect_${s.id}`,
+          studentId: s.id,
+          student: s,
+          role: s.prefectRole || 'Class Prefect',
+          department: s.prefectDepartment || 'Class Prefect',
+          date: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        });
+      });
       
+      // Also include any prefects from the prefects cache that might not be in student data
       prefectsCache.forEach(p => {
         const student = studentsCache.find(s => s.id === p.studentId);
-        if (student && student.isPrefect !== 'Yes') {
-          updateDoc(doc(db, 'students', p.studentId), { 
-            isPrefect: 'Yes', 
-            prefectRole: p.role, 
-            prefectDepartment: p.department 
-          });
-        }
-        if (!prefectData.find(pd => pd.studentId === p.studentId)) {
-          const student = studentsCache.find(s => s.id === p.studentId);
-          if (student) {
-            prefectData.push({
-              id: p.id,
-              studentId: p.studentId,
-              student: student,
-              role: p.role || 'Class Prefect',
-              department: p.department || 'Class Prefect',
-              date: p.date || new Date().toISOString().split('T')[0]
+        if (student && !prefectData.find(pd => pd.studentId === p.studentId)) {
+          // Update student record if needed
+          if (student.isPrefect !== 'Yes') {
+            updateDoc(doc(db, 'students', p.studentId), { 
+              isPrefect: 'Yes', 
+              prefectRole: p.role, 
+              prefectDepartment: p.department 
             });
           }
+          prefectData.push({
+            id: p.id,
+            studentId: p.studentId,
+            student: student,
+            role: p.role || 'Class Prefect',
+            department: p.department || 'Class Prefect',
+            date: p.date || new Date().toISOString().split('T')[0]
+          });
         }
       });
       
+      // Apply department filter
       let filtered = prefectData;
       if (deptFilter) filtered = filtered.filter(p => p.department === deptFilter);
 
@@ -4286,7 +4481,7 @@
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No prefects found</td></tr>';
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No prefects found. Add prefect roles or mark students as prefects.</td></tr>';
     };
 
     window.deletePrefect = async function(id) {
@@ -4481,20 +4676,370 @@
     };
 
     // ============================================================
-    // MAINTENANCE (Abbreviated for length)
+    // MAINTENANCE (Abbreviated)
     // ============================================================
 
     window.showAddMaintenanceModal = function(editId) {
-      // Full implementation in the complete file
-      showToast('Maintenance module loaded', 'info');
+      if (!canAdd('maintenance')) { showToast('You do not have permission to add maintenance reports', 'error'); return; }
+      const report = editId ? maintenanceCache.find(m => m.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get maintenance staff for assignment
+      const maintenanceStaff = teachersCache.filter(t => t.type === 'maintenance' && t.status === 'Active');
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Class *</label><select id="m_class">${classSelectHtml(report?.class || '')}</select></div>
+          <div class="form-group"><label>Issue Type *</label>
+            <select id="m_issueType">
+              ${MAINTENANCE_TYPES.map(t => `<option value="${t.value}" ${report?.issueType === t.value ? 'selected' : ''}>${t.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="m_status">
+              ${MAINTENANCE_STATUSES.map(s => `<option value="${s}" ${report?.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Date Reported</label><input type="date" id="m_date" value="${report?.date || today}"></div>
+          <div class="form-group"><label>Reported By</label><input type="text" id="m_reportedBy" value="${report?.reportedBy || currentUser?.fullName || ''}" placeholder="Name of reporter"></div>
+          <div class="form-group"><label>Damaged By</label><input type="text" id="m_damagedBy" value="${report?.damagedBy || ''}" placeholder="Who caused the damage"></div>
+          <div class="form-group"><label>Assigned To</label>
+            <select id="m_assignedTo">
+              <option value="">Unassigned</option>
+              ${maintenanceStaff.map(t => `<option value="${t.id}" ${report?.assignedTo === t.id ? 'selected' : ''}>${t.name} (${t.specialization})</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Resolved Date</label><input type="date" id="m_resolvedDate" value="${report?.resolvedDate || ''}"></div>
+        </div>
+        <div class="form-group"><label>Description *</label><textarea id="m_description" rows="3">${report?.description || ''}</textarea></div>
+        <div class="form-group"><label>Notes</label><textarea id="m_notes" rows="2">${report?.notes || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveMaintenance('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Report</button>
+      `;
+      openModal(editId ? 'Edit Maintenance Report' : 'Add Maintenance Report', html);
+    };
+
+    window.saveMaintenance = async function(editId) {
+      const classVal = document.getElementById('m_class').value;
+      const issueType = document.getElementById('m_issueType').value;
+      const status = document.getElementById('m_status').value;
+      const date = document.getElementById('m_date').value;
+      const reportedBy = document.getElementById('m_reportedBy').value.trim();
+      const damagedBy = document.getElementById('m_damagedBy').value.trim();
+      const assignedTo = document.getElementById('m_assignedTo').value;
+      const resolvedDate = document.getElementById('m_resolvedDate').value;
+      const description = document.getElementById('m_description').value.trim();
+      const notes = document.getElementById('m_notes').value.trim();
+
+      if (!classVal || !issueType || !date || !description) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const data = {
+        class: classVal,
+        issueType,
+        status,
+        date,
+        reportedBy: reportedBy || currentUser?.fullName || 'Unknown',
+        damagedBy,
+        assignedTo,
+        resolvedDate,
+        description,
+        notes
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'maintenance', editId), data);
+          showToast('Maintenance report updated!');
+        } else {
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'maintenance'), data);
+          showToast('Maintenance report added!');
+        }
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
     };
 
     window.renderMaintenance = function() {
-      // Implementation
+      const classFilter = document.getElementById('maintenanceClassFilter').value;
+      const statusFilter = document.getElementById('maintenanceStatusFilter').value;
+      const typeFilter = document.getElementById('maintenanceTypeFilter').value;
+
+      // Populate class filter
+      const classSelect = document.getElementById('maintenanceClassFilter');
+      if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
+
+      let filtered = maintenanceCache;
+      if (classFilter) filtered = filtered.filter(m => m.class === classFilter);
+      if (statusFilter) filtered = filtered.filter(m => m.status === statusFilter);
+      if (typeFilter) filtered = filtered.filter(m => m.issueType === typeFilter);
+
+      // Stats
+      const total = maintenanceCache.length;
+      const pending = maintenanceCache.filter(m => m.status === 'Pending').length;
+      const inProgress = maintenanceCache.filter(m => m.status === 'In Progress').length;
+      const resolved = maintenanceCache.filter(m => m.status === 'Resolved').length;
+
+      document.getElementById('maintenanceStats').innerHTML = `
+        <div class="stat-card" style="border-top-color:#3498db;">
+          <div class="stat-number">${total}</div>
+          <div class="stat-label">📋 Total Reports</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#e74c3c;">
+          <div class="stat-number">${pending}</div>
+          <div class="stat-label">⏳ Pending</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#f39c12;">
+          <div class="stat-number">${inProgress}</div>
+          <div class="stat-label">🔄 In Progress</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#27ae60;">
+          <div class="stat-number">${resolved}</div>
+          <div class="stat-label">✅ Resolved</div>
+        </div>
+      `;
+
+      const canEditMaint = canEdit('maintenance');
+      const canDeleteMaint = canDeleteSpecific('maintenance');
+
+      document.getElementById('maintenanceTableBody').innerHTML = filtered.map(m => {
+        const assigned = teachersCache.find(t => t.id === m.assignedTo);
+        const statusClass = m.status === 'Pending' ? 'pending' : m.status === 'In Progress' ? 'inprogress' : 'resolved';
+        return `
+          <tr>
+            <td>${formatDate(m.date)}</td>
+            <td>${m.class}</td>
+            <td>${m.reportedBy || '-'}</td>
+            <td><span class="badge badge-info">${m.issueType}</span></td>
+            <td>${m.description}</td>
+            <td>${m.damagedBy || '-'}</td>
+            <td>${assigned?.name || m.assignedTo || 'Unassigned'}</td>
+            <td><span class="maintenance-status-badge ${statusClass}">${m.status}</span></td>
+            <td>${m.status === 'Resolved' ? formatDate(m.resolvedDate) : '-'}</td>
+            <td>
+              ${canEditMaint ? `<button class="btn btn-primary btn-sm" onclick="showAddMaintenanceModal('${m.id}')">Edit</button>` : ''}
+              ${canDeleteMaint ? `<button class="btn btn-danger btn-sm" onclick="deleteMaintenance('${m.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No maintenance reports found</td></tr>';
     };
 
+    window.deleteMaintenance = async function(id) {
+      if (!confirm('Delete this maintenance report?')) return;
+      try { await deleteDoc(doc(db, 'maintenance', id)); showToast('Report deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // MAINTENANCE DEPARTMENT (Abbreviated)
+    // ============================================================
+
     window.renderMaintenanceDept = function() {
-      // Implementation
+      const statusFilter = document.getElementById('maintenanceDeptStatusFilter').value;
+      const teamFilter = document.getElementById('maintenanceDeptTeamFilter').value;
+      const typeFilter = document.getElementById('maintenanceDeptTypeFilter').value;
+
+      // Populate team filter
+      const teamSelect = document.getElementById('maintenanceDeptTeamFilter');
+      const maintenanceStaff = teachersCache.filter(t => t.type === 'maintenance' && t.status === 'Active');
+      if (teamSelect.options.length <= 1) {
+        teamSelect.innerHTML = '<option value="">All Team Members</option>' + 
+          maintenanceStaff.map(t => `<option value="${t.id}">${t.name} (${t.specialization})</option>`).join('');
+      }
+
+      let filtered = maintenanceCache;
+      if (statusFilter) filtered = filtered.filter(m => m.status === statusFilter);
+      if (teamFilter) filtered = filtered.filter(m => m.assignedTo === teamFilter);
+      if (typeFilter) filtered = filtered.filter(m => m.issueType === typeFilter);
+
+      // Stats
+      const total = maintenanceCache.length;
+      const pending = maintenanceCache.filter(m => m.status === 'Pending').length;
+      const inProgress = maintenanceCache.filter(m => m.status === 'In Progress').length;
+      const resolved = maintenanceCache.filter(m => m.status === 'Resolved').length;
+
+      document.getElementById('maintenanceDeptStats').innerHTML = `
+        <div class="stat-card" style="border-top-color:#3498db;">
+          <div class="stat-number">${total}</div>
+          <div class="stat-label">📋 Total Reports</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#e74c3c;">
+          <div class="stat-number">${pending}</div>
+          <div class="stat-label">⏳ Pending</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#f39c12;">
+          <div class="stat-number">${inProgress}</div>
+          <div class="stat-label">🔄 In Progress</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#27ae60;">
+          <div class="stat-number">${resolved}</div>
+          <div class="stat-label">✅ Resolved</div>
+        </div>
+      `;
+
+      const canEditMaint = canEdit('maintenance');
+      const canDeleteMaint = canDeleteSpecific('maintenance');
+
+      document.getElementById('maintenanceDeptTableBody').innerHTML = filtered.map(m => {
+        const assigned = teachersCache.find(t => t.id === m.assignedTo);
+        const statusClass = m.status === 'Pending' ? 'pending' : m.status === 'In Progress' ? 'inprogress' : 'resolved';
+        return `
+          <tr>
+            <td>${formatDate(m.date)}</td>
+            <td>${m.class}</td>
+            <td><span class="badge badge-info">${m.issueType}</span></td>
+            <td>${m.description}</td>
+            <td>${m.reportedBy || '-'}</td>
+            <td>${assigned?.name || m.assignedTo || 'Unassigned'}</td>
+            <td><span class="maintenance-status-badge ${statusClass}">${m.status}</span></td>
+            <td>${m.notes || '-'}</td>
+            <td>
+              ${canEditMaint ? `<button class="btn btn-primary btn-sm" onclick="showAddMaintenanceModal('${m.id}')">Edit</button>` : ''}
+              ${canDeleteMaint ? `<button class="btn btn-danger btn-sm" onclick="deleteMaintenance('${m.id}')">Del</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">No maintenance reports found</td></tr>';
+    };
+
+    // ============================================================
+    // ANALYTICS (Abbreviated)
+    // ============================================================
+
+    window.renderAnalytics = function() {
+      // Populate student and class selects
+      const studentSelect = document.getElementById('analyticsStudentSelect');
+      const classSelect = document.getElementById('analyticsClassSelect');
+      
+      if (studentSelect.options.length <= 1) {
+        studentSelect.innerHTML = '<option value="">Select a student...</option>' + 
+          studentsCache.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('');
+      }
+      
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = '<option value="">Select a class...</option>' + 
+          CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+    };
+
+    window.loadAnalyticsData = function() {
+      const studentId = document.getElementById('analyticsStudentSelect').value;
+      const classVal = document.getElementById('analyticsClassSelect').value;
+      
+      if (!studentId && !classVal) {
+        showToast('Please select a student or class', 'warning');
+        return;
+      }
+      
+      showToast('📊 Loading analytics data...', 'info');
+      
+      // Student grade chart
+      if (studentId) {
+        const student = studentsCache.find(s => s.id === studentId);
+        const grades = gradesCache.filter(g => g.studentId === studentId);
+        
+        if (grades.length === 0) {
+          showToast('No grades found for this student', 'warning');
+          return;
+        }
+        
+        const subjects = grades.map(g => g.subject);
+        const totals = grades.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+        
+        destroyChart('analyticsStudentChart');
+        chartInstances['analyticsStudentChart'] = new Chart(document.getElementById('analyticsStudentChart'), {
+          type: 'bar',
+          data: { 
+            labels: subjects, 
+            datasets: [{ 
+              data: totals, 
+              backgroundColor: totals.map(t => getGradeColor(t)),
+              label: `${student?.firstName}'s Scores`
+            }] 
+          },
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 130 } },
+            plugins: { legend: { display: false } }
+          }
+        });
+        
+        // Grade trend chart
+        const terms = ['Term 1', 'Term 2', 'Term 3'];
+        const termAverages = terms.map(term => {
+          const termGrades = grades.filter(g => g.term === term);
+          if (termGrades.length === 0) return 0;
+          const scores = termGrades.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+          return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        });
+        
+        destroyChart('analyticsTrendChart');
+        chartInstances['analyticsTrendChart'] = new Chart(document.getElementById('analyticsTrendChart'), {
+          type: 'line',
+          data: { 
+            labels: terms, 
+            datasets: [{ 
+              data: termAverages, 
+              borderColor: '#2e86c1',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 6,
+              backgroundColor: 'rgba(46, 134, 193, 0.1)'
+            }] 
+          },
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 130 } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+      
+      // Class average chart
+      if (classVal) {
+        const students = studentsCache.filter(s => s.class === classVal);
+        const studentIds = students.map(s => s.id);
+        const grades = gradesCache.filter(g => studentIds.includes(g.studentId));
+        
+        if (grades.length === 0) {
+          showToast('No grades found for this class', 'warning');
+          return;
+        }
+        
+        const subjects = [...new Set(grades.map(g => g.subject))];
+        const subjectAverages = subjects.map(subj => {
+          const sg = grades.filter(g => g.subject === subj);
+          if (sg.length === 0) return 0;
+          const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+          return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        });
+        
+        destroyChart('analyticsClassChart');
+        chartInstances['analyticsClassChart'] = new Chart(document.getElementById('analyticsClassChart'), {
+          type: 'bar',
+          data: { 
+            labels: subjects, 
+            datasets: [{ 
+              data: subjectAverages, 
+              backgroundColor: '#3498db',
+              label: 'Class Average'
+            }] 
+          },
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 130 } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+      
+      showToast('✅ Analytics data loaded!', 'success');
     };
 
     // ============================================================
@@ -4643,6 +5188,8 @@
       console.log('🔑 Test Login: test@test.com / test123');
       console.log('📝 New users must be approved by Admin or Director');
       console.log('👩‍🏫 Teachers can Add, Edit, and Delete Student Data');
+      console.log('📚 Subjects: Mathematics, English, Kiswahili, Biology, Chemistry, Physics, KSL, Creative Arts & Sports (CA), Core Maths, Science, Social Studies, CRE, Agriculture, Business Studies, Computer Studies, History, Geography, Literature, Home Science, Art & Craft, CSL');
+      console.log('⭐ Prefect roles auto-populated from student data');
     });
   </script>
 </body>
