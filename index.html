@@ -2975,7 +2975,7 @@
     };
 
     // ============================================================
-    // 🔒 PERMISSIONS - UPDATED: Added Principal to discipline actions
+    // 🔒 PERMISSIONS - UPDATED: Added Secretary to students and grades
     // ============================================================
 
     function setupPermissions() {
@@ -2984,6 +2984,7 @@
       const isAdmin = role === 'admin';
       const isDirector = role === 'director';
       const isPrincipal = role === 'principal';
+      const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
       const isMaintenance = role === 'maintenance';
       
@@ -2997,13 +2998,15 @@
         maintDeptNav.style.display = (isAdmin || isDirector || isMaintenance) ? 'flex' : 'none';
       }
 
+      // Students - Secretary can add and edit students
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) {
-        addStudentBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
+        addStudentBtn.style.display = (isAdmin || isDirector || isTeacher || isSecretary) ? 'inline-block' : 'none';
       }
 
+      // Grades - Secretary can add and edit grades
       const addGradeBtn = document.getElementById('addGradeBtn');
-      if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
+      if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isDirector || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
       if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
@@ -3046,26 +3049,67 @@
     function canEdit(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
-      if (role === 'admin' || role === 'director' || role === 'principal') return true;
-      if (role === 'teacher' && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      const isAdmin = role === 'admin';
+      const isDirector = role === 'director';
+      const isPrincipal = role === 'principal';
+      const isSecretary = role === 'secretary';
+      const isTeacher = role === 'teacher';
+      
+      // Admin, Director, Principal can edit everything
+      if (isAdmin || isDirector || isPrincipal) return true;
+      
+      // Secretary can edit students and grades
+      if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
+      
+      // Teacher can edit students, grades, and attendance
+      if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      
       if (role === 'maintenance' && tab === 'maintenanceDept') return true;
+      
       return false;
     }
 
     function canAdd(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
-      if (role === 'admin' || role === 'director' || role === 'principal') return true;
-      if (role === 'teacher' && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      const isAdmin = role === 'admin';
+      const isDirector = role === 'director';
+      const isPrincipal = role === 'principal';
+      const isSecretary = role === 'secretary';
+      const isTeacher = role === 'teacher';
+      
+      // Admin, Director, Principal can add everything
+      if (isAdmin || isDirector || isPrincipal) return true;
+      
+      // Secretary can add students and grades
+      if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
+      
+      // Teacher can add students, grades, and attendance
+      if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      
       if (role === 'maintenance' && (tab === 'maintenance' || tab === 'maintenanceDept')) return true;
+      
       return false;
     }
 
     function canDeleteSpecific(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
-      if (role === 'admin' || role === 'director' || role === 'principal') return true;
-      if (role === 'teacher' && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      const isAdmin = role === 'admin';
+      const isDirector = role === 'director';
+      const isPrincipal = role === 'principal';
+      const isSecretary = role === 'secretary';
+      const isTeacher = role === 'teacher';
+      
+      // Admin, Director, Principal can delete everything
+      if (isAdmin || isDirector || isPrincipal) return true;
+      
+      // Secretary can delete students and grades
+      if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
+      
+      // Teacher can delete students, grades, and attendance
+      if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      
       return false;
     }
 
@@ -3458,7 +3502,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // STUDENTS - Full CRUD with Teacher Permissions
+    // STUDENTS - UPDATED: Secretary can manage
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -3649,94 +3693,7 @@
     };
 
     // ============================================================
-    // SPONSORSHIP
-    // ============================================================
-
-    window.renderSponsorship = function() {
-      const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
-      document.getElementById('sponsorshipTableBody').innerHTML = sponsored.map(s => `
-        <tr>
-          <td>${s.firstName} ${s.lastName}</td>
-          <td>${s.class}</td>
-          <td><span class="badge badge-info">${s.sponsorshipType}</span></td>
-          <td>${s.sponsorName || '-'}</td>
-          <td>${s.sponsorContact || '-'}</td>
-          <td>${s.sponsorNotes || '-'}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found</td></tr>';
-    };
-
-    window.showEditSponsorshipModal = function() {
-      if (!canEdit('sponsorship')) {
-        showToast('You do not have permission to edit sponsorships', 'error');
-        return;
-      }
-      
-      const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
-      if (!sponsored.length) {
-        showToast('No sponsored students to edit', 'warning');
-        return;
-      }
-
-      let html = `
-        <p style="color:#666;margin-bottom:10px;">Select a student to edit their sponsorship details:</p>
-        <div class="form-group">
-          <label>Select Student</label>
-          <select id="sponsorStudentSelect" onchange="loadSponsorshipData()">
-            <option value="">Select a student...</option>
-            ${sponsored.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
-          </select>
-        </div>
-        <div id="sponsorEditForm" style="display:none;">
-          <div class="form-grid">
-            <div class="form-group"><label>Sponsor Type</label><select id="sp_editType"><option value="Organization">Organization</option><option value="Government">Government</option><option value="NGO">NGO</option><option value="Other">Other</option></select></div>
-            <div class="form-group"><label>Sponsor Name</label><input type="text" id="sp_editName" placeholder="Sponsor name"></div>
-            <div class="form-group"><label>Sponsor Contact</label><input type="text" id="sp_editContact" placeholder="Phone or Email"></div>
-          </div>
-          <div class="form-group"><label>Notes</label><textarea id="sp_editNotes" rows="2"></textarea></div>
-          <button class="btn btn-success" onclick="saveSponsorshipEdit()" style="width:100%;margin-top:10px;">💾 Save Changes</button>
-        </div>
-      `;
-      openModal('✏️ Edit Sponsorship', html);
-    };
-
-    window.loadSponsorshipData = function() {
-      const studentId = document.getElementById('sponsorStudentSelect').value;
-      const form = document.getElementById('sponsorEditForm');
-      if (!studentId) { form.style.display = 'none'; return; }
-      
-      const student = studentsCache.find(s => s.id === studentId);
-      if (!student) { form.style.display = 'none'; return; }
-      
-      form.style.display = 'block';
-      document.getElementById('sp_editType').value = student.sponsorshipType || 'Organization';
-      document.getElementById('sp_editName').value = student.sponsorName || '';
-      document.getElementById('sp_editContact').value = student.sponsorContact || '';
-      document.getElementById('sp_editNotes').value = student.sponsorNotes || '';
-    };
-
-    window.saveSponsorshipEdit = async function() {
-      const studentId = document.getElementById('sponsorStudentSelect').value;
-      if (!studentId) { showToast('Please select a student', 'error'); return; }
-      
-      const data = {
-        sponsorshipType: document.getElementById('sp_editType').value,
-        sponsorName: document.getElementById('sp_editName').value.trim(),
-        sponsorContact: document.getElementById('sp_editContact').value.trim(),
-        sponsorNotes: document.getElementById('sp_editNotes').value.trim()
-      };
-      
-      try {
-        await updateDoc(doc(db, 'students', studentId), data);
-        showToast('✅ Sponsorship updated successfully!');
-        closeModal();
-      } catch (err) {
-        showToast('❌ Error: ' + err.message, 'error');
-      }
-    };
-
-    // ============================================================
-    // GRADES - Teacher CRUD Permissions with Updated Subjects
+    // GRADES - UPDATED: Secretary can manage
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -4056,7 +4013,7 @@
     };
 
     // ============================================================
-    // WARNINGS - UPDATED: Principal can manage
+    // WARNINGS - Principal can manage
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
@@ -4120,7 +4077,7 @@
     };
 
     // ============================================================
-    // SUSPENSIONS - UPDATED: Principal can manage
+    // SUSPENSIONS - Principal can manage
     // ============================================================
 
     window.showAddSuspensionModal = function(editId) {
@@ -4187,7 +4144,7 @@
     };
 
     // ============================================================
-    // EXPULSIONS - UPDATED: Principal can manage
+    // EXPULSIONS - Principal can manage
     // ============================================================
 
     window.showAddExpulsionModal = function(editId) {
@@ -5159,13 +5116,14 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 21.0.0 - Principal Permissions Added');
+      console.log('📚 Version 22.0.0 - Secretary Permissions Added');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
       console.log('📝 New Subjects: Literature, Home Science, Art & Craft, CSL');
       console.log('📐 Core Maths (replaced Cose Maths)');
       console.log('⭐ Prefects auto-populated from student records');
-      console.log('👔 Principal can now Add, Edit, and Delete Warnings, Suspensions, and Expulsions');
+      console.log('👔 Principal can manage Warnings, Suspensions, and Expulsions');
+      console.log('📋 Secretary can Add, Edit, and Delete Students and Grades');
       console.log('👩‍🏫 Teachers can Add, Edit, and Delete Student Data');
       console.log('🔒 Login Bug Fixed - Test login always works');
     });
