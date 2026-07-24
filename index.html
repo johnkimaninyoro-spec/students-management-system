@@ -88,6 +88,211 @@
       display: none;
     }
 
+    /* File upload styles */
+    .file-upload-wrapper {
+      position: relative;
+      width: 100%;
+      padding: 20px;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #fafbfc;
+    }
+
+    .file-upload-wrapper:hover {
+      border-color: var(--primary-light);
+      background: #f0f8ff;
+    }
+
+    .file-upload-wrapper .upload-icon {
+      font-size: 40px;
+      display: block;
+      color: var(--gray);
+    }
+
+    .file-upload-wrapper .upload-text {
+      color: var(--gray);
+      font-size: 0.9em;
+      margin-top: 8px;
+    }
+
+    .file-upload-wrapper .file-name {
+      color: var(--primary);
+      font-weight: 600;
+      margin-top: 5px;
+      word-break: break-all;
+    }
+
+    .file-upload-wrapper input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-preview {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .file-preview .file-icon {
+      font-size: 24px;
+    }
+
+    .file-preview .file-info {
+      flex: 1;
+      font-size: 0.85em;
+    }
+
+    .file-preview .file-info .file-name-display {
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .file-preview .file-info .file-size {
+      color: var(--gray);
+      font-size: 0.8em;
+    }
+
+    .file-preview .file-remove {
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.75em;
+    }
+
+    .file-preview .file-remove:hover {
+      background: #c0392b;
+    }
+
+    .file-preview .file-thumbnail {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+
+    /* Photo upload for students */
+    .photo-upload-wrapper {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid #ddd;
+      overflow: hidden;
+      cursor: pointer;
+      margin: 0 auto;
+      background: #f0f2f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-upload-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-upload-wrapper .photo-placeholder {
+      font-size: 40px;
+      color: var(--gray);
+    }
+
+    .photo-upload-wrapper .photo-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      text-align: center;
+      padding: 4px;
+      font-size: 0.6em;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .photo-upload-wrapper:hover .photo-overlay {
+      opacity: 1;
+    }
+
+    .photo-upload-wrapper input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .warning-document-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--primary-light);
+      text-decoration: none;
+      font-size: 0.8em;
+    }
+
+    .warning-document-link:hover {
+      text-decoration: underline;
+    }
+
+    .document-preview-modal .modal {
+      max-width: 600px;
+    }
+
+    .document-preview-modal .document-viewer {
+      width: 100%;
+      min-height: 400px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+
+    .document-preview-modal .document-viewer iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+    }
+
+    .document-preview-modal .document-viewer img {
+      max-width: 100%;
+      max-height: 500px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .document-preview-modal .document-viewer .no-preview {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .document-preview-modal .document-viewer .no-preview .icon {
+      font-size: 60px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
     @media print {
       .print-watermark {
         display: block;
@@ -487,6 +692,8 @@
     .btn-reject:hover { background: #c0392b; }
     .btn-view { background: #8e44ad; color: white; }
     .btn-view:hover { background: #7d3c98; }
+    .btn-download { background: #2c3e50; color: white; }
+    .btn-download:hover { background: #1a252f; }
 
     .share-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -886,6 +1093,7 @@
       font-size: 32px;
       font-weight: 700;
       flex-shrink: 0;
+      overflow: hidden;
     }
     .profile-avatar img {
       width: 100%;
@@ -1071,7 +1279,7 @@
             <div class="table-container">
               <table id="studentsTable">
                 <thead>
-                  <tr><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Dorm</th><th>Sponsorship</th><th>Prefect</th><th>Role</th><th>Department</th><th>Parent/Guardian</th><th>Actions</th></tr>
+                  <tr><th>Adm No.</th><th>Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Dorm</th><th>Sponsorship</th><th>Prefect</th><th>Role</th><th>Department</th><th>Parent/Guardian</th><th>Photo</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="studentTableBody"></tbody>
               </table>
@@ -1175,7 +1383,7 @@
           </div>
         </div>
 
-        <!-- WARNINGS -->
+        <!-- WARNINGS - Updated with document upload -->
         <div class="tab-content" id="tab-warnings">
           <div class="card">
             <div class="card-header">
@@ -1187,7 +1395,7 @@
               </div>
             </div>
             <div class="table-container">
-              <table id="warningsTable"><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Issued By</th><th>Actions</th></tr></thead>
+              <table id="warningsTable"><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Reason</th><th>Issued By</th><th>Document</th><th>Actions</th></tr></thead>
               <tbody id="warningsTableBody"></tbody></table>
             </div>
           </div>
@@ -1584,14 +1792,24 @@
     </div>
   </div>
 
-  <!-- Share/Print Preview Modal -->
-  <div class="modal-overlay print-preview-modal" id="shareModal">
+  <!-- Document Preview Modal -->
+  <div class="modal-overlay document-preview-modal" id="documentPreviewModal">
     <div class="modal">
       <div class="modal-header">
-        <h2 id="shareModalTitle">📤 Share / Print</h2>
-        <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('show')">&times;</button>
+        <h2 id="docPreviewTitle">📄 Document Preview</h2>
+        <button class="modal-close" onclick="document.getElementById('documentPreviewModal').classList.remove('show')">&times;</button>
       </div>
-      <div id="shareModalBody" style="max-height:70vh;overflow-y:auto;padding:10px;"></div>
+      <div id="docPreviewBody">
+        <div class="document-viewer" id="docViewer">
+          <div class="no-preview">
+            <span class="icon">📄</span>
+            <p>No document to preview</p>
+          </div>
+        </div>
+        <div style="margin-top:15px;text-align:center;">
+          <button class="btn btn-download" id="docDownloadBtn" onclick="downloadDocument()">⬇️ Download Document</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1640,7 +1858,6 @@
       'Form 3 East', 'Form 3 West', 'Form 4 East', 'Form 4 West'
     ];
 
-    // SUBJECTS - Added PRT/Coding
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
       'Biology', 'Chemistry', 'Physics',
@@ -1681,8 +1898,6 @@
     const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
 
-    // KENYAN GRADING SYSTEM - A, A-, B+, B, B-, C+, C, C-, D+, D, D-, E
-    // PASS MARK IS C (50%) and above - FIXED
     const KENYAN_GRADES = [
       { grade: 'A', min: 80, max: 100, class: 'badge-grade-a', label: 'A' },
       { grade: 'A-', min: 75, max: 79, class: 'badge-grade-a-', label: 'A-' },
@@ -1710,6 +1925,13 @@
     let prefectsCache = [], usersCache = [], auditCache = [];
     let maintenanceCache = [];
     let pendingRegistrationsCache = [];
+
+    // Store uploaded file data for warnings
+    let warningFileData = null;
+    let currentWarningFileId = null;
+
+    // Store student photo data
+    let studentPhotoData = null;
 
     // Student filter state
     let studentFilter = {
@@ -1759,12 +1981,10 @@
       return `<span class="badge ${grade.class}">${grade.grade}</span>`;
     }
 
-    // PASS MARK IS C (50%) and above - FIXED
     function isPass(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return false;
       }
-      // C is 50% and above is a pass in Kenyan system
       return score >= 50;
     }
 
@@ -1850,114 +2070,153 @@
     }
 
     // ============================================================
-    // SEARCHABLE DROPDOWN COMPONENT
+    // FILE UPLOAD HELPERS
     // ============================================================
 
-    function createSearchableDropdown(inputId, listId, options, selectedValue = '') {
-      const container = document.createElement('div');
-      container.className = 'searchable-dropdown';
-      
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.id = inputId;
-      input.placeholder = 'Search for a student...';
-      input.autocomplete = 'off';
-      
-      const list = document.createElement('div');
-      list.className = 'dropdown-list';
-      list.id = listId;
-      
-      container.appendChild(input);
-      container.appendChild(list);
-      
-      let selectedId = selectedValue;
-      
-      function renderOptions(searchTerm = '') {
-        list.innerHTML = '';
-        const filtered = options.filter(opt => 
-          opt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          opt.admNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          opt.class.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        
-        if (filtered.length === 0) {
-          const item = document.createElement('div');
-          item.className = 'dropdown-item';
-          item.textContent = 'No students found';
-          item.style.color = '#999';
-          item.style.cursor = 'default';
-          list.appendChild(item);
-        } else {
-          filtered.forEach(opt => {
-            const item = document.createElement('div');
-            item.className = 'dropdown-item';
-            if (opt.id === selectedId) {
-              item.classList.add('selected');
-            }
-            item.innerHTML = `
-              ${opt.name}
-              <span class="student-class">${opt.class}</span>
-              <span class="student-adm">#${opt.admNo}</span>
-            `;
-            item.dataset.value = opt.id;
-            item.onclick = function(e) {
-              e.stopPropagation();
-              selectOption(opt.id);
-            };
-            list.appendChild(item);
-          });
-        }
-      }
-      
-      function selectOption(id) {
-        const opt = options.find(o => o.id === id);
-        if (opt) {
-          selectedId = id;
-          input.value = `${opt.name} (${opt.admNo})`;
-          list.classList.remove('show');
-          input.dataset.value = id;
-          // Trigger change event
-          const event = new Event('change', { bubbles: true });
-          input.dispatchEvent(event);
-        }
-      }
-      
-      input.addEventListener('focus', function() {
-        renderOptions(this.value);
-        list.classList.add('show');
-      });
-      
-      input.addEventListener('input', function() {
-        renderOptions(this.value);
-        list.classList.add('show');
-        if (!this.value) {
-          this.dataset.value = '';
-          selectedId = '';
-        }
-      });
-      
-      document.addEventListener('click', function(e) {
-        if (!container.contains(e.target)) {
-          list.classList.remove('show');
-        }
-      });
-      
-      // If there's a selected value, display it
-      if (selectedValue) {
-        const opt = options.find(o => o.id === selectedValue);
-        if (opt) {
-          input.value = `${opt.name} (${opt.admNo})`;
-          input.dataset.value = opt.id;
-          selectedId = opt.id;
-        }
-      }
-      
-      // Return the input element for further manipulation
-      return container;
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
+    function getFileIcon(mimeType) {
+      if (mimeType.startsWith('image/')) return '🖼️';
+      if (mimeType === 'application/pdf') return '📄';
+      if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+      if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
+      if (mimeType.includes('text')) return '📃';
+      return '📎';
+    }
+
+    function getFileExtension(filename) {
+      return filename.split('.').pop().toLowerCase();
+    }
+
+    function isImageFile(mimeType) {
+      return mimeType.startsWith('image/');
+    }
+
+    function handleWarningFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        warningFileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: e.target.result,
+          lastModified: file.lastModified
+        };
+        
+        // Show preview
+        const previewDiv = document.getElementById('warningFilePreview');
+        if (previewDiv) {
+          const icon = getFileIcon(file.type);
+          const size = formatFileSize(file.size);
+          const isImage = isImageFile(file.type);
+          
+          previewDiv.innerHTML = `
+            <div class="file-preview">
+              ${isImage ? `<img src="${e.target.result}" class="file-thumbnail" alt="${file.name}">` : `<span class="file-icon">${icon}</span>`}
+              <div class="file-info">
+                <div class="file-name-display">${file.name}</div>
+                <div class="file-size">${size} • ${file.type || 'Unknown type'}</div>
+              </div>
+              <button class="file-remove" onclick="removeWarningFile()">✕ Remove</button>
+            </div>
+          `;
+        }
+        
+        // Update hidden input
+        const hiddenInput = document.getElementById('w_documentData');
+        if (hiddenInput) {
+          hiddenInput.value = JSON.stringify(warningFileData);
+        }
+        
+        showToast(`📎 File "${file.name}" uploaded successfully`, 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.removeWarningFile = function() {
+      warningFileData = null;
+      const previewDiv = document.getElementById('warningFilePreview');
+      if (previewDiv) {
+        previewDiv.innerHTML = '';
+      }
+      const hiddenInput = document.getElementById('w_documentData');
+      if (hiddenInput) {
+        hiddenInput.value = '';
+      }
+      const fileInput = document.getElementById('w_documentFile');
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      showToast('File removed', 'info');
+    };
+
     // ============================================================
-    // STUDENT PROFILE MODAL - View all student data with photo
+    // STUDENT PHOTO UPLOAD
+    // ============================================================
+
+    function handleStudentPhotoUpload(event, studentId = null) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file', 'error');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image size should be less than 5MB', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        studentPhotoData = e.target.result;
+        
+        // Update the photo preview
+        const previewImg = document.getElementById('s_photoPreview');
+        if (previewImg) {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+        }
+        
+        // Update hidden input
+        const hiddenInput = document.getElementById('s_photoData');
+        if (hiddenInput) {
+          hiddenInput.value = e.target.result;
+        }
+        
+        showToast('📸 Photo uploaded successfully', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.removeStudentPhoto = function() {
+      studentPhotoData = null;
+      const previewImg = document.getElementById('s_photoPreview');
+      if (previewImg) {
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+      }
+      const hiddenInput = document.getElementById('s_photoData');
+      if (hiddenInput) {
+        hiddenInput.value = '';
+      }
+      const fileInput = document.getElementById('s_photoFile');
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      showToast('Photo removed', 'info');
+    };
+
+    // ============================================================
+    // STUDENT PROFILE MODAL
     // ============================================================
 
     window.showStudentProfile = function(studentId) {
@@ -1967,7 +2226,6 @@
         return;
       }
 
-      // Get all related data
       const studentGrades = gradesCache.filter(g => g.studentId === studentId);
       const studentAttendance = attendanceCache.filter(a => a.studentId === studentId);
       const studentWarnings = warningsCache.filter(w => w.studentId === studentId);
@@ -1976,15 +2234,12 @@
       const studentClinic = clinicCache.filter(c => c.studentId === studentId);
       const studentPrefect = prefectsCache.find(p => p.studentId === studentId);
 
-      // Calculate academic summary
       const validGrades = studentGrades.filter(g => hasActualScores(g));
       const totalScore = validGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
       const avgScore = validGrades.length > 0 ? Math.round(totalScore / validGrades.length) : null;
       
-      // Build the profile HTML with photo support
       let html = `
         <div id="studentProfileContent">
-          <!-- Header with Photo -->
           <div class="profile-header">
             <div class="profile-avatar">
               ${student.photoUrl ? `<img src="${student.photoUrl}" alt="${student.firstName}">` : student.firstName?.charAt(0) || 'S'}
@@ -2001,7 +2256,6 @@
             </div>
           </div>
 
-          <!-- Personal Information -->
           <div class="profile-section">
             <h4>👤 Personal Information</h4>
             <div class="profile-grid">
@@ -2016,7 +2270,6 @@
             </div>
           </div>
 
-          <!-- Prefect Information -->
           ${student.isPrefect === 'Yes' ? `
           <div class="profile-section" style="border-left-color:#f1c40f;">
             <h4>⭐ Prefect Information</h4>
@@ -2028,7 +2281,6 @@
           </div>
           ` : ''}
 
-          <!-- Sponsorship Information -->
           ${student.sponsorshipType && student.sponsorshipType !== 'Self Sponsored' ? `
           <div class="profile-section" style="border-left-color:#2ecc71;">
             <h4>💰 Sponsorship</h4>
@@ -2041,7 +2293,6 @@
           </div>
           ` : ''}
 
-          <!-- Parent/Guardian -->
           ${student.parent || student.parentPhone || student.parentEmail ? `
           <div class="profile-section" style="border-left-color:#3498db;">
             <h4>👨‍👩‍👦 Parent/Guardian</h4>
@@ -2053,7 +2304,6 @@
           </div>
           ` : ''}
 
-          <!-- Health History -->
           ${student.health ? `
           <div class="profile-section" style="border-left-color:#e74c3c;">
             <h4>🏥 Health History</h4>
@@ -2062,7 +2312,6 @@
           ` : ''}
       `;
 
-      // Academic Performance
       html += `
         <div class="profile-section" style="border-left-color:#8e44ad;">
           <h4>📊 Academic Performance</h4>
@@ -2103,7 +2352,6 @@
         </div>
       `;
 
-      // Attendance
       html += `
         <div class="profile-section" style="border-left-color:#f39c12;">
           <h4>📋 Attendance Records (${studentAttendance.length})</h4>
@@ -2129,7 +2377,6 @@
         </div>
       `;
 
-      // Discipline Records
       const hasDiscipline = studentWarnings.length > 0 || studentSuspensions.length > 0 || studentExpulsions.length > 0;
       html += `
         <div class="profile-section" style="border-left-color:#e74c3c;">
@@ -2159,7 +2406,6 @@
         </div>
       `;
 
-      // Clinic Visits
       html += `
         <div class="profile-section" style="border-left-color:#2ecc71;">
           <h4>🏥 Clinic Visits (${studentClinic.length})</h4>
@@ -2187,7 +2433,6 @@
         </div>
       `;
 
-      // Notes
       if (student.notes) {
         html += `
           <div class="profile-section" style="border-left-color:#95a5a6;">
@@ -2201,7 +2446,6 @@
 
       openModal(`📋 Student Profile: ${student.firstName} ${student.lastName}`, html);
 
-      // Render grade chart after modal opens
       setTimeout(() => {
         const canvas = document.getElementById('profileGradeChart');
         if (canvas && validGrades.length > 0) {
@@ -2255,14 +2499,12 @@
         return;
       }
 
-      // Get all related data
       const studentGrades = gradesCache.filter(g => g.studentId === studentId);
       const studentAttendance = attendanceCache.filter(a => a.studentId === studentId);
       const studentWarnings = warningsCache.filter(w => w.studentId === studentId);
       const studentSuspensions = suspensionsCache.filter(s => s.studentId === studentId);
       const studentExpulsions = expulsionsCache.filter(e => e.studentId === studentId);
       const studentClinic = clinicCache.filter(c => c.studentId === studentId);
-      const studentPrefect = prefectsCache.find(p => p.studentId === studentId);
 
       const validGrades = studentGrades.filter(g => hasActualScores(g));
       const totalScore = validGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
@@ -2270,7 +2512,6 @@
 
       const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-      // Photo URL or fallback
       const photoHtml = student.photoUrl 
         ? `<img src="${student.photoUrl}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #1a5276;">` 
         : `<div style="width:100px;height:100px;border-radius:50%;background:#1a5276;color:white;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;margin:0 auto;">${student.firstName?.charAt(0) || 'S'}</div>`;
@@ -2510,7 +2751,7 @@
         'sponsorship': { rows: studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored'), columns: ['Student', 'Class', 'Sponsor Type', 'Sponsor Name', 'Contact', 'Notes'] },
         'grades': { rows: gradesCache, columns: ['Student', 'Class', 'Subject', 'Term', 'Exam Type', 'Test 1', 'Test 2', 'Test 3', 'Final Exam', 'Total', 'Grade'] },
         'attendance': { rows: attendanceCache, columns: ['Date', 'Student', 'Class', 'Status', 'Reason', 'Marked By'] },
-        'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Issued By'] },
+        'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Issued By', 'Document'] },
         'suspensions': { rows: suspensionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Duration', 'Status'] },
         'expulsions': { rows: expulsionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Approved By'] },
         'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor/Nurse', 'Complaint', 'Condition', 'Diagnosis', 'Medication', 'Follow-Up', 'Follow-Up Date'] },
@@ -2589,8 +2830,16 @@
             <td>${row.sponsorContact || '-'}</td>
             <td>${row.sponsorNotes || '-'}</td>
           `;
+        } else if (tab === 'warnings') {
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${row.studentName || 'Unknown'}</td>
+            <td>${row.class || '-'}</td>
+            <td>${row.reason || ''}</td>
+            <td>${row.issuedBy || '-'}</td>
+            <td>${row.hasDocument ? '📎 Yes' : '-'}</td>
+          `;
         } else {
-          // Default for other tables
           const columns = data.columns;
           cells = columns.map(col => {
             const val = row[col.toLowerCase().replace(/ /g, '')] || row[col] || '-';
@@ -2668,7 +2917,6 @@
     };
 
     window.shareTab = function(tab) {
-      // Use printTab functionality for sharing
       printTab(tab);
     };
 
@@ -3262,8 +3510,8 @@
       });
 
       const sampleWarnings = [
-        { studentId: 'sample_2024-001', date: today, reason: 'Consistent lateness to class', issuedBy: 'Mr. Peter' },
-        { studentId: 'sample_2024-003', date: today, reason: 'Failure to complete homework', issuedBy: 'Mrs. Jane' },
+        { studentId: 'sample_2024-001', date: today, reason: 'Consistent lateness to class', issuedBy: 'Mr. Peter', hasDocument: false },
+        { studentId: 'sample_2024-003', date: today, reason: 'Failure to complete homework', issuedBy: 'Mrs. Jane', hasDocument: false },
       ];
       sampleWarnings.forEach(w => warningsCache.push({ id: `sample_warn_${Math.random().toString(36).substr(2, 6)}`, ...w }));
 
@@ -3406,7 +3654,6 @@
       const addExpulsionBtn = document.getElementById('addExpulsionBtn');
       if (addExpulsionBtn) addExpulsionBtn.style.display = canManageDiscipline ? 'inline-block' : 'none';
 
-      // CLINIC PERMISSIONS - Allow doctors, nurses, HRIO, radiographers, and other clinicians
       const isClinician = ['doctor', 'nurse', 'hrio', 'radiographer', 'clinician', 'labtech'].includes(role);
       const addClinicBtn = document.getElementById('addClinicBtn');
       if (addClinicBtn) {
@@ -3908,7 +4155,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // STUDENTS
+    // STUDENTS - Updated with photo upload
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -3918,6 +4165,18 @@
       
       const html = `
         <div class="form-grid">
+          <div style="grid-column:1/-1;text-align:center;margin-bottom:10px;">
+            <div class="photo-upload-wrapper">
+              <img id="s_photoPreview" src="${student?.photoUrl || ''}" style="display:${student?.photoUrl ? 'block' : 'none'};width:100%;height:100%;object-fit:cover;">
+              <span class="photo-placeholder" id="s_photoPlaceholder" style="display:${student?.photoUrl ? 'none' : 'block'};">📸</span>
+              <div class="photo-overlay">Click to upload photo</div>
+              <input type="file" id="s_photoFile" accept="image/*" onchange="handleStudentPhotoUpload(event)">
+              <input type="hidden" id="s_photoData" value="${student?.photoUrl || ''}">
+            </div>
+            <div style="margin-top:5px;font-size:0.8em;color:var(--gray);">
+              ${student?.photoUrl ? `<button class="btn btn-danger btn-sm" onclick="removeStudentPhoto()">🗑️ Remove Photo</button>` : 'Upload student photo (JPEG, PNG)'}
+            </div>
+          </div>
           <div class="form-group"><label>Admission Number *</label><input type="text" id="s_admNo" value="${student?.admNo || ''}" placeholder="e.g., 2024-001"></div>
           <div class="form-group"><label>First Name *</label><input type="text" id="s_firstName" value="${student?.firstName || ''}" placeholder="First name"></div>
           <div class="form-group"><label>Last Name *</label><input type="text" id="s_lastName" value="${student?.lastName || ''}" placeholder="Last name"></div>
@@ -3927,7 +4186,6 @@
           <div class="form-group"><label>Status *</label><select id="s_status"><option value="Boarder" ${student?.status === 'Boarder' ? 'selected' : ''}>Boarder</option><option value="Day Scholar" ${student?.status === 'Day Scholar' ? 'selected' : ''}>Day Scholar</option></select></div>
           <div class="form-group"><label>Location</label><input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira"></div>
           <div class="form-group"><label>🏠 Dorm</label><select id="s_dorm">${dormSelectHtml(student?.dorm || '')}</select></div>
-          <div class="form-group"><label>Photo URL</label><input type="text" id="s_photoUrl" value="${student?.photoUrl || ''}" placeholder="https://example.com/photo.jpg"></div>
           <div class="form-group"><label>Is Prefect?</label><select id="s_isPrefect"><option value="No" ${student?.isPrefect !== 'Yes' ? 'selected' : ''}>No</option><option value="Yes" ${student?.isPrefect === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
           <div class="form-group"><label>Prefect Role</label><select id="s_prefectRole"><option value="">None</option>${PREFECT_ROLES.map(r => `<option value="${r}" ${student?.prefectRole === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
           <div class="form-group"><label>Prefect Department</label><select id="s_prefectDept"><option value="">None</option>${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${student?.prefectDepartment === d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
@@ -3956,6 +4214,9 @@
       const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
       const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
 
+      // Get photo data from hidden input
+      const photoData = document.getElementById('s_photoData').value || '';
+
       const data = {
         admNo, firstName, lastName,
         class: document.getElementById('s_class').value,
@@ -3964,7 +4225,7 @@
         status: document.getElementById('s_status').value,
         location: document.getElementById('s_location').value,
         dorm: document.getElementById('s_dorm').value || '',
-        photoUrl: document.getElementById('s_photoUrl').value || '',
+        photoUrl: photoData || document.getElementById('s_photoUrl')?.value || '',
         isPrefect: isPrefect,
         prefectRole: prefectRole,
         prefectDepartment: prefectDepartment,
@@ -4077,6 +4338,7 @@
           <td>${s.prefectRole || '-'}</td>
           <td>${s.prefectDepartment || '-'}</td>
           <td>${s.parent || '-'}</td>
+          <td>${s.photoUrl ? `<img src="${s.photoUrl}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:1px solid #ddd;">` : '📷'}</td>
           <td>
             <button class="btn btn-view btn-sm" onclick="showStudentProfile('${s.id}')">📋 View</button>
             ${canEditStudents ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
@@ -4202,7 +4464,7 @@
     };
 
     // ============================================================
-    // GRADES - UPDATED WITH SEARCHABLE STUDENT DROPDOWN
+    // GRADES
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -4212,7 +4474,6 @@
       
       const subjectOptions = SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('');
 
-      // Create student options for searchable dropdown
       const studentOptions = studentsCache.map(s => ({
         id: s.id,
         name: `${s.firstName} ${s.lastName}`,
@@ -4220,7 +4481,6 @@
         class: s.class || ''
       }));
 
-      // Build dropdown HTML
       let dropdownHtml = `
         <div class="form-group">
           <label>Student *</label>
@@ -4258,7 +4518,6 @@
       openModal(editId ? 'Edit Grade' : 'Add Grade', html);
       
       setTimeout(() => {
-        // Initialize searchable dropdown for grades
         const dropdownContainer = document.getElementById('gradeStudentDropdown');
         const searchInput = document.getElementById('g_student_search');
         const listEl = document.getElementById('g_student_list');
@@ -4297,7 +4556,6 @@
                 hiddenInput.value = opt.id;
                 searchInput.value = `${opt.name} (${opt.admNo})`;
                 listEl.classList.remove('show');
-                // Trigger change event
                 const event = new Event('change', { bubbles: true });
                 hiddenInput.dispatchEvent(event);
               };
@@ -4325,7 +4583,6 @@
           }
         });
 
-        // Set initial value if editing
         if (grade?.studentId) {
           const opt = studentOptions.find(o => o.id === grade.studentId);
           if (opt) {
@@ -4617,7 +4874,6 @@
         </tr>
       `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students with scores found</td></tr>';
 
-      // Subject Averages Chart
       const subjects = [...new Set(grades.filter(g => hasActualScores(g)).map(g => g.subject))];
       const subjectAverages = subjects.map(subj => {
         const sg = grades.filter(g => g.subject === subj && hasActualScores(g));
@@ -4633,7 +4889,6 @@
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
       });
 
-      // Student Performance Chart
       const topStudents = rankedStudents.slice(0, 10);
       const studentNames = topStudents.map(s => `${s.student.firstName}`);
       const studentAvgs = topStudents.map(s => s.avg);
@@ -4645,7 +4900,6 @@
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
       });
 
-      // Grade Distribution Chart
       const gradeCounts = {};
       KENYAN_GRADES.forEach(g => gradeCounts[g.grade] = 0);
       studentAverages.filter(s => s.hasScores).forEach(s => {
@@ -4677,7 +4931,6 @@
         }
       });
 
-      // Pass/Fail Ratio - C and above is pass
       const scoredStudents = studentAverages.filter(s => s.hasScores);
       const passed = scoredStudents.filter(s => isPass(s.avg, true)).length;
       const failed = scoredStudents.filter(s => !isPass(s.avg, true)).length;
@@ -4691,12 +4944,13 @@
     };
 
     // ============================================================
-    // WARNINGS
+    // WARNINGS - Updated with document upload
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
       if (!canAdd('warnings')) { showToast('Only Admin, Director, and Principal can issue warnings', 'error'); return; }
       const warning = editId ? warningsCache.find(w => w.id === editId) : null;
+      
       const html = `
         <div class="form-grid">
           <div class="form-group"><label>Student *</label><select id="w_student">${studentsCache.map(s => `<option value="${s.id}" ${warning?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
@@ -4704,9 +4958,48 @@
         </div>
         <div class="form-group"><label>Reason *</label><textarea id="w_reason" rows="3">${warning?.reason || ''}</textarea></div>
         <div class="form-group"><label>Issued By</label><input type="text" id="w_issuedBy" value="${warning?.issuedBy || currentUser?.fullName || currentUser?.email || ''}" placeholder="Name of issuer"></div>
+        
+        <div class="form-group">
+          <label>📎 Attach Supporting Document (PDF, Image, Word, etc.)</label>
+          <div class="file-upload-wrapper" id="warningUploadWrapper">
+            <span class="upload-icon">📄</span>
+            <span class="upload-text">Click or drag to upload a document</span>
+            <span class="file-name" id="warningFileName">${warning?.documentName || ''}</span>
+            <input type="file" id="w_documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" onchange="handleWarningFileUpload(event)">
+            <input type="hidden" id="w_documentData" value='${warning?.documentData || ''}'>
+          </div>
+          <div id="warningFilePreview"></div>
+        </div>
+        
         <button class="btn btn-success" onclick="saveWarning('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Issue'} Warning</button>
       `;
       openModal(editId ? 'Edit Warning' : 'Issue Warning', html);
+      
+      // If editing with existing document, show preview
+      if (warning?.documentData) {
+        setTimeout(() => {
+          const previewDiv = document.getElementById('warningFilePreview');
+          if (previewDiv && warning.documentData) {
+            const fileData = typeof warning.documentData === 'string' ? JSON.parse(warning.documentData) : warning.documentData;
+            if (fileData) {
+              const icon = getFileIcon(fileData.type || '');
+              const size = formatFileSize(fileData.size || 0);
+              const isImage = fileData.type && isImageFile(fileData.type);
+              
+              previewDiv.innerHTML = `
+                <div class="file-preview">
+                  ${isImage ? `<img src="${fileData.data}" class="file-thumbnail" alt="${fileData.name}">` : `<span class="file-icon">${icon}</span>`}
+                  <div class="file-info">
+                    <div class="file-name-display">${fileData.name}</div>
+                    <div class="file-size">${size} • ${fileData.type || 'Unknown type'}</div>
+                  </div>
+                  <button class="file-remove" onclick="removeWarningFile()">✕ Remove</button>
+                </div>
+              `;
+            }
+          }
+        }, 200);
+      }
     };
 
     window.saveWarning = async function(editId) {
@@ -4714,13 +5007,58 @@
       const date = document.getElementById('w_date').value;
       const reason = document.getElementById('w_reason').value.trim();
       const issuedBy = document.getElementById('w_issuedBy').value.trim() || currentUser?.fullName || currentUser?.email || 'unknown';
-      if (!studentId || !date || !reason) { showToast('Please fill all fields', 'error'); return; }
-      const data = { studentId, date, reason, issuedBy };
+      
+      // Get document data
+      let documentData = document.getElementById('w_documentData').value;
+      let hasDocument = false;
+      let documentName = '';
+      
+      if (documentData) {
+        try {
+          const parsed = JSON.parse(documentData);
+          if (parsed && parsed.data) {
+            hasDocument = true;
+            documentName = parsed.name || 'document';
+          }
+        } catch (e) {
+          // If not JSON, it might be a data URL directly
+          if (documentData.startsWith('data:')) {
+            hasDocument = true;
+            documentName = 'document';
+          }
+        }
+      }
+      
+      if (!studentId || !date || !reason) { showToast('Please fill all required fields', 'error'); return; }
+      
+      const data = { 
+        studentId, 
+        date, 
+        reason, 
+        issuedBy,
+        hasDocument: hasDocument,
+        documentName: documentName,
+        documentData: documentData || ''
+      };
+      
       try {
-        if (editId) { await updateDoc(doc(db, 'warnings', editId), data); showToast('Warning updated'); }
-        else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'warnings'), data); showToast('Warning issued'); }
+        if (editId) { 
+          await updateDoc(doc(db, 'warnings', editId), data); 
+          showToast('Warning updated'); 
+        } else { 
+          data.createdAt = serverTimestamp(); 
+          await addDoc(collection(db, 'warnings'), data); 
+          showToast('Warning issued'); 
+        }
         closeModal();
-      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+        // Reset file data
+        warningFileData = null;
+        document.getElementById('w_documentFile').value = '';
+        document.getElementById('w_documentData').value = '';
+        document.getElementById('warningFilePreview').innerHTML = '';
+      } catch (err) { 
+        showToast('Error: ' + err.message, 'error'); 
+      }
     };
 
     window.renderWarnings = function() {
@@ -4729,20 +5067,159 @@
 
       document.getElementById('warningsTableBody').innerHTML = warningsCache.map(w => {
         const student = studentsCache.find(s => s.id === w.studentId);
+        const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
+        const studentClass = student?.class || '-';
+        
+        // Store student info on the warning for printing
+        w.studentName = studentName;
+        w.class = studentClass;
+        
+        const hasDoc = w.hasDocument || (w.documentData && w.documentData.length > 0);
+        
         return `
           <tr>
             <td>${formatDate(w.date)}</td>
-            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
+            <td>${studentName}</td>
+            <td>${studentClass}</td>
             <td>${w.reason}</td>
             <td>${w.issuedBy || '-'}</td>
+            <td>
+              ${hasDoc ? `
+                <a href="#" class="warning-document-link" onclick="previewWarningDocument('${w.id}')">
+                  📎 View Document
+                </a>
+              ` : '-'}
+            </td>
             <td>
               ${canEditWarnings ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
               ${canDeleteWarnings ? `<button class="btn btn-danger btn-sm" onclick="deleteWarning('${w.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No warnings found</td></tr>';
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No warnings found</td></tr>';
+    };
+
+    window.previewWarningDocument = function(warningId) {
+      const warning = warningsCache.find(w => w.id === warningId);
+      if (!warning) {
+        showToast('Warning not found', 'error');
+        return;
+      }
+      
+      let documentData = warning.documentData;
+      let documentName = warning.documentName || 'document';
+      
+      if (!documentData) {
+        showToast('No document attached to this warning', 'warning');
+        return;
+      }
+      
+      // Parse if it's JSON
+      let dataUrl = documentData;
+      let fileType = 'application/octet-stream';
+      
+      try {
+        const parsed = JSON.parse(documentData);
+        if (parsed && parsed.data) {
+          dataUrl = parsed.data;
+          fileType = parsed.type || 'application/octet-stream';
+          documentName = parsed.name || documentName;
+        }
+      } catch (e) {
+        // It's already a data URL
+        if (dataUrl.startsWith('data:')) {
+          const matches = dataUrl.match(/^data:([^;]+)/);
+          if (matches) {
+            fileType = matches[1];
+          }
+        }
+      }
+      
+      // Show preview modal
+      const viewer = document.getElementById('docViewer');
+      const title = document.getElementById('docPreviewTitle');
+      const downloadBtn = document.getElementById('docDownloadBtn');
+      
+      title.textContent = `📄 ${documentName}`;
+      
+      // Store for download
+      currentWarningFileId = warningId;
+      
+      if (dataUrl.startsWith('data:image/')) {
+        viewer.innerHTML = `<img src="${dataUrl}" alt="${documentName}">`;
+      } else if (dataUrl.startsWith('data:application/pdf')) {
+        viewer.innerHTML = `
+          <div style="text-align:center;padding:20px;">
+            <span style="font-size:48px;">📄</span>
+            <p style="margin-top:10px;font-weight:600;">${documentName}</p>
+            <p style="color:#666;font-size:0.9em;">PDF Document - Click download to view</p>
+          </div>
+        `;
+      } else {
+        viewer.innerHTML = `
+          <div class="no-preview">
+            <span class="icon">📎</span>
+            <p>Preview not available for this file type</p>
+            <p style="font-size:0.8em;color:#999;margin-top:5px;">${documentName}</p>
+            <p style="font-size:0.8em;color:#999;">Click Download to view the file</p>
+          </div>
+        `;
+      }
+      
+      document.getElementById('documentPreviewModal').classList.add('show');
+    };
+
+    window.downloadDocument = function() {
+      if (!currentWarningFileId) {
+        showToast('No document to download', 'error');
+        return;
+      }
+      
+      const warning = warningsCache.find(w => w.id === currentWarningFileId);
+      if (!warning) {
+        showToast('Warning not found', 'error');
+        return;
+      }
+      
+      let documentData = warning.documentData;
+      let documentName = warning.documentName || 'document';
+      
+      if (!documentData) {
+        showToast('No document data found', 'error');
+        return;
+      }
+      
+      try {
+        const parsed = JSON.parse(documentData);
+        if (parsed && parsed.data) {
+          documentData = parsed.data;
+          documentName = parsed.name || documentName;
+        }
+      } catch (e) {
+        // It's already a data URL
+      }
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = documentData;
+      
+      // Get file extension from mime type if possible
+      let ext = '';
+      if (documentData.startsWith('data:image/')) {
+        const matches = documentData.match(/^data:image\/([^;]+)/);
+        if (matches) {
+          ext = matches[1];
+        }
+      } else if (documentData.startsWith('data:application/pdf')) {
+        ext = 'pdf';
+      }
+      
+      link.download = ext ? `${documentName}.${ext}` : documentName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('📥 Downloading document...', 'success');
     };
 
     window.deleteWarning = async function(id) {
@@ -4886,12 +5363,11 @@
     };
 
     // ============================================================
-    // CLINIC - Updated with searchable student dropdown
+    // CLINIC
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
       const role = currentUser?.role || '';
-      // Allow all clinician roles
       const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'principal', 'director', 'radiographer', 'clinician', 'labtech'];
       if (!clinicRoles.includes(role)) {
         showToast('Only Admin, Doctors, Nurses, HRIO, Radiographers, and other clinicians can manage clinic visits', 'error');
@@ -4900,7 +5376,6 @@
       const visit = editId ? clinicCache.find(c => c.id === editId) : null;
       const today = new Date().toISOString().split('T')[0];
 
-      // Create student options for searchable dropdown
       const studentOptions = studentsCache.map(s => ({
         id: s.id,
         name: `${s.firstName} ${s.lastName}`,
@@ -4908,7 +5383,6 @@
         class: s.class || ''
       }));
 
-      // Build dropdown HTML
       let dropdownHtml = `
         <div class="form-group">
           <label>Student *</label>
@@ -4939,7 +5413,6 @@
       openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
       
       setTimeout(() => {
-        // Initialize searchable dropdown for clinic
         const dropdownContainer = document.getElementById('clinicStudentDropdown');
         const searchInput = document.getElementById('c_student_search');
         const listEl = document.getElementById('c_student_list');
@@ -4978,7 +5451,6 @@
                 hiddenInput.value = opt.id;
                 searchInput.value = `${opt.name} (${opt.admNo})`;
                 listEl.classList.remove('show');
-                // Trigger change event
                 const event = new Event('change', { bubbles: true });
                 hiddenInput.dispatchEvent(event);
               };
@@ -5006,7 +5478,6 @@
           }
         });
 
-        // Set initial value if editing
         if (visit?.studentId) {
           const opt = studentOptions.find(o => o.id === visit.studentId);
           if (opt) {
@@ -5015,7 +5486,6 @@
           }
         }
 
-        // Follow-up toggle
         document.getElementById('c_followUp').addEventListener('change', function() {
           document.getElementById('followUpDateGroup').style.display = this.value === 'Yes' ? 'block' : 'none';
         });
@@ -5092,7 +5562,7 @@
     };
 
     // ============================================================
-    // PREFECTS - AUTO-POPULATED FROM STUDENT RECORDS
+    // PREFECTS
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
@@ -5149,10 +5619,8 @@
     window.renderPrefects = function() {
       const deptFilter = document.getElementById('prefectDeptFilter').value;
       
-      // Get prefects from student records (isPrefect === 'Yes')
       const prefectStudents = studentsCache.filter(s => s.isPrefect === 'Yes');
       
-      // Create prefect entries from student data - AUTO-POPULATED
       let prefectData = prefectStudents.map(s => ({
         id: `prefect_${s.id}`,
         studentId: s.id,
@@ -5162,11 +5630,9 @@
         date: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
       }));
       
-      // Also include any prefects from the prefects collection that might not be in student records
       prefectsCache.forEach(p => {
         const student = studentsCache.find(s => s.id === p.studentId);
         if (student && student.isPrefect !== 'Yes') {
-          // Update the student record
           updateDoc(doc(db, 'students', p.studentId), { 
             isPrefect: 'Yes', 
             prefectRole: p.role, 
@@ -5992,12 +6458,12 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 25.0.0 - PRT/Coding Added, C Pass Mark, Student Photos');
+      console.log('📚 Version 25.0.0 - Document Upload & Photo Upload Added');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📊 New Subject: PRT/Coding');
+      console.log('📎 Warnings now support document attachments (PDF, Images, Word, etc.)');
+      console.log('📸 Student photos can be uploaded from files');
       console.log('📈 Pass Mark: C (50% and above)');
-      console.log('📸 Student Photos support added for profiles and print reports');
       console.log('⭐ Prefects auto-populated from student records');
       console.log('💰 Sponsorships auto-populated from student records');
       console.log('👤 Click View on any student to see full profile with photo');
