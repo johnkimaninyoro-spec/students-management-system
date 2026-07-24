@@ -3241,8 +3241,12 @@
       const addExpulsionBtn = document.getElementById('addExpulsionBtn');
       if (addExpulsionBtn) addExpulsionBtn.style.display = canManageDiscipline ? 'inline-block' : 'none';
 
+      // CLINIC PERMISSIONS - Allow doctors, nurses, HRIO, radiographers, and other clinicians
+      const isClinician = ['doctor', 'nurse', 'hrio', 'radiographer', 'clinician', 'labtech'].includes(role);
       const addClinicBtn = document.getElementById('addClinicBtn');
-      if (addClinicBtn) addClinicBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
+      if (addClinicBtn) {
+        addClinicBtn.style.display = (isAdmin || isDirector || isClinician) ? 'inline-block' : 'none';
+      }
 
       const addTeacherBtn = document.getElementById('addTeacherBtn');
       if (addTeacherBtn) addTeacherBtn.style.display = (isAdmin || isDirector) ? 'inline-block' : 'none';
@@ -3272,10 +3276,12 @@
       const isPrincipal = role === 'principal';
       const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
+      const isClinician = ['doctor', 'nurse', 'hrio', 'radiographer', 'clinician', 'labtech'].includes(role);
       
       if (isAdmin || isDirector || isPrincipal) return true;
       if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
       if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      if (isClinician && tab === 'clinic') return true;
       if (role === 'maintenance' && tab === 'maintenanceDept') return true;
       return false;
     }
@@ -3288,10 +3294,12 @@
       const isPrincipal = role === 'principal';
       const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
+      const isClinician = ['doctor', 'nurse', 'hrio', 'radiographer', 'clinician', 'labtech'].includes(role);
       
       if (isAdmin || isDirector || isPrincipal) return true;
       if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
       if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      if (isClinician && tab === 'clinic') return true;
       if (role === 'maintenance' && (tab === 'maintenance' || tab === 'maintenanceDept')) return true;
       return false;
     }
@@ -3304,10 +3312,12 @@
       const isPrincipal = role === 'principal';
       const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
+      const isClinician = ['doctor', 'nurse', 'hrio', 'radiographer', 'clinician', 'labtech'].includes(role);
       
       if (isAdmin || isDirector || isPrincipal) return true;
       if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
       if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
+      if (isClinician && tab === 'clinic') return true;
       return false;
     }
 
@@ -4615,14 +4625,15 @@
     };
 
     // ============================================================
-    // CLINIC
+    // CLINIC - Updated to allow doctors, nurses, HRIO, radiographers
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
       const role = currentUser?.role || '';
-      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'principal'];
+      // Allow all clinician roles
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'principal', 'director', 'radiographer', 'clinician', 'labtech'];
       if (!clinicRoles.includes(role)) {
-        showToast('Only Admin, Nurse, Doctor, HRIO, and Principal can manage clinic visits', 'error');
+        showToast('Only Admin, Doctors, Nurses, HRIO, Radiographers, and other clinicians can manage clinic visits', 'error');
         return;
       }
       const visit = editId ? clinicCache.find(c => c.id === editId) : null;
@@ -4666,13 +4677,25 @@
       const data = { studentId, date, doctor, condition, complaint, diagnosis, medication, followUp, followUpDate: followUp === 'Yes' ? followUpDate : '' };
 
       try {
-        if (editId) { await updateDoc(doc(db, 'clinic', editId), data); showToast('Visit updated'); }
-        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'clinic'), data); showToast('Visit recorded'); }
+        if (editId) { 
+          await updateDoc(doc(db, 'clinic', editId), data); 
+          showToast('Visit updated'); 
+        } else { 
+          data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; 
+          data.createdAt = serverTimestamp(); 
+          await addDoc(collection(db, 'clinic'), data); 
+          showToast('Visit recorded'); 
+        }
         closeModal();
-      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+      } catch (err) { 
+        showToast('Error: ' + err.message, 'error'); 
+      }
     };
 
     window.renderClinic = function() {
+      const canEditClinic = canEdit('clinic');
+      const canDeleteClinic = canDeleteSpecific('clinic');
+
       document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
         const student = studentsCache.find(s => s.id === c.studentId);
         return `
@@ -4687,8 +4710,8 @@
             <td>${c.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
             <td>${c.followUp === 'Yes' ? formatDate(c.followUpDate) : '-'}</td>
             <td>
-              <button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>
+              ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
+              ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
@@ -4696,6 +4719,10 @@
     };
 
     window.deleteClinic = async function(id) {
+      if (!canDeleteSpecific('clinic')) {
+        showToast('You do not have permission to delete clinic records', 'error');
+        return;
+      }
       if (!confirm('Delete this clinic visit?')) return;
       try { await deleteDoc(doc(db, 'clinic', id)); showToast('Visit deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
@@ -5611,6 +5638,7 @@
       console.log('💰 Sponsorships auto-populated from student records');
       console.log('👤 Click View on any student to see full profile with photo');
       console.log('🖨️ Student profile includes photo in printable report');
+      console.log('🏥 Doctors, Nurses, HRIO, Radiographers can manage clinic visits');
     });
   </script>
 </body>
