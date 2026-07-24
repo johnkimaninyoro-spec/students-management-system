@@ -530,6 +530,20 @@
     .badge-approved { background: #d5f5e3; color: #27ae60; }
     .badge-rejected { background: #fadbd8; color: #e74c3c; }
 
+    /* Kenyan Grade Badges */
+    .badge-grade-a { background: #27ae60; color: white; }
+    .badge-grade-a- { background: #2ecc71; color: white; }
+    .badge-grade-b-plus { background: #85c1e9; color: #1a5276; }
+    .badge-grade-b { background: #5dade2; color: white; }
+    .badge-grade-b- { background: #a9cce3; color: #1a5276; }
+    .badge-grade-c-plus { background: #f5b041; color: white; }
+    .badge-grade-c { background: #f39c12; color: white; }
+    .badge-grade-c- { background: #f7dc6f; color: #7d6608; }
+    .badge-grade-d-plus { background: #e67e22; color: white; }
+    .badge-grade-d { background: #d35400; color: white; }
+    .badge-grade-d- { background: #f5b7b1; color: #922b21; }
+    .badge-grade-e { background: #e74c3c; color: white; }
+
     .toast-container { position: fixed; top: 80px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
     .toast { padding: 14px 24px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.4s ease; font-size: 0.9em; max-width: 400px; }
     @keyframes slideIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
@@ -951,7 +965,7 @@
           </div>
         </div>
 
-        <!-- SPONSORSHIP - Updated to auto-populate from student records -->
+        <!-- SPONSORSHIP -->
         <div class="tab-content" id="tab-sponsorship">
           <div class="card">
             <div class="card-header">
@@ -1553,6 +1567,22 @@
     const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
 
+    // KENYAN GRADING SYSTEM - A, A-, B+, B, B-, C+, C, C-, D+, D, D-, E
+    const KENYAN_GRADES = [
+      { grade: 'A', min: 80, max: 100, class: 'badge-grade-a', label: 'A' },
+      { grade: 'A-', min: 75, max: 79, class: 'badge-grade-a-', label: 'A-' },
+      { grade: 'B+', min: 70, max: 74, class: 'badge-grade-b-plus', label: 'B+' },
+      { grade: 'B', min: 65, max: 69, class: 'badge-grade-b', label: 'B' },
+      { grade: 'B-', min: 60, max: 64, class: 'badge-grade-b-', label: 'B-' },
+      { grade: 'C+', min: 55, max: 59, class: 'badge-grade-c-plus', label: 'C+' },
+      { grade: 'C', min: 50, max: 54, class: 'badge-grade-c', label: 'C' },
+      { grade: 'C-', min: 45, max: 49, class: 'badge-grade-c-', label: 'C-' },
+      { grade: 'D+', min: 40, max: 44, class: 'badge-grade-d-plus', label: 'D+' },
+      { grade: 'D', min: 35, max: 39, class: 'badge-grade-d', label: 'D' },
+      { grade: 'D-', min: 30, max: 34, class: 'badge-grade-d-', label: 'D-' },
+      { grade: 'E', min: 0, max: 29, class: 'badge-grade-e', label: 'E' }
+    ];
+
     let currentUser = null;
     let activeTab = 'dashboard';
     let unsubscribers = [];
@@ -1583,27 +1613,46 @@
       try { const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString(); } catch { return '-'; }
     }
 
-    function getLetterGrade(score) {
-      if (score >= 80) return 'A';
-      if (score >= 70) return 'B';
-      if (score >= 60) return 'C';
-      if (score >= 50) return 'D';
-      return 'F';
-    }
-
-    function getGradeColor(score) {
-      if (score >= 80) return '#27ae60';
-      if (score >= 60) return '#f39c12';
-      return '#e74c3c';
+    // KENYAN GRADING SYSTEM - Get letter grade with + and -
+    function getKenyanGrade(score) {
+      // Score is out of 100
+      const percentage = Math.round(score);
+      for (const grade of KENYAN_GRADES) {
+        if (percentage >= grade.min && percentage <= grade.max) {
+          return grade;
+        }
+      }
+      return KENYAN_GRADES[KENYAN_GRADES.length - 1]; // Return E as default
     }
 
     function getGradeBadge(score) {
-      const grade = getLetterGrade(score);
-      const colors = { 'A': 'badge-success', 'B': 'badge-info', 'C': 'badge-warning', 'D': 'badge-danger', 'F': 'badge-danger' };
-      return `<span class="badge ${colors[grade]}">${grade}</span>`;
+      const grade = getKenyanGrade(score);
+      return `<span class="badge ${grade.class}">${grade.grade}</span>`;
     }
 
-    function isPass(score) { return score >= 50; }
+    function getGradeColor(score) {
+      const grade = getKenyanGrade(score);
+      const colors = {
+        'A': '#27ae60',
+        'A-': '#2ecc71',
+        'B+': '#85c1e9',
+        'B': '#5dade2',
+        'B-': '#a9cce3',
+        'C+': '#f5b041',
+        'C': '#f39c12',
+        'C-': '#f7dc6f',
+        'D+': '#e67e22',
+        'D': '#d35400',
+        'D-': '#f5b7b1',
+        'E': '#e74c3c'
+      };
+      return colors[grade.grade] || '#95a5a6';
+    }
+
+    function isPass(score) { 
+      // In Kenyan system, C+ (55%) and above is considered a pass
+      return score >= 55; 
+    }
 
     function friendlyAuthError(code) {
       const map = {
@@ -1759,6 +1808,7 @@
         } else if (tab === 'grades') {
           const student = studentsCache.find(s => s.id === row.studentId);
           const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+          const grade = getKenyanGrade(total);
           cells = `
             <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
             <td>${student?.class || '-'}</td>
@@ -1770,7 +1820,7 @@
             <td>${row.test3 || 0}</td>
             <td>${row.exam || 0}</td>
             <td><strong>${total}</strong></td>
-            <td>${getLetterGrade(total)}</td>
+            <td>${grade.grade}</td>
           `;
         } else if (tab === 'attendance') {
           const student = studentsCache.find(s => s.id === row.studentId);
@@ -1917,6 +1967,18 @@
             .badge-primary { background: #d6eaf8; color: #1a5276; }
             .badge-gold { background: #f9e79f; color: #8e6b00; }
             .badge-purple { background: #e8daef; color: #8e44ad; }
+            .badge-grade-a { background: #27ae60; color: white; }
+            .badge-grade-a- { background: #2ecc71; color: white; }
+            .badge-grade-b-plus { background: #85c1e9; color: #1a5276; }
+            .badge-grade-b { background: #5dade2; color: white; }
+            .badge-grade-b- { background: #a9cce3; color: #1a5276; }
+            .badge-grade-c-plus { background: #f5b041; color: white; }
+            .badge-grade-c { background: #f39c12; color: white; }
+            .badge-grade-c- { background: #f7dc6f; color: #7d6608; }
+            .badge-grade-d-plus { background: #e67e22; color: white; }
+            .badge-grade-d { background: #d35400; color: white; }
+            .badge-grade-d- { background: #f5b7b1; color: #922b21; }
+            .badge-grade-e { background: #e74c3c; color: white; }
             @media print {
               body { padding: 10px; }
               .no-print { display: none; }
@@ -1990,6 +2052,7 @@
         } else if (tab === 'grades') {
           const student = studentsCache.find(s => s.id === row.studentId);
           const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+          const grade = getKenyanGrade(total);
           cells = `
             <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
             <td>${student?.class || '-'}</td>
@@ -2001,7 +2064,7 @@
             <td>${row.test3 || 0}</td>
             <td>${row.exam || 0}</td>
             <td><strong>${total}</strong></td>
-            <td>${getLetterGrade(total)}</td>
+            <td>${grade.grade}</td>
           `;
         } else if (tab === 'attendance') {
           const student = studentsCache.find(s => s.id === row.studentId);
@@ -2807,7 +2870,7 @@
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
       
-      // Updated sample grades with new subjects
+      // Updated sample grades with new subjects and Kenyan grading
       const sampleGrades = [
         { studentId: 'sample_2024-001', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 15, test2: 18, test3: 20, exam: 45 },
         { studentId: 'sample_2024-001', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 50 },
@@ -2962,7 +3025,7 @@
       
       renderDashboard();
       renderStudents();
-      renderSponsorship(); // Now auto-populated from student data
+      renderSponsorship();
       renderGrades();
       renderAttendance();
       renderPrefects();
@@ -2975,7 +3038,7 @@
     };
 
     // ============================================================
-    // 🔒 PERMISSIONS - UPDATED: Added Secretary to students and grades
+    // 🔒 PERMISSIONS
     // ============================================================
 
     function setupPermissions() {
@@ -3472,13 +3535,35 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { ticks: { maxRotation: 45 } } } }
       });
 
-      const gradeDist = { A: 0, B: 0, C: 0, D: 0, F: 0 };
-      grades.forEach(g => { const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0); gradeDist[getLetterGrade(total)]++; });
+      // Grade distribution with Kenyan grading system
+      const gradeDist = {};
+      KENYAN_GRADES.forEach(g => gradeDist[g.grade] = 0);
+      grades.forEach(g => {
+        const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+        const grade = getKenyanGrade(total);
+        gradeDist[grade.grade] = (gradeDist[grade.grade] || 0) + 1;
+      });
+      
+      const gradeLabels = KENYAN_GRADES.map(g => g.grade);
+      const gradeData = KENYAN_GRADES.map(g => gradeDist[g.grade] || 0);
+      const gradeColors = KENYAN_GRADES.map(g => getGradeColor(g.grade));
+      
       destroyChart('dashGradeChart');
       chartInstances['dashGradeChart'] = new Chart(document.getElementById('dashGradeChart'), {
         type: 'bar',
-        data: { labels: ['A', 'B', 'C', 'D', 'F'], datasets: [{ data: [gradeDist.A, gradeDist.B, gradeDist.C, gradeDist.D, gradeDist.F], backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c'] }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        data: { 
+          labels: gradeLabels, 
+          datasets: [{ 
+            data: gradeData, 
+            backgroundColor: gradeColors 
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          scales: { y: { beginAtZero: true } }, 
+          plugins: { legend: { display: false } } 
+        }
       });
 
       const last7 = [];
@@ -3795,7 +3880,7 @@
     };
 
     // ============================================================
-    // GRADES - Secretary can manage
+    // GRADES - Updated with Kenyan Grading System
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -3821,6 +3906,9 @@
           <p style="margin:0;font-size:0.9em;color:#666;">
             <strong>📊 Total Score:</strong> <span id="totalScoreDisplay">0</span> / 130
           </p>
+          <p style="margin:0;font-size:0.9em;color:#666;margin-top:4px;">
+            <strong>📈 Grade:</strong> <span id="gradeDisplay">-</span>
+          </p>
         </div>
         <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Grade</button>
       `;
@@ -3842,6 +3930,12 @@
       const exam = parseInt(document.getElementById('g_exam').value) || 0;
       const total = test1 + test2 + test3 + exam;
       document.getElementById('totalScoreDisplay').textContent = total;
+      
+      const grade = getKenyanGrade(total);
+      const gradeDisplay = document.getElementById('gradeDisplay');
+      if (gradeDisplay) {
+        gradeDisplay.innerHTML = `<span class="badge ${grade.class}">${grade.grade}</span>`;
+      }
     }
 
     window.saveGrade = async function(editId) {
@@ -3900,6 +3994,7 @@
       document.getElementById('gradesTableBody').innerHTML = filtered.map(g => {
         const student = studentsCache.find(s => s.id === g.studentId);
         const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+        const grade = getKenyanGrade(total);
         const examTypeClass = g.examType === 'Opener' ? 'opener' : g.examType === 'Midterm' ? 'midterm' : 'endterm';
         return `
           <tr>
@@ -4017,7 +4112,7 @@
     };
 
     // ============================================================
-    // CLASS PERFORMANCE
+    // CLASS PERFORMANCE - Updated with Kenyan Grading
     // ============================================================
 
     window.renderClassPerformance = function() {
@@ -4057,8 +4152,8 @@
           <td>${s.student.firstName} ${s.student.lastName}</td>
           <td><strong>${s.avg}%</strong></td>
           <td>${getGradeBadge(s.avg)}</td>
-          <td>${s.avg >= 50 ? '✅' : '❌'}</td>
-          <td>${s.avg >= 50 ? '0' : '1'}</td>
+          <td>${isPass(s.avg) ? '✅' : '❌'}</td>
+          <td>${isPass(s.avg) ? '0' : '1'}</td>
         </tr>
       `).join('');
 
@@ -4084,32 +4179,48 @@
       destroyChart('perfStudentChart');
       chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
         type: 'bar',
-        data: { labels: studentNames, datasets: [{ data: studentAvgs, backgroundColor: studentAvgs.map(a => a >= 50 ? '#27ae60' : '#e74c3c') }] },
+        data: { labels: studentNames, datasets: [{ data: studentAvgs, backgroundColor: studentAvgs.map(a => isPass(a) ? '#27ae60' : '#e74c3c') }] },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
       });
 
-      // Grade Distribution Chart
-      const gradeCounts = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      // Grade Distribution Chart with Kenyan grades
+      const gradeCounts = {};
+      KENYAN_GRADES.forEach(g => gradeCounts[g.grade] = 0);
       studentAverages.forEach(s => {
-        const grade = getLetterGrade(s.avg);
-        gradeCounts[grade]++;
+        const grade = getKenyanGrade(s.avg);
+        gradeCounts[grade.grade] = (gradeCounts[grade.grade] || 0) + 1;
       });
+      
+      const gradeLabels = KENYAN_GRADES.map(g => g.grade);
+      const gradeData = KENYAN_GRADES.map(g => gradeCounts[g.grade] || 0);
+      const gradeColors = KENYAN_GRADES.map(g => getGradeColor(g.grade));
 
       destroyChart('perfGradeChart');
       chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
-        type: 'doughnut',
-        data: { labels: ['A', 'B', 'C', 'D', 'F'], datasets: [{ data: [gradeCounts.A, gradeCounts.B, gradeCounts.C, gradeCounts.D, gradeCounts.F], backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c'] }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        type: 'bar',
+        data: { 
+          labels: gradeLabels, 
+          datasets: [{ 
+            data: gradeData, 
+            backgroundColor: gradeColors 
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          scales: { y: { beginAtZero: true } }, 
+          plugins: { legend: { display: false } } 
+        }
       });
 
       // Pass/Fail Ratio
-      const passed = studentAverages.filter(s => s.avg >= 50).length;
-      const failed = studentAverages.filter(s => s.avg < 50).length;
+      const passed = studentAverages.filter(s => isPass(s.avg)).length;
+      const failed = studentAverages.filter(s => !isPass(s.avg)).length;
 
       destroyChart('perfPassFailChart');
       chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
         type: 'doughnut',
-        data: { labels: ['✅ Passed', '❌ Failed'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        data: { labels: ['✅ Passed (C+ and above)', '❌ Failed (C and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
     };
@@ -4396,7 +4507,7 @@
     };
 
     // ============================================================
-    // ⭐ PREFECTS - AUTO-POPULATED FROM STUDENT RECORDS
+    // PREFECTS - AUTO-POPULATED FROM STUDENT RECORDS
     // ============================================================
 
     window.showAddPrefectModal = function(editId) {
@@ -4941,7 +5052,7 @@
     };
 
     // ============================================================
-    // ANALYTICS
+    // ANALYTICS - Updated with Kenyan Grading
     // ============================================================
 
     window.renderAnalytics = function() {
@@ -4983,6 +5094,7 @@
         
         const subjects = grades.map(g => g.subject);
         const totals = grades.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+        const colors = totals.map(t => getGradeColor(t));
         
         destroyChart('analyticsStudentChart');
         chartInstances['analyticsStudentChart'] = new Chart(document.getElementById('analyticsStudentChart'), {
@@ -4991,7 +5103,7 @@
             labels: subjects, 
             datasets: [{ 
               data: totals, 
-              backgroundColor: totals.map(t => getGradeColor(t)),
+              backgroundColor: colors,
               label: `${student?.firstName}'s Scores`
             }] 
           },
@@ -5003,7 +5115,7 @@
           }
         });
         
-        // Grade trend chart
+        // Grade trend chart - using Kenyan grading for labels
         const terms = ['Term 1', 'Term 2', 'Term 3'];
         const termAverages = terms.map(term => {
           const termGrades = grades.filter(g => g.term === term);
@@ -5030,7 +5142,18 @@
             responsive: true, 
             maintainAspectRatio: false,
             scales: { y: { beginAtZero: true, max: 130 } },
-            plugins: { legend: { display: false } }
+            plugins: { 
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const score = context.parsed.y;
+                    const grade = getKenyanGrade(score);
+                    return `${context.dataset.label}: ${score}% (${grade.grade})`;
+                  }
+                }
+              }
+            }
           }
         });
       }
@@ -5069,7 +5192,18 @@
             responsive: true, 
             maintainAspectRatio: false,
             scales: { y: { beginAtZero: true, max: 130 } },
-            plugins: { legend: { display: false } }
+            plugins: { 
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const score = context.parsed.y;
+                    const grade = getKenyanGrade(score);
+                    return `${context.dataset.label}: ${score}% (${grade.grade})`;
+                  }
+                }
+              }
+            }
           }
         });
       }
@@ -5218,11 +5352,12 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 23.0.0 - Auto-Populated Sponsorships & Prefects');
+      console.log('📚 Version 24.0.0 - Kenyan Grading System Applied');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📝 New Subjects: Literature, Home Science, Art & Craft, CSL');
-      console.log('📐 Core Maths (replaced Cose Maths)');
+      console.log('📝 Subjects: Mathematics, English, Kiswahili, Biology, Chemistry, Physics, KSL, Creative Arts & Sports (CA), Core Maths, Science, Social Studies, CRE, Agriculture, Business Studies, Computer Studies, History, Geography, Literature, Home Science, Art & Craft, CSL');
+      console.log('📊 Kenyan Grading: A, A-, B+, B, B-, C+, C, C-, D+, D, D-, E');
+      console.log('📈 Pass Mark: C+ (55% and above)');
       console.log('⭐ Prefects auto-populated from student records');
       console.log('💰 Sponsorships auto-populated from student records');
       console.log('👔 Principal can manage Warnings, Suspensions, and Expulsions');
