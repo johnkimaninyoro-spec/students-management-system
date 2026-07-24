@@ -88,7 +88,6 @@
       display: none;
     }
 
-    /* File upload styles */
     .file-upload-wrapper {
       position: relative;
       width: 100%;
@@ -188,7 +187,6 @@
       border: 1px solid #ddd;
     }
 
-    /* Photo upload for students */
     .photo-upload-wrapper {
       position: relative;
       width: 120px;
@@ -243,7 +241,6 @@
       cursor: pointer;
     }
 
-    /* Clinic styles */
     .clinic-section {
       margin: 15px 0;
       padding: 15px;
@@ -761,7 +758,6 @@
     .form-row { display: flex; gap: 16px; flex-wrap: wrap; }
     .form-row .form-group { flex: 1; min-width: 180px; }
 
-    /* Searchable dropdown styles */
     .searchable-dropdown {
       position: relative;
       width: 100%;
@@ -846,7 +842,6 @@
     .badge-rejected { background: #fadbd8; color: #e74c3c; }
     .badge-na { background: #f0f0f0; color: #999; }
 
-    /* Kenyan Grade Badges */
     .badge-grade-a { background: #27ae60; color: white; }
     .badge-grade-a- { background: #2ecc71; color: white; }
     .badge-grade-b-plus { background: #85c1e9; color: #1a5276; }
@@ -1117,7 +1112,6 @@
     .registration-stat-card.rejected { border-top-color: #e74c3c; }
     .registration-stat-card.total { border-top-color: #2e86c1; }
 
-    /* Student Profile Styles */
     .profile-header {
       display: flex;
       align-items: center;
@@ -1187,17 +1181,17 @@
       </div>
       <div class="form-group">
         <label>📧 Email Address</label>
-        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off" value="test@test.com">
+        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off" value="">
       </div>
       <div class="form-group">
         <label>🔒 Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password" value="test123">
+        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password" value="">
       </div>
       <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
       <div class="login-error" id="loginError"></div>
       <div class="test-login-hint">
-        <strong>💡 Test Login:</strong> test@test.com / test123<br>
-        <small>Or use your Firebase credentials</small>
+        <strong>💡 Demo Mode:</strong> Click <a href="#" onclick="window.testLogin(); return false;" style="color:var(--primary-light);font-weight:600;">here</a> to use the demo<br>
+        <small>Or <a href="#" onclick="showSignupModal(); return false;">request access</a> to create an account</small>
       </div>
       <div class="register-link">
         Don't have an account? <a href="#" onclick="showSignupModal(); return false;">Request Access</a>
@@ -1484,7 +1478,7 @@
           </div>
         </div>
 
-        <!-- CLINIC - Updated with new fields -->
+        <!-- CLINIC -->
         <div class="tab-content" id="tab-clinic">
           <div class="card">
             <div class="card-header">
@@ -1877,7 +1871,7 @@
     import {
       getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
       updatePassword, reauthenticateWithCredential, EmailAuthProvider,
-      createUserWithEmailAndPassword
+      createUserWithEmailAndPassword, sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import {
       getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
@@ -1945,7 +1939,6 @@
     const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
 
-    // Clinic referral options
     const REFERRAL_OPTIONS = ['None', 'Dentist', 'Eye Specialist', 'Orthopedic', 'Dermatologist', 'ENT Specialist', 'Psychologist', 'Nutritionist', 'Other'];
 
     const KENYAN_GRADES = [
@@ -1976,14 +1969,10 @@
     let maintenanceCache = [];
     let pendingRegistrationsCache = [];
 
-    // Store uploaded file data for warnings
     let warningFileData = null;
     let currentWarningFileId = null;
-
-    // Store student photo data
     let studentPhotoData = null;
 
-    // Student filter state
     let studentFilter = {
       status: '',
       gender: '',
@@ -1991,14 +1980,13 @@
     };
 
     // ============================================================
-    // 🏆 KENYAN GRADING SYSTEM - Pass mark is C (50%) and above
+    // 🏆 KENYAN GRADING SYSTEM
     // ============================================================
 
     function getKenyanGrade(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return null;
       }
-      
       const percentage = Math.round(score);
       for (const grade of KENYAN_GRADES) {
         if (percentage >= grade.min && percentage <= grade.max) {
@@ -2014,49 +2002,31 @@
       const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '' && !isNaN(grade.test2);
       const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '' && !isNaN(grade.test3);
       const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '' && !isNaN(grade.exam);
-      
-      const hasAnyScore = hasTest1 || hasTest2 || hasTest3 || hasExam;
-      return hasAnyScore;
+      return hasTest1 || hasTest2 || hasTest3 || hasExam;
     }
 
     function getGradeBadge(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return `<span class="badge badge-na">N/A</span>`;
       }
-      
       const grade = getKenyanGrade(score, hasScores);
-      if (!grade) {
-        return `<span class="badge badge-na">N/A</span>`;
-      }
+      if (!grade) return `<span class="badge badge-na">N/A</span>`;
       return `<span class="badge ${grade.class}">${grade.grade}</span>`;
     }
 
     function isPass(score, hasScores = true) {
-      if (!hasScores || score === undefined || score === null || isNaN(score)) {
-        return false;
-      }
+      if (!hasScores || score === undefined || score === null || isNaN(score)) return false;
       return score >= 50;
     }
 
     function getGradeColor(score, hasScores = true) {
-      if (!hasScores || score === undefined || score === null || isNaN(score)) {
-        return '#95a5a6';
-      }
+      if (!hasScores || score === undefined || score === null || isNaN(score)) return '#95a5a6';
       const grade = getKenyanGrade(score, hasScores);
       if (!grade) return '#95a5a6';
       const colors = {
-        'A': '#27ae60',
-        'A-': '#2ecc71',
-        'B+': '#85c1e9',
-        'B': '#5dade2',
-        'B-': '#a9cce3',
-        'C+': '#f5b041',
-        'C': '#f39c12',
-        'C-': '#f7dc6f',
-        'D+': '#e67e22',
-        'D': '#d35400',
-        'D-': '#f5b7b1',
-        'E': '#e74c3c'
+        'A': '#27ae60', 'A-': '#2ecc71', 'B+': '#85c1e9', 'B': '#5dade2',
+        'B-': '#a9cce3', 'C+': '#f5b041', 'C': '#f39c12', 'C-': '#f7dc6f',
+        'D+': '#e67e22', 'D': '#d35400', 'D-': '#f5b7b1', 'E': '#e74c3c'
       };
       return colors[grade.grade] || '#95a5a6';
     }
@@ -2119,10 +2089,6 @@
       }
     }
 
-    // ============================================================
-    // FILE UPLOAD HELPERS
-    // ============================================================
-
     function formatFileSize(bytes) {
       if (bytes < 1024) return bytes + ' B';
       if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -2146,7 +2112,6 @@
       const file = event.target.files[0];
       if (!file) return;
 
-      // Validate file type - accept images, PDFs, Word docs, text files
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
       if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
         showToast('Please upload a valid file (JPEG, PNG, GIF, WebP, PDF, Word, or TXT)', 'error');
@@ -2154,7 +2119,6 @@
         return;
       }
 
-      // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         showToast('File size should be less than 10MB', 'error');
         event.target.value = '';
@@ -2171,7 +2135,6 @@
           lastModified: file.lastModified
         };
         
-        // Show preview
         const previewDiv = document.getElementById('warningFilePreview');
         if (previewDiv) {
           const icon = getFileIcon(file.type);
@@ -2190,17 +2153,11 @@
           `;
         }
         
-        // Update hidden input
         const hiddenInput = document.getElementById('w_documentData');
-        if (hiddenInput) {
-          hiddenInput.value = JSON.stringify(warningFileData);
-        }
+        if (hiddenInput) hiddenInput.value = JSON.stringify(warningFileData);
         
-        // Update file name display
         const fileNameDisplay = document.getElementById('warningFileName');
-        if (fileNameDisplay) {
-          fileNameDisplay.textContent = file.name;
-        }
+        if (fileNameDisplay) fileNameDisplay.textContent = file.name;
         
         showToast(`📎 File "${file.name}" uploaded successfully`, 'success');
       };
@@ -2210,29 +2167,17 @@
     window.removeWarningFile = function() {
       warningFileData = null;
       const previewDiv = document.getElementById('warningFilePreview');
-      if (previewDiv) {
-        previewDiv.innerHTML = '';
-      }
+      if (previewDiv) previewDiv.innerHTML = '';
       const hiddenInput = document.getElementById('w_documentData');
-      if (hiddenInput) {
-        hiddenInput.value = '';
-      }
+      if (hiddenInput) hiddenInput.value = '';
       const fileInput = document.getElementById('w_documentFile');
-      if (fileInput) {
-        fileInput.value = '';
-      }
+      if (fileInput) fileInput.value = '';
       const fileNameDisplay = document.getElementById('warningFileName');
-      if (fileNameDisplay) {
-        fileNameDisplay.textContent = '';
-      }
+      if (fileNameDisplay) fileNameDisplay.textContent = '';
       showToast('File removed', 'info');
     };
 
-    // ============================================================
-    // STUDENT PHOTO UPLOAD
-    // ============================================================
-
-    function handleStudentPhotoUpload(event, studentId = null) {
+    function handleStudentPhotoUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -2250,24 +2195,17 @@
       reader.onload = function(e) {
         studentPhotoData = e.target.result;
         
-        // Update the photo preview
         const previewImg = document.getElementById('s_photoPreview');
         if (previewImg) {
           previewImg.src = e.target.result;
           previewImg.style.display = 'block';
         }
         
-        // Hide placeholder
         const placeholder = document.getElementById('s_photoPlaceholder');
-        if (placeholder) {
-          placeholder.style.display = 'none';
-        }
+        if (placeholder) placeholder.style.display = 'none';
         
-        // Update hidden input
         const hiddenInput = document.getElementById('s_photoData');
-        if (hiddenInput) {
-          hiddenInput.value = e.target.result;
-        }
+        if (hiddenInput) hiddenInput.value = e.target.result;
         
         showToast('📸 Photo uploaded successfully', 'success');
       };
@@ -2277,35 +2215,23 @@
     window.removeStudentPhoto = function() {
       studentPhotoData = null;
       const previewImg = document.getElementById('s_photoPreview');
-      if (previewImg) {
-        previewImg.src = '';
-        previewImg.style.display = 'none';
-      }
+      if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
       const placeholder = document.getElementById('s_photoPlaceholder');
-      if (placeholder) {
-        placeholder.style.display = 'block';
-      }
+      if (placeholder) placeholder.style.display = 'block';
       const hiddenInput = document.getElementById('s_photoData');
-      if (hiddenInput) {
-        hiddenInput.value = '';
-      }
+      if (hiddenInput) hiddenInput.value = '';
       const fileInput = document.getElementById('s_photoFile');
-      if (fileInput) {
-        fileInput.value = '';
-      }
+      if (fileInput) fileInput.value = '';
       showToast('Photo removed', 'info');
     };
 
     // ============================================================
-    // STUDENT PROFILE MODAL
+    // STUDENT PROFILE
     // ============================================================
 
     window.showStudentProfile = function(studentId) {
       const student = studentsCache.find(s => s.id === studentId);
-      if (!student) {
-        showToast('Student not found', 'error');
-        return;
-      }
+      if (!student) { showToast('Student not found', 'error'); return; }
 
       const studentGrades = gradesCache.filter(g => g.studentId === studentId);
       const studentAttendance = attendanceCache.filter(a => a.studentId === studentId);
@@ -2548,21 +2474,8 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              scales: {
-                y: { beginAtZero: true, max: 130 }
-              },
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      const score = context.parsed.y;
-                      const grade = getKenyanGrade(score, true);
-                      return `Score: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
-                    }
-                  }
-                }
-              }
+              scales: { y: { beginAtZero: true, max: 130 } },
+              plugins: { legend: { display: false } }
             }
           });
         }
@@ -2570,15 +2483,12 @@
     };
 
     // ============================================================
-    // PRINT STUDENT PROFILE WITH PHOTO
+    // PRINT STUDENT PROFILE
     // ============================================================
 
     window.printStudentProfile = function(studentId) {
       const student = studentsCache.find(s => s.id === studentId);
-      if (!student) {
-        showToast('Student not found', 'error');
-        return;
-      }
+      if (!student) { showToast('Student not found', 'error'); return; }
 
       const studentGrades = gradesCache.filter(g => g.studentId === studentId);
       const studentAttendance = attendanceCache.filter(a => a.studentId === studentId);
@@ -3113,7 +3023,7 @@
     };
 
     // ============================================================
-    // 🔐 AUTHENTICATION
+    // 🔐 AUTHENTICATION - FIXED
     // ============================================================
 
     window.showSignupModal = function() {
@@ -3254,36 +3164,44 @@
       }
 
       try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const uid = userCredential.user.uid;
+        // Check if user already exists
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const uid = userCredential.user.uid;
 
-        await setDoc(doc(db, 'pendingRegistrations', uid), {
-          email: email,
-          fullName: name,
-          requestedRole: role || 'teacher',
-          class: classValue || '',
-          status: 'pending',
-          createdAt: serverTimestamp(),
-          uid: uid
-        });
+          await setDoc(doc(db, 'pendingRegistrations', uid), {
+            email: email,
+            fullName: name,
+            requestedRole: role || 'teacher',
+            class: classValue || '',
+            status: 'pending',
+            createdAt: serverTimestamp(),
+            uid: uid
+          });
 
-        await setDoc(doc(db, 'users', uid), {
-          email: email,
-          fullName: name,
-          role: role || 'teacher',
-          class: classValue || '',
-          approvalStatus: 'pending',
-          createdAt: serverTimestamp(),
-          loginCount: 0
-        });
+          await setDoc(doc(db, 'users', uid), {
+            email: email,
+            fullName: name,
+            role: role || 'teacher',
+            class: classValue || '',
+            approvalStatus: 'pending',
+            createdAt: serverTimestamp(),
+            loginCount: 0
+          });
 
-        await signOut(auth);
+          await signOut(auth);
 
-        showToast('✅ Registration submitted! Please wait for admin approval.', 'success');
-        closeModal();
-        
-        document.getElementById('loginError').textContent = 'Registration pending approval. You will be notified when approved.';
-        
+          showToast('✅ Registration submitted! Please wait for admin approval.', 'success');
+          closeModal();
+          
+          document.getElementById('loginError').textContent = 'Registration pending approval. You will be notified when approved.';
+        } catch (err) {
+          if (err.code === 'auth/email-already-in-use') {
+            showToast('This email is already registered. Please login or use a different email.', 'error');
+          } else {
+            throw err;
+          }
+        }
       } catch (err) {
         console.error('Signup error:', err);
         showToast(friendlyAuthError(err.code) || 'Error submitting registration', 'error');
@@ -3315,11 +3233,6 @@
       console.log('🔐 Login attempt:', { email, passwordLength: password.length });
       errorEl.textContent = '';
       
-      if (email === 'test@test.com' && password === 'test123') {
-        window.testLogin();
-        return;
-      }
-      
       if (!email) { errorEl.textContent = 'Please enter your email'; return; }
       if (!password) { errorEl.textContent = 'Please enter your password'; return; }
       
@@ -3346,7 +3259,7 @@
         }
         
         if (errorEl.textContent.includes('Error') || errorEl.textContent.includes('invalid')) {
-          errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use test@test.com / test123 for demo</small>`;
+          errorEl.innerHTML += `<br><small style="color:#666;">💡 Tip: Use the demo mode link below to explore the system</small>`;
         }
       } finally {
         btn.disabled = false;
@@ -3354,28 +3267,29 @@
       }
     };
 
+    // Demo mode - loads sample data
     window.testLogin = function() {
       try {
-        console.log('🧪 TEST MODE: Logging in with test account');
+        console.log('🧪 DEMO MODE: Loading sample data...');
         currentUser = { 
-          uid: 'test123', 
-          email: 'test@test.com', 
-          fullName: 'Test Admin', 
+          uid: 'demo123', 
+          email: 'demo@mchsschool.com', 
+          fullName: 'Demo Admin', 
           role: 'admin',
           approvalStatus: 'approved'
         };
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
-        document.getElementById('currentUserDisplay').textContent = 'Test Admin';
+        document.getElementById('currentUserDisplay').textContent = 'Demo Admin';
         document.getElementById('currentRoleBadge').textContent = 'ADMIN';
         isTestMode = true;
         setupPermissions();
         loadSampleData();
         showTab('dashboard');
-        showToast('✅ Test login successful! (Demo Mode)', 'success');
+        showToast('✅ Demo mode active! Explore all features with sample data.', 'success');
       } catch (err) {
-        console.error('Test login error:', err);
-        showToast('Error with test login: ' + err.message, 'error');
+        console.error('Demo mode error:', err);
+        showToast('Error loading demo: ' + err.message, 'error');
       }
     };
 
@@ -3393,6 +3307,10 @@
         showToast('Error logging out', 'error');
       }
     };
+
+    // ============================================================
+    // AUTH STATE HANDLER
+    // ============================================================
 
     onAuthStateChanged(auth, async (user) => {
       try {
@@ -3447,22 +3365,21 @@
           } catch (err) {
             console.error('Error loading user profile:', err);
             document.getElementById('loginError').textContent = 'Error loading profile. Try again.';
-            if (user.email === 'test@test.com') {
-              window.testLogin();
-            }
           }
         } else if (!user && !isTestMode) {
-          if (!isTestMode) {
-            currentUser = null;
-            stopListeners();
-            document.getElementById('loginPage').style.display = 'flex';
-            document.getElementById('appContainer').style.display = 'none';
-          }
+          currentUser = null;
+          stopListeners();
+          document.getElementById('loginPage').style.display = 'flex';
+          document.getElementById('appContainer').style.display = 'none';
         }
       } catch (err) {
         console.error('Auth state error:', err);
       }
     });
+
+    // ============================================================
+    // ADMIN FUNCTIONS
+    // ============================================================
 
     window.approveRegistration = async function(uid) {
       if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'director')) {
@@ -3604,7 +3521,7 @@
           studentId: s.id,
           date: today,
           status: Math.random() > 0.2 ? 'Present' : 'Absent',
-          markedBy: 'Test Admin'
+          markedBy: 'Demo Admin'
         });
       });
 
@@ -3638,7 +3555,6 @@
       ];
       sampleExpulsions.forEach(e => expulsionsCache.push({ id: `sample_exp_${Math.random().toString(36).substr(2, 6)}`, ...e }));
 
-      // Sample clinic visits with all new fields
       const sampleClinic = [
         { 
           studentId: 'sample_2024-001', 
@@ -3766,6 +3682,8 @@
       renderMaintenance();
       renderMaintenanceDept();
       renderRegistrations();
+      renderTeachers();
+      renderTeacherAttendance();
     };
 
     // ============================================================
@@ -5511,7 +5429,7 @@
     };
 
     // ============================================================
-    // CLINIC - UPDATED with new fields
+    // CLINIC
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
@@ -5681,13 +5599,11 @@
       const timeBack = document.getElementById('c_timeBack').value;
       const parentContacted = document.getElementById('c_parentContacted').checked;
 
-      // Validate all required fields are filled
       if (!studentId || !date || !doctor || !condition || !complaint) {
         showToast('Please fill all required fields (*)', 'error');
         return;
       }
 
-      // If follow-up is Yes, follow-up date is required
       if (followUp === 'Yes' && !followUpDate) {
         showToast('Please select a follow-up date', 'error');
         return;
@@ -5731,7 +5647,6 @@
       document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
         const student = studentsCache.find(s => s.id === c.studentId);
         const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
-        // Store student name for printing
         c.studentName = studentName;
         return `
           <tr>
@@ -6664,7 +6579,7 @@
       console.log('🚀 Mara Christian High School Management System');
       console.log('📚 Version 26.0.0 - Enhanced Clinic Module');
       console.log('💡 Made with ❤️ for education');
-      console.log('🔑 Test Login: test@test.com / test123');
+      console.log('🔑 Click "here" in the demo link to explore with sample data');
       console.log('📎 Warnings support document attachments (PDF, Images, Word, etc.)');
       console.log('📸 Student photos can be uploaded from files (JPEG, PNG, GIF, WebP)');
       console.log('🏥 CLINIC ENHANCEMENTS:');
