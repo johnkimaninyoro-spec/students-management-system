@@ -1582,7 +1582,7 @@
       'Form 3 East', 'Form 3 West', 'Form 4 East', 'Form 4 West'
     ];
 
-    // UPDATED SUBJECTS - Added PRT/Coding
+    // SUBJECTS - Added PRT/Coding
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
       'Biology', 'Chemistry', 'Physics',
@@ -1624,7 +1624,7 @@
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
 
     // KENYAN GRADING SYSTEM - A, A-, B+, B, B-, C+, C, C-, D+, D, D-, E
-    // PASS MARK IS C+ (55%) and above
+    // PASS MARK IS C (50%) and above - FIXED
     const KENYAN_GRADES = [
       { grade: 'A', min: 80, max: 100, class: 'badge-grade-a', label: 'A' },
       { grade: 'A-', min: 75, max: 79, class: 'badge-grade-a-', label: 'A-' },
@@ -1661,7 +1661,7 @@
     };
 
     // ============================================================
-    // 🏆 KENYAN GRADING SYSTEM - Pass mark is C+ (55%) and above
+    // 🏆 KENYAN GRADING SYSTEM - Pass mark is C (50%) and above
     // ============================================================
 
     function getKenyanGrade(score, hasScores = true) {
@@ -1701,13 +1701,13 @@
       return `<span class="badge ${grade.class}">${grade.grade}</span>`;
     }
 
-    // PASS MARK IS C+ (55%) and above - FIXED
+    // PASS MARK IS C (50%) and above - FIXED
     function isPass(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return false;
       }
-      // C+ is 55% and above is a pass in Kenyan system
-      return score >= 55;
+      // C is 50% and above is a pass in Kenyan system
+      return score >= 50;
     }
 
     function getGradeColor(score, hasScores = true) {
@@ -1906,7 +1906,7 @@
               <div class="item"><strong>Average Score:</strong> ${avgScore}%</div>
               <div class="item"><strong>Grade:</strong> ${getGradeBadge(avgScore, true)}</div>
               <div class="item"><strong>Subjects Taken:</strong> ${validGrades.length}</div>
-              <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing (C+ and above)' : '❌ Needs Improvement'}</div>
+              <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing (C and above)' : '❌ Needs Improvement'}</div>
             </div>
             <div style="height:150px;margin-top:10px;">
               <canvas id="profileGradeChart"></canvas>
@@ -2193,7 +2193,7 @@
                 <div class="item"><strong>Average Score:</strong> ${avgScore}%</div>
                 <div class="item"><strong>Overall Grade:</strong> ${getGradeBadge(avgScore, true)}</div>
                 <div class="item"><strong>Subjects:</strong> ${validGrades.length}</div>
-                <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing (C+ and above)' : '❌ Needs Improvement'}</div>
+                <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing (C and above)' : '❌ Needs Improvement'}</div>
               </div>
               <table>
                 <thead><tr><th>Subject</th><th>Term</th><th>Exam Type</th><th>Test 1</th><th>Test 2</th><th>Test 3</th><th>Final</th><th>Total</th><th>Grade</th></tr></thead>
@@ -3020,7 +3020,7 @@
     };
 
     // ============================================================
-    // LOAD SAMPLE DATA with PRT/Coding
+    // LOAD SAMPLE DATA
     // ============================================================
 
     window.loadSampleData = function() {
@@ -3041,7 +3041,6 @@
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
       
-      // Sample grades with PRT/Coding included
       const sampleGrades = [
         { studentId: 'sample_2024-001', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 15, test2: 18, test3: 20, exam: 45 },
         { studentId: 'sample_2024-001', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 50 },
@@ -4407,7 +4406,7 @@
         }
       });
 
-      // Pass/Fail Ratio - C+ and above is pass
+      // Pass/Fail Ratio - C and above is pass
       const scoredStudents = studentAverages.filter(s => s.hasScores);
       const passed = scoredStudents.filter(s => isPass(s.avg, true)).length;
       const failed = scoredStudents.filter(s => !isPass(s.avg, true)).length;
@@ -4415,7 +4414,7 @@
       destroyChart('perfPassFailChart');
       chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
         type: 'doughnut',
-        data: { labels: ['✅ Passed (C+ and above)', '❌ Failed (C and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        data: { labels: ['✅ Passed (C and above)', '❌ Failed (C- and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
     };
@@ -5602,11 +5601,11 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 25.0.0 - PRT/Coding Added, C+ Pass Mark, Student Photos');
+      console.log('📚 Version 25.0.0 - PRT/Coding Added, C Pass Mark, Student Photos');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
       console.log('📊 New Subject: PRT/Coding');
-      console.log('📈 Pass Mark: C+ (55% and above)');
+      console.log('📈 Pass Mark: C (50% and above)');
       console.log('📸 Student Photos support added for profiles and print reports');
       console.log('⭐ Prefects auto-populated from student records');
       console.log('💰 Sponsorships auto-populated from student records');
