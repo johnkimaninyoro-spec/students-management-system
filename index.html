@@ -243,6 +243,53 @@
       cursor: pointer;
     }
 
+    /* Clinic styles */
+    .clinic-section {
+      margin: 15px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #2ecc71;
+    }
+
+    .clinic-section h4 {
+      margin: 0 0 10px 0;
+      color: var(--primary);
+      font-size: 0.95em;
+    }
+
+    .clinic-section .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .clinic-section .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .clinic-section .checkbox-group label {
+      font-weight: 500;
+      color: var(--dark);
+      cursor: pointer;
+    }
+
+    .clinic-section .time-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .clinic-section .time-input input[type="time"] {
+      padding: 6px 10px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9em;
+    }
+
     .warning-document-link {
       display: inline-flex;
       align-items: center;
@@ -1383,7 +1430,7 @@
           </div>
         </div>
 
-        <!-- WARNINGS - Updated with document upload -->
+        <!-- WARNINGS -->
         <div class="tab-content" id="tab-warnings">
           <div class="card">
             <div class="card-header">
@@ -1437,7 +1484,7 @@
           </div>
         </div>
 
-        <!-- CLINIC -->
+        <!-- CLINIC - Updated with new fields -->
         <div class="tab-content" id="tab-clinic">
           <div class="card">
             <div class="card-header">
@@ -1450,7 +1497,7 @@
             </div>
             <div class="table-container">
               <table id="clinicTable">
-                <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Condition</th><th>Complaint</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Referred To</th><th>Parent Contacted</th><th>Time Back</th><th>Actions</th></tr></thead>
                 <tbody id="clinicTableBody"></tbody></table>
             </div>
           </div>
@@ -1877,7 +1924,7 @@
     ];
 
     const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director', 'hrio', 'nutritionist', 'labtech', 'radiographer', 'maintenance'];
-    const CONDITIONS = ['New Illness', 'Pre-existing Condition'];
+    const CONDITIONS = ['New Illness', 'Pre-existing Condition', 'Injury', 'Chronic Condition'];
     const PREFECT_DEPARTMENTS = [
       'Academics', 'Discipline', 'Games & Sports', 'Entertainment',
       'Health & Sanitation', 'Dining Hall', 'Dormitory/Boarding',
@@ -1897,6 +1944,9 @@
 
     const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
+
+    // Clinic referral options
+    const REFERRAL_OPTIONS = ['None', 'Dentist', 'Eye Specialist', 'Orthopedic', 'Dermatologist', 'ENT Specialist', 'Psychologist', 'Nutritionist', 'Other'];
 
     const KENYAN_GRADES = [
       { grade: 'A', min: 80, max: 100, class: 'badge-grade-a', label: 'A' },
@@ -2080,25 +2130,36 @@
     }
 
     function getFileIcon(mimeType) {
-      if (mimeType.startsWith('image/')) return '🖼️';
+      if (mimeType && mimeType.startsWith('image/')) return '🖼️';
       if (mimeType === 'application/pdf') return '📄';
-      if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-      if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
-      if (mimeType.includes('text')) return '📃';
+      if (mimeType && (mimeType.includes('word') || mimeType.includes('document'))) return '📝';
+      if (mimeType && (mimeType.includes('excel') || mimeType.includes('spreadsheet'))) return '📊';
+      if (mimeType && mimeType.includes('text')) return '📃';
       return '📎';
     }
 
-    function getFileExtension(filename) {
-      return filename.split('.').pop().toLowerCase();
-    }
-
     function isImageFile(mimeType) {
-      return mimeType.startsWith('image/');
+      return mimeType && mimeType.startsWith('image/');
     }
 
     function handleWarningFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
+
+      // Validate file type - accept images, PDFs, Word docs, text files
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+      if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
+        showToast('Please upload a valid file (JPEG, PNG, GIF, WebP, PDF, Word, or TXT)', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('File size should be less than 10MB', 'error');
+        event.target.value = '';
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -2135,6 +2196,12 @@
           hiddenInput.value = JSON.stringify(warningFileData);
         }
         
+        // Update file name display
+        const fileNameDisplay = document.getElementById('warningFileName');
+        if (fileNameDisplay) {
+          fileNameDisplay.textContent = file.name;
+        }
+        
         showToast(`📎 File "${file.name}" uploaded successfully`, 'success');
       };
       reader.readAsDataURL(file);
@@ -2153,6 +2220,10 @@
       const fileInput = document.getElementById('w_documentFile');
       if (fileInput) {
         fileInput.value = '';
+      }
+      const fileNameDisplay = document.getElementById('warningFileName');
+      if (fileNameDisplay) {
+        fileNameDisplay.textContent = '';
       }
       showToast('File removed', 'info');
     };
@@ -2186,6 +2257,12 @@
           previewImg.style.display = 'block';
         }
         
+        // Hide placeholder
+        const placeholder = document.getElementById('s_photoPlaceholder');
+        if (placeholder) {
+          placeholder.style.display = 'none';
+        }
+        
         // Update hidden input
         const hiddenInput = document.getElementById('s_photoData');
         if (hiddenInput) {
@@ -2203,6 +2280,10 @@
       if (previewImg) {
         previewImg.src = '';
         previewImg.style.display = 'none';
+      }
+      const placeholder = document.getElementById('s_photoPlaceholder');
+      if (placeholder) {
+        placeholder.style.display = 'block';
       }
       const hiddenInput = document.getElementById('s_photoData');
       if (hiddenInput) {
@@ -2754,7 +2835,7 @@
         'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Issued By', 'Document'] },
         'suspensions': { rows: suspensionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Duration', 'Status'] },
         'expulsions': { rows: expulsionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Approved By'] },
-        'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor/Nurse', 'Complaint', 'Condition', 'Diagnosis', 'Medication', 'Follow-Up', 'Follow-Up Date'] },
+        'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor/Nurse', 'Condition', 'Complaint', 'Diagnosis', 'Medication', 'Follow-Up', 'Follow-Up Date', 'Referred To', 'Parent Contacted', 'Time Back'] },
         'prefects': { rows: prefectsCache, columns: ['Student', 'Class', 'Prefect Role', 'Department', 'Assigned Date'] },
         'teachers': { rows: teachersCache, columns: ['Name', 'Employee ID', 'Type', 'Specialization', 'Subjects', 'Classes', 'Class Teacher', 'Dorm Role', 'Dorm', 'Status'] },
         'teacherAttendance': { rows: teacherAttCache, columns: ['Date', 'Teacher', 'Type', 'Status', 'Reason', 'Lessons Today', 'Lessons/Week', 'Marked By'] },
@@ -2838,6 +2919,21 @@
             <td>${row.reason || ''}</td>
             <td>${row.issuedBy || '-'}</td>
             <td>${row.hasDocument ? '📎 Yes' : '-'}</td>
+          `;
+        } else if (tab === 'clinic') {
+          cells = `
+            <td>${formatDate(row.date)}</td>
+            <td>${row.studentName || 'Unknown'}</td>
+            <td>${row.doctor || '-'}</td>
+            <td>${row.condition || '-'}</td>
+            <td>${row.complaint || '-'}</td>
+            <td>${row.diagnosis || '-'}</td>
+            <td>${row.medication || '-'}</td>
+            <td>${row.followUp || 'No'}</td>
+            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
+            <td>${row.referredTo || 'None'}</td>
+            <td>${row.parentContacted ? '✅ Yes' : '❌ No'}</td>
+            <td>${row.timeBack || '-'}</td>
           `;
         } else {
           const columns = data.columns;
@@ -3194,6 +3290,22 @@
       }
     };
 
+    function friendlyAuthError(code) {
+      const map = {
+        'auth/invalid-email': 'Invalid email address format.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/email-already-in-use': 'This email is already registered.',
+        'auth/weak-password': 'Password must be at least 6 characters.',
+        'auth/too-many-requests': 'Too many attempts. Please try again later.',
+        'auth/invalid-credential': 'Invalid email or password.',
+        'auth/api-key-not-valid': 'API key is invalid. Check your Firebase config.',
+        'auth/network-request-failed': 'Network error. Please check your internet connection.'
+      };
+      return map[code] || `Error: ${code}`;
+    }
+
     window.handleLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -3526,6 +3638,53 @@
       ];
       sampleExpulsions.forEach(e => expulsionsCache.push({ id: `sample_exp_${Math.random().toString(36).substr(2, 6)}`, ...e }));
 
+      // Sample clinic visits with all new fields
+      const sampleClinic = [
+        { 
+          studentId: 'sample_2024-001', 
+          date: today, 
+          doctor: 'Dr. Mercy Ochieng', 
+          condition: 'New Illness', 
+          complaint: 'Severe headache and fever',
+          diagnosis: 'Malaria suspected',
+          medication: 'Artemether-Lumefantrine 20/120mg',
+          followUp: 'Yes',
+          followUpDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
+          referredTo: 'None',
+          parentContacted: true,
+          timeBack: '10:30'
+        },
+        { 
+          studentId: 'sample_2024-005', 
+          date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0], 
+          doctor: 'Nurse Jane Akinyi', 
+          condition: 'Injury', 
+          complaint: 'Sprained ankle during sports',
+          diagnosis: 'Grade 1 ankle sprain',
+          medication: 'Ibuprofen 400mg, RICE therapy',
+          followUp: 'Yes',
+          followUpDate: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
+          referredTo: 'Orthopedic',
+          parentContacted: true,
+          timeBack: '12:15'
+        },
+        { 
+          studentId: 'sample_2024-008', 
+          date: new Date(Date.now() - 5 * 86400000).toISOString().split('T')[0], 
+          doctor: 'Dr. Peter Maina', 
+          condition: 'Chronic Condition', 
+          complaint: 'Asthma attack, difficulty breathing',
+          diagnosis: 'Acute asthma exacerbation',
+          medication: 'Salbutamol inhaler, Prednisolone',
+          followUp: 'Yes',
+          followUpDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+          referredTo: 'ENT Specialist',
+          parentContacted: true,
+          timeBack: '09:45'
+        },
+      ];
+      sampleClinic.forEach(c => clinicCache.push({ id: `sample_clinic_${Math.random().toString(36).substr(2, 6)}`, ...c }));
+
       const sampleMaintenance = [
         {
           class: 'Grade 7 East',
@@ -3603,6 +3762,7 @@
       renderWarnings();
       renderSuspensions();
       renderExpulsions();
+      renderClinic();
       renderMaintenance();
       renderMaintenanceDept();
       renderRegistrations();
@@ -4155,7 +4315,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // STUDENTS - Updated with photo upload
+    // STUDENTS
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -4214,7 +4374,6 @@
       const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
       const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
 
-      // Get photo data from hidden input
       const photoData = document.getElementById('s_photoData').value || '';
 
       const data = {
@@ -4944,7 +5103,7 @@
     };
 
     // ============================================================
-    // WARNINGS - Updated with document upload
+    // WARNINGS
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
@@ -4965,7 +5124,7 @@
             <span class="upload-icon">📄</span>
             <span class="upload-text">Click or drag to upload a document</span>
             <span class="file-name" id="warningFileName">${warning?.documentName || ''}</span>
-            <input type="file" id="w_documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" onchange="handleWarningFileUpload(event)">
+            <input type="file" id="w_documentFile" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.txt" onchange="handleWarningFileUpload(event)">
             <input type="hidden" id="w_documentData" value='${warning?.documentData || ''}'>
           </div>
           <div id="warningFilePreview"></div>
@@ -4975,7 +5134,6 @@
       `;
       openModal(editId ? 'Edit Warning' : 'Issue Warning', html);
       
-      // If editing with existing document, show preview
       if (warning?.documentData) {
         setTimeout(() => {
           const previewDiv = document.getElementById('warningFilePreview');
@@ -5008,7 +5166,6 @@
       const reason = document.getElementById('w_reason').value.trim();
       const issuedBy = document.getElementById('w_issuedBy').value.trim() || currentUser?.fullName || currentUser?.email || 'unknown';
       
-      // Get document data
       let documentData = document.getElementById('w_documentData').value;
       let hasDocument = false;
       let documentName = '';
@@ -5021,7 +5178,6 @@
             documentName = parsed.name || 'document';
           }
         } catch (e) {
-          // If not JSON, it might be a data URL directly
           if (documentData.startsWith('data:')) {
             hasDocument = true;
             documentName = 'document';
@@ -5051,11 +5207,11 @@
           showToast('Warning issued'); 
         }
         closeModal();
-        // Reset file data
         warningFileData = null;
         document.getElementById('w_documentFile').value = '';
         document.getElementById('w_documentData').value = '';
         document.getElementById('warningFilePreview').innerHTML = '';
+        document.getElementById('warningFileName').textContent = '';
       } catch (err) { 
         showToast('Error: ' + err.message, 'error'); 
       }
@@ -5070,7 +5226,6 @@
         const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
         const studentClass = student?.class || '-';
         
-        // Store student info on the warning for printing
         w.studentName = studentName;
         w.class = studentClass;
         
@@ -5114,7 +5269,6 @@
         return;
       }
       
-      // Parse if it's JSON
       let dataUrl = documentData;
       let fileType = 'application/octet-stream';
       
@@ -5126,7 +5280,6 @@
           documentName = parsed.name || documentName;
         }
       } catch (e) {
-        // It's already a data URL
         if (dataUrl.startsWith('data:')) {
           const matches = dataUrl.match(/^data:([^;]+)/);
           if (matches) {
@@ -5135,14 +5288,11 @@
         }
       }
       
-      // Show preview modal
       const viewer = document.getElementById('docViewer');
       const title = document.getElementById('docPreviewTitle');
       const downloadBtn = document.getElementById('docDownloadBtn');
       
       title.textContent = `📄 ${documentName}`;
-      
-      // Store for download
       currentWarningFileId = warningId;
       
       if (dataUrl.startsWith('data:image/')) {
@@ -5199,11 +5349,9 @@
         // It's already a data URL
       }
       
-      // Create download link
       const link = document.createElement('a');
       link.href = documentData;
       
-      // Get file extension from mime type if possible
       let ext = '';
       if (documentData.startsWith('data:image/')) {
         const matches = documentData.match(/^data:image\/([^;]+)/);
@@ -5363,7 +5511,7 @@
     };
 
     // ============================================================
-    // CLINIC
+    // CLINIC - UPDATED with new fields
     // ============================================================
 
     window.showAddClinicModal = function(editId) {
@@ -5375,6 +5523,7 @@
       }
       const visit = editId ? clinicCache.find(c => c.id === editId) : null;
       const today = new Date().toISOString().split('T')[0];
+      const currentTime = new Date().toTimeString().slice(0, 5);
 
       const studentOptions = studentsCache.map(s => ({
         id: s.id,
@@ -5382,6 +5531,10 @@
         admNo: s.admNo || '',
         class: s.class || ''
       }));
+
+      const referralOptions = REFERRAL_OPTIONS.map(r => 
+        `<option value="${r}" ${visit?.referredTo === r ? 'selected' : ''}>${r}</option>`
+      ).join('');
 
       let dropdownHtml = `
         <div class="form-group">
@@ -5404,10 +5557,32 @@
         <div class="form-group"><label>Complaint *</label><textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea></div>
         <div class="form-group"><label>Diagnosis</label><textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea></div>
         <div class="form-group"><label>Treatment / Medication</label><input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg"></div>
+        
         <div class="form-grid">
-          <div class="form-group"><label>Need Follow-Up?</label><select id="c_followUp"><option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option><option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
+          <div class="form-group"><label>Follow-Up Appointment?</label><select id="c_followUp"><option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option><option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
           <div class="form-group" id="followUpDateGroup" style="display:${visit?.followUp === 'Yes' ? 'block' : 'none'}"><label>Follow-Up Date</label><input type="date" id="c_followUpDate" value="${visit?.followUpDate || ''}"></div>
         </div>
+        
+        <div class="clinic-section">
+          <h4>📋 Additional Information</h4>
+          <div class="form-grid">
+            <div class="form-group"><label>Referred To Specialist</label>
+              <select id="c_referredTo">
+                ${referralOptions}
+              </select>
+            </div>
+            <div class="form-group"><label>Time Sent Back to Class</label>
+              <div class="time-input">
+                <input type="time" id="c_timeBack" value="${visit?.timeBack || currentTime}">
+              </div>
+            </div>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="c_parentContacted" ${visit?.parentContacted ? 'checked' : ''}>
+            <label for="c_parentContacted">📞 Parent/Guardian Contacted</label>
+          </div>
+        </div>
+        
         <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
       `;
       openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
@@ -5502,13 +5677,36 @@
       const medication = document.getElementById('c_medication').value.trim();
       const followUp = document.getElementById('c_followUp').value;
       const followUpDate = document.getElementById('c_followUpDate').value;
+      const referredTo = document.getElementById('c_referredTo').value;
+      const timeBack = document.getElementById('c_timeBack').value;
+      const parentContacted = document.getElementById('c_parentContacted').checked;
 
+      // Validate all required fields are filled
       if (!studentId || !date || !doctor || !condition || !complaint) {
-        showToast('Please fill all required fields', 'error');
+        showToast('Please fill all required fields (*)', 'error');
         return;
       }
 
-      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication, followUp, followUpDate: followUp === 'Yes' ? followUpDate : '' };
+      // If follow-up is Yes, follow-up date is required
+      if (followUp === 'Yes' && !followUpDate) {
+        showToast('Please select a follow-up date', 'error');
+        return;
+      }
+
+      const data = { 
+        studentId, 
+        date, 
+        doctor, 
+        condition, 
+        complaint, 
+        diagnosis, 
+        medication, 
+        followUp, 
+        followUpDate: followUp === 'Yes' ? followUpDate : '',
+        referredTo: referredTo || 'None',
+        timeBack: timeBack || '',
+        parentContacted: parentContacted
+      };
 
       try {
         if (editId) { 
@@ -5532,24 +5730,30 @@
 
       document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
         const student = studentsCache.find(s => s.id === c.studentId);
+        const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
+        // Store student name for printing
+        c.studentName = studentName;
         return `
           <tr>
             <td>${formatDate(c.date)}</td>
-            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+            <td>${studentName}</td>
             <td>${c.doctor || '-'}</td>
-            <td>${c.complaint || '-'}</td>
             <td><span class="badge badge-info">${c.condition || '-'}</span></td>
+            <td>${c.complaint || '-'}</td>
             <td>${c.diagnosis || '-'}</td>
             <td>${c.medication || '-'}</td>
-            <td>${c.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
+            <td>${c.followUp === 'Yes' ? '📅 Yes' : '❌ No'}</td>
             <td>${c.followUp === 'Yes' ? formatDate(c.followUpDate) : '-'}</td>
+            <td>${c.referredTo && c.referredTo !== 'None' ? c.referredTo : '-'}</td>
+            <td>${c.parentContacted ? '✅ Yes' : '❌ No'}</td>
+            <td>${c.timeBack || '-'}</td>
             <td>
               ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
               ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+      }).join('') || '<tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
     };
 
     window.deleteClinic = async function(id) {
@@ -6458,17 +6662,20 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 25.0.0 - Document Upload & Photo Upload Added');
+      console.log('📚 Version 26.0.0 - Enhanced Clinic Module');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📎 Warnings now support document attachments (PDF, Images, Word, etc.)');
-      console.log('📸 Student photos can be uploaded from files');
+      console.log('📎 Warnings support document attachments (PDF, Images, Word, etc.)');
+      console.log('📸 Student photos can be uploaded from files (JPEG, PNG, GIF, WebP)');
+      console.log('🏥 CLINIC ENHANCEMENTS:');
+      console.log('   ✅ All fields required before saving');
+      console.log('   ✅ Follow-up appointment tracking');
+      console.log('   ✅ Specialist referral tracking (Dentist, Eye Specialist, etc.)');
+      console.log('   ✅ Parent/Guardian contact status');
+      console.log('   ✅ Time sent back to class');
       console.log('📈 Pass Mark: C (50% and above)');
       console.log('⭐ Prefects auto-populated from student records');
-      console.log('💰 Sponsorships auto-populated from student records');
       console.log('👤 Click View on any student to see full profile with photo');
-      console.log('🖨️ Student profile includes photo in printable report');
-      console.log('🏥 Doctors, Nurses, HRIO, Radiographers can manage clinic visits');
       console.log('🔍 Searchable student dropdowns added for Grades and Clinic visits');
     });
   </script>
