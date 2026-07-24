@@ -951,7 +951,7 @@
           </div>
         </div>
 
-        <!-- SPONSORSHIP -->
+        <!-- SPONSORSHIP - Updated to auto-populate from student records -->
         <div class="tab-content" id="tab-sponsorship">
           <div class="card">
             <div class="card-header">
@@ -2786,23 +2786,23 @@
     };
 
     // ============================================================
-    // LOAD SAMPLE DATA - Updated with new subjects and more prefects
+    // LOAD SAMPLE DATA - Updated with new subjects, prefects, and sponsorships
     // ============================================================
 
     window.loadSampleData = function() {
       const sampleStudents = [
-        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics' },
-        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline' },
-        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports' },
-        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect' },
-        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation' },
-        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect' },
-        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Dining Hall' },
-        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Dormitory/Boarding' },
-        { admNo: '2024-009', firstName: 'James', lastName: 'Odhiambo', class: 'Form 4 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Environment' },
-        { admNo: '2024-010', firstName: 'Grace', lastName: 'Akinyi', class: 'Form 4 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual' },
-        { admNo: '2024-011', firstName: 'Robert', lastName: 'Kiprop', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'No', prefectRole: '', prefectDepartment: '' },
-        { admNo: '2024-012', firstName: 'Faith', lastName: 'Chepchumba', class: 'Form 4 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Government', isPrefect: 'No', prefectRole: '', prefectDepartment: '' },
+        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics' },
+        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Smith Foundation', sponsorContact: 'info@smithfoundation.org', sponsorNotes: 'Full scholarship for 2024', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline' },
+        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports' },
+        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', sponsorName: 'World Vision Kenya', sponsorContact: '+254 700 123456', sponsorNotes: 'Partial sponsorship - covers fees only', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect' },
+        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: 'Full government sponsorship', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation' },
+        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect' },
+        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Dining Hall' },
+        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Equity Foundation', sponsorContact: '+254 722 987654', sponsorNotes: 'Wings to Fly Program', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Dormitory/Boarding' },
+        { admNo: '2024-009', firstName: 'James', lastName: 'Odhiambo', class: 'Form 4 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Environment' },
+        { admNo: '2024-010', firstName: 'Grace', lastName: 'Akinyi', class: 'Form 4 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', sponsorName: 'Compassion International', sponsorContact: '+254 733 456789', sponsorNotes: 'Full sponsorship including boarding', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual' },
+        { admNo: '2024-011', firstName: 'Robert', lastName: 'Kiprop', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: '50% government sponsorship', isPrefect: 'No', prefectRole: '', prefectDepartment: '' },
+        { admNo: '2024-012', firstName: 'Faith', lastName: 'Chepchumba', class: 'Form 4 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'No', prefectRole: '', prefectDepartment: '' },
       ];
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
@@ -2962,7 +2962,7 @@
       
       renderDashboard();
       renderStudents();
-      renderSponsorship();
+      renderSponsorship(); // Now auto-populated from student data
       renderGrades();
       renderAttendance();
       renderPrefects();
@@ -3502,7 +3502,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // STUDENTS - UPDATED: Secretary can manage
+    // STUDENTS - Full CRUD with Teacher Permissions
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -3527,6 +3527,7 @@
           <div class="form-group"><label>Sponsorship Type</label><select id="s_sponsorshipType"><option value="Self Sponsored" ${student?.sponsorshipType === 'Self Sponsored' ? 'selected' : ''}>Self Sponsored</option><option value="Organization" ${student?.sponsorshipType === 'Organization' ? 'selected' : ''}>Organization</option><option value="Government" ${student?.sponsorshipType === 'Government' ? 'selected' : ''}>Government</option><option value="NGO" ${student?.sponsorshipType === 'NGO' ? 'selected' : ''}>NGO</option><option value="Other" ${student?.sponsorshipType === 'Other' ? 'selected' : ''}>Other</option></select></div>
           <div class="form-group"><label>Sponsor Name</label><input type="text" id="s_sponsorName" value="${student?.sponsorName || ''}" placeholder="e.g., The Smith Foundation"></div>
           <div class="form-group"><label>Sponsor Contact</label><input type="text" id="s_sponsorContact" value="${student?.sponsorContact || ''}" placeholder="Phone or Email"></div>
+          <div class="form-group"><label>Sponsor Notes</label><input type="text" id="s_sponsorNotes" value="${student?.sponsorNotes || ''}" placeholder="e.g., Full scholarship"></div>
           <div class="form-group"><label>Parent/Guardian Name</label><input type="text" id="s_parent" value="${student?.parent || ''}"></div>
           <div class="form-group"><label>Parent Phone</label><input type="text" id="s_parentPhone" value="${student?.parentPhone || ''}"></div>
           <div class="form-group"><label>Parent Email</label><input type="email" id="s_parentEmail" value="${student?.parentEmail || ''}"></div>
@@ -3562,6 +3563,7 @@
         sponsorshipType: document.getElementById('s_sponsorshipType').value,
         sponsorName: document.getElementById('s_sponsorName').value,
         sponsorContact: document.getElementById('s_sponsorContact').value,
+        sponsorNotes: document.getElementById('s_sponsorNotes').value,
         parent: document.getElementById('s_parent').value,
         parentPhone: document.getElementById('s_parentPhone').value,
         parentEmail: document.getElementById('s_parentEmail').value,
@@ -3693,7 +3695,107 @@
     };
 
     // ============================================================
-    // GRADES - UPDATED: Secretary can manage
+    // SPONSORSHIP - AUTO-POPULATED FROM STUDENT RECORDS
+    // ============================================================
+
+    window.renderSponsorship = function() {
+      // Get all students with sponsorship (not Self Sponsored)
+      const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
+      
+      document.getElementById('sponsorshipTableBody').innerHTML = sponsored.map(s => {
+        // Get sponsor type badge color
+        const typeColors = {
+          'Organization': 'badge-primary',
+          'Government': 'badge-success',
+          'NGO': 'badge-warning',
+          'Other': 'badge-info'
+        };
+        const badgeClass = typeColors[s.sponsorshipType] || 'badge-info';
+        
+        return `
+          <tr>
+            <td><strong>${s.firstName} ${s.lastName}</strong></td>
+            <td>${s.class}</td>
+            <td><span class="badge ${badgeClass}">${s.sponsorshipType}</span></td>
+            <td>${s.sponsorName || '-'}</td>
+            <td>${s.sponsorContact || '-'}</td>
+            <td>${s.sponsorNotes || '-'}</td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found. Mark students as sponsored in their records.</td></tr>';
+    };
+
+    window.showEditSponsorshipModal = function() {
+      if (!canEdit('sponsorship')) {
+        showToast('You do not have permission to edit sponsorships', 'error');
+        return;
+      }
+      
+      const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
+      if (!sponsored.length) {
+        showToast('No sponsored students to edit', 'warning');
+        return;
+      }
+
+      let html = `
+        <p style="color:#666;margin-bottom:10px;">Select a student to edit their sponsorship details:</p>
+        <div class="form-group">
+          <label>Select Student</label>
+          <select id="sponsorStudentSelect" onchange="loadSponsorshipData()">
+            <option value="">Select a student...</option>
+            ${sponsored.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+          </select>
+        </div>
+        <div id="sponsorEditForm" style="display:none;">
+          <div class="form-grid">
+            <div class="form-group"><label>Sponsor Type</label><select id="sp_editType"><option value="Organization">Organization</option><option value="Government">Government</option><option value="NGO">NGO</option><option value="Other">Other</option></select></div>
+            <div class="form-group"><label>Sponsor Name</label><input type="text" id="sp_editName" placeholder="Sponsor name"></div>
+            <div class="form-group"><label>Sponsor Contact</label><input type="text" id="sp_editContact" placeholder="Phone or Email"></div>
+          </div>
+          <div class="form-group"><label>Notes</label><textarea id="sp_editNotes" rows="2"></textarea></div>
+          <button class="btn btn-success" onclick="saveSponsorshipEdit()" style="width:100%;margin-top:10px;">💾 Save Changes</button>
+        </div>
+      `;
+      openModal('✏️ Edit Sponsorship', html);
+    };
+
+    window.loadSponsorshipData = function() {
+      const studentId = document.getElementById('sponsorStudentSelect').value;
+      const form = document.getElementById('sponsorEditForm');
+      if (!studentId) { form.style.display = 'none'; return; }
+      
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) { form.style.display = 'none'; return; }
+      
+      form.style.display = 'block';
+      document.getElementById('sp_editType').value = student.sponsorshipType || 'Organization';
+      document.getElementById('sp_editName').value = student.sponsorName || '';
+      document.getElementById('sp_editContact').value = student.sponsorContact || '';
+      document.getElementById('sp_editNotes').value = student.sponsorNotes || '';
+    };
+
+    window.saveSponsorshipEdit = async function() {
+      const studentId = document.getElementById('sponsorStudentSelect').value;
+      if (!studentId) { showToast('Please select a student', 'error'); return; }
+      
+      const data = {
+        sponsorshipType: document.getElementById('sp_editType').value,
+        sponsorName: document.getElementById('sp_editName').value.trim(),
+        sponsorContact: document.getElementById('sp_editContact').value.trim(),
+        sponsorNotes: document.getElementById('sp_editNotes').value.trim()
+      };
+      
+      try {
+        await updateDoc(doc(db, 'students', studentId), data);
+        showToast('✅ Sponsorship updated successfully!');
+        closeModal();
+      } catch (err) {
+        showToast('❌ Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // GRADES - Secretary can manage
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -5116,12 +5218,13 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 22.0.0 - Secretary Permissions Added');
+      console.log('📚 Version 23.0.0 - Auto-Populated Sponsorships & Prefects');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
       console.log('📝 New Subjects: Literature, Home Science, Art & Craft, CSL');
       console.log('📐 Core Maths (replaced Cose Maths)');
       console.log('⭐ Prefects auto-populated from student records');
+      console.log('💰 Sponsorships auto-populated from student records');
       console.log('👔 Principal can manage Warnings, Suspensions, and Expulsions');
       console.log('📋 Secretary can Add, Edit, and Delete Students and Grades');
       console.log('👩‍🏫 Teachers can Add, Edit, and Delete Student Data');
