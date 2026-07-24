@@ -8,6 +8,9 @@
   <!-- Chart.js for analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   
+  <!-- html2canvas for page sharing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -238,75 +241,6 @@
       height: 100%;
       opacity: 0;
       cursor: pointer;
-    }
-
-    .upload-progress {
-      width: 100%;
-      height: 4px;
-      background: #e9ecef;
-      border-radius: 2px;
-      margin-top: 8px;
-      overflow: hidden;
-      display: none;
-    }
-
-    .upload-progress .progress-bar {
-      height: 100%;
-      background: var(--primary-light);
-      width: 0%;
-      transition: width 0.3s;
-      border-radius: 2px;
-    }
-
-    .upload-progress.active {
-      display: block;
-    }
-
-    /* Clinic styles */
-    .clinic-section {
-      margin: 15px 0;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border-left: 4px solid #2ecc71;
-    }
-
-    .clinic-section h4 {
-      margin: 0 0 10px 0;
-      color: var(--primary);
-      font-size: 0.95em;
-    }
-
-    .clinic-section .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 8px 0;
-    }
-
-    .clinic-section .checkbox-group input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-
-    .clinic-section .checkbox-group label {
-      font-weight: 500;
-      color: var(--dark);
-      cursor: pointer;
-    }
-
-    .clinic-section .time-input {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .clinic-section .time-input input[type="time"] {
-      padding: 6px 10px;
-      border: 2px solid #ddd;
-      border-radius: 6px;
-      font-size: 0.9em;
     }
 
     .warning-document-link {
@@ -1188,32 +1122,6 @@
     .profile-section table { font-size: 0.8em; }
     .profile-section table th { padding: 6px 10px; font-size: 0.75em; }
     .profile-section table td { padding: 5px 10px; font-size: 0.8em; }
-
-    /* Upload progress styles */
-    .upload-progress-container {
-      width: 100%;
-      margin-top: 8px;
-    }
-    .upload-progress-container .progress-bar {
-      width: 100%;
-      height: 6px;
-      background: #e9ecef;
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .upload-progress-container .progress-bar .progress-fill {
-      height: 100%;
-      background: var(--primary-light);
-      width: 0%;
-      transition: width 0.3s ease;
-      border-radius: 3px;
-    }
-    .upload-progress-container .progress-text {
-      font-size: 0.75em;
-      color: var(--gray);
-      margin-top: 4px;
-      text-align: center;
-    }
   </style>
 </head>
 <body>
@@ -1475,7 +1383,7 @@
           </div>
         </div>
 
-        <!-- WARNINGS -->
+        <!-- WARNINGS - Updated with document upload -->
         <div class="tab-content" id="tab-warnings">
           <div class="card">
             <div class="card-header">
@@ -1542,7 +1450,7 @@
             </div>
             <div class="table-container">
               <table id="clinicTable">
-                <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Condition</th><th>Complaint</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Referred To</th><th>Parent Contacted</th><th>Time Back</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Complaint</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Actions</th></tr></thead>
                 <tbody id="clinicTableBody"></tbody></table>
             </div>
           </div>
@@ -1928,9 +1836,6 @@
       getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
       getDoc, getDocs, onSnapshot, serverTimestamp, query, where, orderBy
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import {
-      getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDH5MhXMp5WCXLdBtsNaVz1bPs13DrOkFw",
@@ -1944,13 +1849,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
     const secondaryApp = initializeApp(firebaseConfig, "Secondary");
     const secondaryAuth = getAuth(secondaryApp);
-
-    // ============================================================
-    // CONSTANTS
-    // ============================================================
 
     const CLASSES = [
       'Grade 7 East', 'Grade 7 West', 'Grade 8 East', 'Grade 8 West',
@@ -1977,7 +1877,7 @@
     ];
 
     const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director', 'hrio', 'nutritionist', 'labtech', 'radiographer', 'maintenance'];
-    const CONDITIONS = ['New Illness', 'Pre-existing Condition', 'Injury', 'Chronic Condition'];
+    const CONDITIONS = ['New Illness', 'Pre-existing Condition'];
     const PREFECT_DEPARTMENTS = [
       'Academics', 'Discipline', 'Games & Sports', 'Entertainment',
       'Health & Sanitation', 'Dining Hall', 'Dormitory/Boarding',
@@ -1997,7 +1897,6 @@
 
     const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
-    const REFERRAL_OPTIONS = ['None', 'Dentist', 'Eye Specialist', 'Orthopedic', 'Dermatologist', 'ENT Specialist', 'Psychologist', 'Nutritionist', 'Other'];
 
     const KENYAN_GRADES = [
       { grade: 'A', min: 80, max: 100, class: 'badge-grade-a', label: 'A' },
@@ -2014,10 +1913,6 @@
       { grade: 'E', min: 0, max: 29, class: 'badge-grade-e', label: 'E' }
     ];
 
-    // ============================================================
-    // STATE
-    // ============================================================
-
     let currentUser = null;
     let activeTab = 'dashboard';
     let unsubscribers = [];
@@ -2031,9 +1926,12 @@
     let maintenanceCache = [];
     let pendingRegistrationsCache = [];
 
-    // Upload state
-    let pendingUploads = {};
+    // Store uploaded file data for warnings
+    let warningFileData = null;
     let currentWarningFileId = null;
+
+    // Store student photo data
+    let studentPhotoData = null;
 
     // Student filter state
     let studentFilter = {
@@ -2043,13 +1941,14 @@
     };
 
     // ============================================================
-    // HELPER FUNCTIONS
+    // 🏆 KENYAN GRADING SYSTEM - Pass mark is C (50%) and above
     // ============================================================
 
     function getKenyanGrade(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return null;
       }
+      
       const percentage = Math.round(score);
       for (const grade of KENYAN_GRADES) {
         if (percentage >= grade.min && percentage <= grade.max) {
@@ -2065,13 +1964,16 @@
       const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '' && !isNaN(grade.test2);
       const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '' && !isNaN(grade.test3);
       const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '' && !isNaN(grade.exam);
-      return hasTest1 || hasTest2 || hasTest3 || hasExam;
+      
+      const hasAnyScore = hasTest1 || hasTest2 || hasTest3 || hasExam;
+      return hasAnyScore;
     }
 
     function getGradeBadge(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return `<span class="badge badge-na">N/A</span>`;
       }
+      
       const grade = getKenyanGrade(score, hasScores);
       if (!grade) {
         return `<span class="badge badge-na">N/A</span>`;
@@ -2084,6 +1986,29 @@
         return false;
       }
       return score >= 50;
+    }
+
+    function getGradeColor(score, hasScores = true) {
+      if (!hasScores || score === undefined || score === null || isNaN(score)) {
+        return '#95a5a6';
+      }
+      const grade = getKenyanGrade(score, hasScores);
+      if (!grade) return '#95a5a6';
+      const colors = {
+        'A': '#27ae60',
+        'A-': '#2ecc71',
+        'B+': '#85c1e9',
+        'B': '#5dade2',
+        'B-': '#a9cce3',
+        'C+': '#f5b041',
+        'C': '#f39c12',
+        'C-': '#f7dc6f',
+        'D+': '#e67e22',
+        'D': '#d35400',
+        'D-': '#f5b7b1',
+        'E': '#e74c3c'
+      };
+      return colors[grade.grade] || '#95a5a6';
     }
 
     function formatDate(dateStr) {
@@ -2144,6 +2069,10 @@
       }
     }
 
+    // ============================================================
+    // FILE UPLOAD HELPERS
+    // ============================================================
+
     function formatFileSize(bytes) {
       if (bytes < 1024) return bytes + ' B';
       if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -2151,190 +2080,37 @@
     }
 
     function getFileIcon(mimeType) {
-      if (mimeType && mimeType.startsWith('image/')) return '🖼️';
+      if (mimeType.startsWith('image/')) return '🖼️';
       if (mimeType === 'application/pdf') return '📄';
-      if (mimeType && (mimeType.includes('word') || mimeType.includes('document'))) return '📝';
-      if (mimeType && (mimeType.includes('excel') || mimeType.includes('spreadsheet'))) return '📊';
-      if (mimeType && mimeType.includes('text')) return '📃';
+      if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+      if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
+      if (mimeType.includes('text')) return '📃';
       return '📎';
     }
 
+    function getFileExtension(filename) {
+      return filename.split('.').pop().toLowerCase();
+    }
+
     function isImageFile(mimeType) {
-      return mimeType && mimeType.startsWith('image/');
+      return mimeType.startsWith('image/');
     }
-
-    // ============================================================
-    // 🔥 FIREBASE STORAGE UPLOAD FUNCTIONS
-    // ============================================================
-
-    /**
-     * Upload a file to Firebase Storage with progress tracking
-     * @param {File} file - The file to upload
-     * @param {string} path - Storage path (e.g., 'students/photos/studentId.jpg')
-     * @param {Function} onProgress - Callback for progress updates (0-100)
-     * @returns {Promise<string>} - Download URL of the uploaded file
-     */
-    async function uploadFileToStorage(file, path, onProgress = null) {
-      if (!file) throw new Error('No file provided');
-      
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('File size exceeds 10MB limit');
-      }
-
-      // Validate file type - allow images and common document types
-      const allowedTypes = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml',
-        'application/pdf', 'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
-      ];
-      
-      const isImage = file.type.startsWith('image/');
-      if (!isImage && !allowedTypes.includes(file.type)) {
-        throw new Error('Unsupported file type. Please upload an image, PDF, Word, or text file.');
-      }
-
-      const storageRef = ref(storage, path);
-      
-      return new Promise((resolve, reject) => {
-        const uploadTask = uploadBytesResumable(storageRef, file);
-        
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-            if (onProgress) onProgress(progress);
-          },
-          (error) => {
-            reject(error);
-          },
-          async () => {
-            try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            } catch (error) {
-              reject(error);
-            }
-          }
-        );
-      });
-    }
-
-    /**
-     * Delete a file from Firebase Storage
-     * @param {string} path - Storage path to delete
-     */
-    async function deleteFileFromStorage(path) {
-      if (!path) return;
-      try {
-        const storageRef = ref(storage, path);
-        await deleteObject(storageRef);
-      } catch (error) {
-        console.warn('Error deleting file:', error);
-      }
-    }
-
-    /**
-     * Generate a unique storage path for a file
-     */
-    function generateStoragePath(collection, id, filename) {
-      const timestamp = Date.now();
-      const extension = filename.split('.').pop() || 'jpg';
-      return `${collection}/${id}_${timestamp}.${extension}`;
-    }
-
-    // ============================================================
-    // STUDENT PHOTO UPLOAD
-    // ============================================================
-
-    let studentPhotoFile = null;
-    let studentPhotoPreview = null;
-
-    function handleStudentPhotoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        showToast('Please select an image file', 'error');
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Image size should be less than 5MB', 'error');
-        return;
-      }
-
-      studentPhotoFile = file;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        studentPhotoPreview = e.target.result;
-        
-        const previewImg = document.getElementById('s_photoPreview');
-        if (previewImg) {
-          previewImg.src = e.target.result;
-          previewImg.style.display = 'block';
-        }
-        
-        const placeholder = document.getElementById('s_photoPlaceholder');
-        if (placeholder) {
-          placeholder.style.display = 'none';
-        }
-        
-        showToast('📸 Photo selected. It will be uploaded when you save the student.', 'success');
-      };
-      reader.readAsDataURL(file);
-    }
-
-    window.removeStudentPhoto = function() {
-      studentPhotoFile = null;
-      studentPhotoPreview = null;
-      const previewImg = document.getElementById('s_photoPreview');
-      if (previewImg) {
-        previewImg.src = '';
-        previewImg.style.display = 'none';
-      }
-      const placeholder = document.getElementById('s_photoPlaceholder');
-      if (placeholder) {
-        placeholder.style.display = 'block';
-      }
-      const fileInput = document.getElementById('s_photoFile');
-      if (fileInput) {
-        fileInput.value = '';
-      }
-      showToast('Photo removed', 'info');
-    };
-
-    // ============================================================
-    // WARNING DOCUMENT UPLOAD
-    // ============================================================
-
-    let warningFile = null;
-    let warningFilePreview = null;
 
     function handleWarningFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-      if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
-        showToast('Please upload a valid file (JPEG, PNG, GIF, WebP, PDF, Word, or TXT)', 'error');
-        event.target.value = '';
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        showToast('File size should be less than 10MB', 'error');
-        event.target.value = '';
-        return;
-      }
-
-      warningFile = file;
-      
       const reader = new FileReader();
       reader.onload = function(e) {
-        warningFilePreview = e.target.result;
+        warningFileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: e.target.result,
+          lastModified: file.lastModified
+        };
         
+        // Show preview
         const previewDiv = document.getElementById('warningFilePreview');
         if (previewDiv) {
           const icon = getFileIcon(file.type);
@@ -2353,36 +2129,94 @@
           `;
         }
         
-        const fileNameDisplay = document.getElementById('warningFileName');
-        if (fileNameDisplay) {
-          fileNameDisplay.textContent = file.name;
+        // Update hidden input
+        const hiddenInput = document.getElementById('w_documentData');
+        if (hiddenInput) {
+          hiddenInput.value = JSON.stringify(warningFileData);
         }
         
-        showToast(`📎 File "${file.name}" selected. It will be uploaded when you save.`, 'success');
+        showToast(`📎 File "${file.name}" uploaded successfully`, 'success');
       };
       reader.readAsDataURL(file);
     }
 
     window.removeWarningFile = function() {
-      warningFile = null;
-      warningFilePreview = null;
+      warningFileData = null;
       const previewDiv = document.getElementById('warningFilePreview');
       if (previewDiv) {
         previewDiv.innerHTML = '';
+      }
+      const hiddenInput = document.getElementById('w_documentData');
+      if (hiddenInput) {
+        hiddenInput.value = '';
       }
       const fileInput = document.getElementById('w_documentFile');
       if (fileInput) {
         fileInput.value = '';
       }
-      const fileNameDisplay = document.getElementById('warningFileName');
-      if (fileNameDisplay) {
-        fileNameDisplay.textContent = '';
-      }
       showToast('File removed', 'info');
     };
 
     // ============================================================
-    // SHOW STUDENT PROFILE
+    // STUDENT PHOTO UPLOAD
+    // ============================================================
+
+    function handleStudentPhotoUpload(event, studentId = null) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file', 'error');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image size should be less than 5MB', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        studentPhotoData = e.target.result;
+        
+        // Update the photo preview
+        const previewImg = document.getElementById('s_photoPreview');
+        if (previewImg) {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+        }
+        
+        // Update hidden input
+        const hiddenInput = document.getElementById('s_photoData');
+        if (hiddenInput) {
+          hiddenInput.value = e.target.result;
+        }
+        
+        showToast('📸 Photo uploaded successfully', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.removeStudentPhoto = function() {
+      studentPhotoData = null;
+      const previewImg = document.getElementById('s_photoPreview');
+      if (previewImg) {
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+      }
+      const hiddenInput = document.getElementById('s_photoData');
+      if (hiddenInput) {
+        hiddenInput.value = '';
+      }
+      const fileInput = document.getElementById('s_photoFile');
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      showToast('Photo removed', 'info');
+    };
+
+    // ============================================================
+    // STUDENT PROFILE MODAL
     // ============================================================
 
     window.showStudentProfile = function(studentId) {
@@ -2618,6 +2452,7 @@
           const ctx = canvas.getContext('2d');
           const subjects = validGrades.map(g => g.subject);
           const scores = validGrades.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+          const colors = scores.map(s => getGradeColor(s, true));
           
           new Chart(ctx, {
             type: 'bar',
@@ -2625,7 +2460,7 @@
               labels: subjects,
               datasets: [{
                 data: scores,
-                backgroundColor: '#3498db',
+                backgroundColor: colors,
                 borderRadius: 4
               }]
             },
@@ -2654,7 +2489,7 @@
     };
 
     // ============================================================
-    // PRINT STUDENT PROFILE
+    // PRINT STUDENT PROFILE WITH PHOTO
     // ============================================================
 
     window.printStudentProfile = function(studentId) {
@@ -2919,7 +2754,7 @@
         'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Issued By', 'Document'] },
         'suspensions': { rows: suspensionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Duration', 'Status'] },
         'expulsions': { rows: expulsionsCache, columns: ['Date', 'Student', 'Class', 'Reason', 'Approved By'] },
-        'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor/Nurse', 'Condition', 'Complaint', 'Diagnosis', 'Medication', 'Follow-Up', 'Follow-Up Date', 'Referred To', 'Parent Contacted', 'Time Back'] },
+        'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor/Nurse', 'Complaint', 'Condition', 'Diagnosis', 'Medication', 'Follow-Up', 'Follow-Up Date'] },
         'prefects': { rows: prefectsCache, columns: ['Student', 'Class', 'Prefect Role', 'Department', 'Assigned Date'] },
         'teachers': { rows: teachersCache, columns: ['Name', 'Employee ID', 'Type', 'Specialization', 'Subjects', 'Classes', 'Class Teacher', 'Dorm Role', 'Dorm', 'Status'] },
         'teacherAttendance': { rows: teacherAttCache, columns: ['Date', 'Teacher', 'Type', 'Status', 'Reason', 'Lessons Today', 'Lessons/Week', 'Marked By'] },
@@ -3003,21 +2838,6 @@
             <td>${row.reason || ''}</td>
             <td>${row.issuedBy || '-'}</td>
             <td>${row.hasDocument ? '📎 Yes' : '-'}</td>
-          `;
-        } else if (tab === 'clinic') {
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${row.studentName || 'Unknown'}</td>
-            <td>${row.doctor || '-'}</td>
-            <td>${row.condition || '-'}</td>
-            <td>${row.complaint || '-'}</td>
-            <td>${row.diagnosis || '-'}</td>
-            <td>${row.medication || '-'}</td>
-            <td>${row.followUp || 'No'}</td>
-            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
-            <td>${row.referredTo || 'None'}</td>
-            <td>${row.parentContacted ? '✅ Yes' : '❌ No'}</td>
-            <td>${row.timeBack || '-'}</td>
           `;
         } else {
           const columns = data.columns;
@@ -3374,22 +3194,6 @@
       }
     };
 
-    function friendlyAuthError(code) {
-      const map = {
-        'auth/invalid-email': 'Invalid email address format.',
-        'auth/user-disabled': 'This account has been disabled.',
-        'auth/user-not-found': 'No account found with this email.',
-        'auth/wrong-password': 'Incorrect password.',
-        'auth/email-already-in-use': 'This email is already registered.',
-        'auth/weak-password': 'Password must be at least 6 characters.',
-        'auth/too-many-requests': 'Too many attempts. Please try again later.',
-        'auth/invalid-credential': 'Invalid email or password.',
-        'auth/api-key-not-valid': 'API key is invalid. Check your Firebase config.',
-        'auth/network-request-failed': 'Network error. Please check your internet connection.'
-      };
-      return map[code] || `Error: ${code}`;
-    }
-
     window.handleLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -3722,52 +3526,6 @@
       ];
       sampleExpulsions.forEach(e => expulsionsCache.push({ id: `sample_exp_${Math.random().toString(36).substr(2, 6)}`, ...e }));
 
-      const sampleClinic = [
-        { 
-          studentId: 'sample_2024-001', 
-          date: today, 
-          doctor: 'Dr. Mercy Ochieng', 
-          condition: 'New Illness', 
-          complaint: 'Severe headache and fever',
-          diagnosis: 'Malaria suspected',
-          medication: 'Artemether-Lumefantrine 20/120mg',
-          followUp: 'Yes',
-          followUpDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
-          referredTo: 'None',
-          parentContacted: true,
-          timeBack: '10:30'
-        },
-        { 
-          studentId: 'sample_2024-005', 
-          date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0], 
-          doctor: 'Nurse Jane Akinyi', 
-          condition: 'Injury', 
-          complaint: 'Sprained ankle during sports',
-          diagnosis: 'Grade 1 ankle sprain',
-          medication: 'Ibuprofen 400mg, RICE therapy',
-          followUp: 'Yes',
-          followUpDate: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
-          referredTo: 'Orthopedic',
-          parentContacted: true,
-          timeBack: '12:15'
-        },
-        { 
-          studentId: 'sample_2024-008', 
-          date: new Date(Date.now() - 5 * 86400000).toISOString().split('T')[0], 
-          doctor: 'Dr. Peter Maina', 
-          condition: 'Chronic Condition', 
-          complaint: 'Asthma attack, difficulty breathing',
-          diagnosis: 'Acute asthma exacerbation',
-          medication: 'Salbutamol inhaler, Prednisolone',
-          followUp: 'Yes',
-          followUpDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-          referredTo: 'ENT Specialist',
-          parentContacted: true,
-          timeBack: '09:45'
-        },
-      ];
-      sampleClinic.forEach(c => clinicCache.push({ id: `sample_clinic_${Math.random().toString(36).substr(2, 6)}`, ...c }));
-
       const sampleMaintenance = [
         {
           class: 'Grade 7 East',
@@ -3845,7 +3603,6 @@
       renderWarnings();
       renderSuspensions();
       renderExpulsions();
-      renderClinic();
       renderMaintenance();
       renderMaintenanceDept();
       renderRegistrations();
@@ -4357,23 +4114,7 @@
       
       const gradeLabels = KENYAN_GRADES.map(g => g.grade);
       const gradeData = KENYAN_GRADES.map(g => gradeDist[g.grade] || 0);
-      const gradeColors = KENYAN_GRADES.map(g => {
-        const colors = {
-          'A': '#27ae60',
-          'A-': '#2ecc71',
-          'B+': '#85c1e9',
-          'B': '#5dade2',
-          'B-': '#a9cce3',
-          'C+': '#f5b041',
-          'C': '#f39c12',
-          'C-': '#f7dc6f',
-          'D+': '#e67e22',
-          'D': '#d35400',
-          'D-': '#f5b7b1',
-          'E': '#e74c3c'
-        };
-        return colors[g.grade] || '#95a5a6';
-      });
+      const gradeColors = KENYAN_GRADES.map(g => getGradeColor(g.grade, true));
       
       destroyChart('dashGradeChart');
       chartInstances['dashGradeChart'] = new Chart(document.getElementById('dashGradeChart'), {
@@ -4414,7 +4155,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // STUDENTS - WITH PHOTO UPLOAD TO STORAGE
+    // STUDENTS - Updated with photo upload
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -4430,9 +4171,10 @@
               <span class="photo-placeholder" id="s_photoPlaceholder" style="display:${student?.photoUrl ? 'none' : 'block'};">📸</span>
               <div class="photo-overlay">Click to upload photo</div>
               <input type="file" id="s_photoFile" accept="image/*" onchange="handleStudentPhotoUpload(event)">
+              <input type="hidden" id="s_photoData" value="${student?.photoUrl || ''}">
             </div>
             <div style="margin-top:5px;font-size:0.8em;color:var(--gray);">
-              ${student?.photoUrl ? `<button class="btn btn-danger btn-sm" onclick="removeStudentPhoto()">🗑️ Remove Photo</button>` : 'Upload student photo (JPEG, PNG, GIF, WebP)'}
+              ${student?.photoUrl ? `<button class="btn btn-danger btn-sm" onclick="removeStudentPhoto()">🗑️ Remove Photo</button>` : 'Upload student photo (JPEG, PNG)'}
             </div>
           </div>
           <div class="form-group"><label>Admission Number *</label><input type="text" id="s_admNo" value="${student?.admNo || ''}" placeholder="e.g., 2024-001"></div>
@@ -4457,19 +4199,9 @@
           <div class="form-group" style="grid-column:1/-1;"><label>Health History</label><textarea id="s_health" rows="2">${student?.health || ''}</textarea></div>
           <div class="form-group" style="grid-column:1/-1;"><label>Notes</label><textarea id="s_notes" rows="2">${student?.notes || ''}</textarea></div>
         </div>
-        <div id="uploadProgress" class="upload-progress-container" style="display:none;">
-          <div class="progress-bar"><div class="progress-fill" id="uploadProgressFill" style="width:0%;"></div></div>
-          <div class="progress-text" id="uploadProgressText">Uploading...</div>
-        </div>
         <button class="btn btn-success" onclick="saveStudent('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Student</button>
       `;
       openModal(editId ? 'Edit Student' : 'Add New Student', html);
-      
-      // Reset photo state
-      studentPhotoFile = null;
-      if (!student?.photoUrl) {
-        studentPhotoPreview = null;
-      }
     };
 
     window.saveStudent = async function(editId) {
@@ -4482,7 +4214,9 @@
       const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
       const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
 
-      // Prepare data object
+      // Get photo data from hidden input
+      const photoData = document.getElementById('s_photoData').value || '';
+
       const data = {
         admNo, firstName, lastName,
         class: document.getElementById('s_class').value,
@@ -4491,6 +4225,7 @@
         status: document.getElementById('s_status').value,
         location: document.getElementById('s_location').value,
         dorm: document.getElementById('s_dorm').value || '',
+        photoUrl: photoData || document.getElementById('s_photoUrl')?.value || '',
         isPrefect: isPrefect,
         prefectRole: prefectRole,
         prefectDepartment: prefectDepartment,
@@ -4506,80 +4241,49 @@
       };
 
       try {
-        // Show progress
-        const progressContainer = document.getElementById('uploadProgress');
-        const progressFill = document.getElementById('uploadProgressFill');
-        const progressText = document.getElementById('uploadProgressText');
-        if (progressContainer) progressContainer.style.display = 'block';
-
-        // Handle photo upload if a new photo was selected
-        let photoUrl = '';
-        if (studentPhotoFile) {
-          const path = generateStoragePath('student_photos', editId || admNo, studentPhotoFile.name);
-          progressText.textContent = 'Uploading photo...';
-          photoUrl = await uploadFileToStorage(studentPhotoFile, path, (progress) => {
-            progressFill.style.width = progress + '%';
-            progressText.textContent = `Uploading photo... ${progress}%`;
-          });
-          data.photoUrl = photoUrl;
-        } else if (document.getElementById('s_photoPreview')?.src) {
-          // Keep existing photo URL if not changed
-          const existingStudent = studentsCache.find(s => s.id === editId);
-          if (existingStudent?.photoUrl) {
-            data.photoUrl = existingStudent.photoUrl;
-          }
-        }
-
-        progressFill.style.width = '100%';
-        progressText.textContent = 'Saving student record...';
-
-        let studentId = editId;
         if (editId) {
           await updateDoc(doc(db, 'students', editId), data);
+          if (isPrefect === 'Yes') {
+            const existingPref = prefectsCache.find(p => p.studentId === editId);
+            if (existingPref) {
+              await updateDoc(doc(db, 'prefects', existingPref.id), {
+                role: prefectRole,
+                department: prefectDepartment,
+                date: new Date().toISOString().split('T')[0]
+              });
+            } else {
+              await addDoc(collection(db, 'prefects'), {
+                studentId: editId,
+                role: prefectRole,
+                department: prefectDepartment,
+                date: new Date().toISOString().split('T')[0],
+                notes: 'Added from student record'
+              });
+            }
+          } else {
+            const existingPref = prefectsCache.find(p => p.studentId === editId);
+            if (existingPref) {
+              await deleteDoc(doc(db, 'prefects', existingPref.id));
+            }
+          }
           showToast('✅ Student updated successfully!');
         } else {
           data.createdAt = serverTimestamp();
           const docRef = await addDoc(collection(db, 'students'), data);
-          studentId = docRef.id;
-          showToast('✅ Student added successfully!');
-        }
-
-        // Handle prefect assignment
-        if (isPrefect === 'Yes' && studentId) {
-          const existingPref = prefectsCache.find(p => p.studentId === studentId);
-          if (existingPref) {
-            await updateDoc(doc(db, 'prefects', existingPref.id), {
-              role: prefectRole,
-              department: prefectDepartment,
-              date: new Date().toISOString().split('T')[0]
-            });
-          } else {
+          if (isPrefect === 'Yes') {
             await addDoc(collection(db, 'prefects'), {
-              studentId: studentId,
+              studentId: docRef.id,
               role: prefectRole,
               department: prefectDepartment,
               date: new Date().toISOString().split('T')[0],
               notes: 'Added from student record'
             });
           }
-        } else if (studentId) {
-          const existingPref = prefectsCache.find(p => p.studentId === studentId);
-          if (existingPref) {
-            await deleteDoc(doc(db, 'prefects', existingPref.id));
-          }
+          showToast('✅ Student added successfully!');
         }
-
-        // Reset upload state
-        studentPhotoFile = null;
-        studentPhotoPreview = null;
-        if (progressContainer) progressContainer.style.display = 'none';
-        
         closeModal();
       } catch (err) {
-        console.error('Error saving student:', err);
         showToast('❌ Error: ' + err.message, 'error');
-        const progressContainer = document.getElementById('uploadProgress');
-        if (progressContainer) progressContainer.style.display = 'none';
       }
     };
 
@@ -4649,18 +4353,9 @@
         showToast('You do not have permission to delete students', 'error');
         return;
       }
-      if (!confirm('Delete this student permanently? This cannot be undone.')) return;
+      if (!confirm('Delete this student permanently?')) return;
       try {
         const student = studentsCache.find(s => s.id === id);
-        // Delete student photo from storage if exists
-        if (student?.photoUrl) {
-          try {
-            const storageRef = ref(storage, student.photoUrl);
-            await deleteObject(storageRef);
-          } catch (e) {
-            console.warn('Could not delete photo:', e);
-          }
-        }
         const prefect = prefectsCache.find(p => p.studentId === id);
         if (prefect) {
           await deleteDoc(doc(db, 'prefects', prefect.id));
@@ -5216,23 +4911,7 @@
       
       const gradeLabels = KENYAN_GRADES.map(g => g.grade);
       const gradeData = KENYAN_GRADES.map(g => gradeCounts[g.grade] || 0);
-      const gradeColors = KENYAN_GRADES.map(g => {
-        const colors = {
-          'A': '#27ae60',
-          'A-': '#2ecc71',
-          'B+': '#85c1e9',
-          'B': '#5dade2',
-          'B-': '#a9cce3',
-          'C+': '#f5b041',
-          'C': '#f39c12',
-          'C-': '#f7dc6f',
-          'D+': '#e67e22',
-          'D': '#d35400',
-          'D-': '#f5b7b1',
-          'E': '#e74c3c'
-        };
-        return colors[g.grade] || '#95a5a6';
-      });
+      const gradeColors = KENYAN_GRADES.map(g => getGradeColor(g.grade, true));
 
       destroyChart('perfGradeChart');
       chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
@@ -5265,16 +4944,12 @@
     };
 
     // ============================================================
-    // WARNINGS - WITH DOCUMENT UPLOAD TO STORAGE
+    // WARNINGS - Updated with document upload
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
       if (!canAdd('warnings')) { showToast('Only Admin, Director, and Principal can issue warnings', 'error'); return; }
       const warning = editId ? warningsCache.find(w => w.id === editId) : null;
-      
-      // Reset file state
-      warningFile = null;
-      warningFilePreview = null;
       
       const html = `
         <div class="form-grid">
@@ -5285,35 +4960,46 @@
         <div class="form-group"><label>Issued By</label><input type="text" id="w_issuedBy" value="${warning?.issuedBy || currentUser?.fullName || currentUser?.email || ''}" placeholder="Name of issuer"></div>
         
         <div class="form-group">
-          <label>📎 Attach Supporting Document (JPEG, PNG, PDF, Word, etc.)</label>
+          <label>📎 Attach Supporting Document (PDF, Image, Word, etc.)</label>
           <div class="file-upload-wrapper" id="warningUploadWrapper">
             <span class="upload-icon">📄</span>
             <span class="upload-text">Click or drag to upload a document</span>
             <span class="file-name" id="warningFileName">${warning?.documentName || ''}</span>
-            <input type="file" id="w_documentFile" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.txt" onchange="handleWarningFileUpload(event)">
+            <input type="file" id="w_documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" onchange="handleWarningFileUpload(event)">
+            <input type="hidden" id="w_documentData" value='${warning?.documentData || ''}'>
           </div>
-          <div id="warningFilePreview">
-            ${warning?.documentUrl ? `
-              <div class="file-preview">
-                <span class="file-icon">📎</span>
-                <div class="file-info">
-                  <div class="file-name-display">${warning.documentName || 'Document'}</div>
-                  <div class="file-size">Uploaded to storage</div>
-                </div>
-                <button class="file-remove" onclick="removeWarningFile()">✕ Remove</button>
-              </div>
-            ` : ''}
-          </div>
-          <div id="warningUploadProgress" class="upload-progress-container" style="display:none;">
-            <div class="progress-bar"><div class="progress-fill" id="warningUploadFill" style="width:0%;"></div></div>
-            <div class="progress-text" id="warningUploadText">Uploading...</div>
-          </div>
-          <input type="hidden" id="w_existingDocumentUrl" value="${warning?.documentUrl || ''}">
+          <div id="warningFilePreview"></div>
         </div>
         
         <button class="btn btn-success" onclick="saveWarning('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Issue'} Warning</button>
       `;
       openModal(editId ? 'Edit Warning' : 'Issue Warning', html);
+      
+      // If editing with existing document, show preview
+      if (warning?.documentData) {
+        setTimeout(() => {
+          const previewDiv = document.getElementById('warningFilePreview');
+          if (previewDiv && warning.documentData) {
+            const fileData = typeof warning.documentData === 'string' ? JSON.parse(warning.documentData) : warning.documentData;
+            if (fileData) {
+              const icon = getFileIcon(fileData.type || '');
+              const size = formatFileSize(fileData.size || 0);
+              const isImage = fileData.type && isImageFile(fileData.type);
+              
+              previewDiv.innerHTML = `
+                <div class="file-preview">
+                  ${isImage ? `<img src="${fileData.data}" class="file-thumbnail" alt="${fileData.name}">` : `<span class="file-icon">${icon}</span>`}
+                  <div class="file-info">
+                    <div class="file-name-display">${fileData.name}</div>
+                    <div class="file-size">${size} • ${fileData.type || 'Unknown type'}</div>
+                  </div>
+                  <button class="file-remove" onclick="removeWarningFile()">✕ Remove</button>
+                </div>
+              `;
+            }
+          }
+        }, 200);
+      }
     };
 
     window.saveWarning = async function(editId) {
@@ -5322,60 +5008,40 @@
       const reason = document.getElementById('w_reason').value.trim();
       const issuedBy = document.getElementById('w_issuedBy').value.trim() || currentUser?.fullName || currentUser?.email || 'unknown';
       
-      const existingDocumentUrl = document.getElementById('w_existingDocumentUrl')?.value || '';
+      // Get document data
+      let documentData = document.getElementById('w_documentData').value;
+      let hasDocument = false;
+      let documentName = '';
+      
+      if (documentData) {
+        try {
+          const parsed = JSON.parse(documentData);
+          if (parsed && parsed.data) {
+            hasDocument = true;
+            documentName = parsed.name || 'document';
+          }
+        } catch (e) {
+          // If not JSON, it might be a data URL directly
+          if (documentData.startsWith('data:')) {
+            hasDocument = true;
+            documentName = 'document';
+          }
+        }
+      }
       
       if (!studentId || !date || !reason) { showToast('Please fill all required fields', 'error'); return; }
       
+      const data = { 
+        studentId, 
+        date, 
+        reason, 
+        issuedBy,
+        hasDocument: hasDocument,
+        documentName: documentName,
+        documentData: documentData || ''
+      };
+      
       try {
-        let documentUrl = existingDocumentUrl;
-        let documentName = '';
-        let hasDocument = false;
-        
-        // Upload new document if selected
-        if (warningFile) {
-          const progressContainer = document.getElementById('warningUploadProgress');
-          const progressFill = document.getElementById('warningUploadFill');
-          const progressText = document.getElementById('warningUploadText');
-          if (progressContainer) progressContainer.style.display = 'block';
-          
-          const student = studentsCache.find(s => s.id === studentId);
-          const path = generateStoragePath('warnings', studentId, warningFile.name);
-          progressText.textContent = 'Uploading document...';
-          documentUrl = await uploadFileToStorage(warningFile, path, (progress) => {
-            progressFill.style.width = progress + '%';
-            progressText.textContent = `Uploading document... ${progress}%`;
-          });
-          documentName = warningFile.name;
-          hasDocument = true;
-          
-          if (progressContainer) progressContainer.style.display = 'none';
-          
-          // Delete old document if exists
-          if (existingDocumentUrl) {
-            try {
-              await deleteFileFromStorage(existingDocumentUrl);
-            } catch (e) {
-              console.warn('Could not delete old document:', e);
-            }
-          }
-        } else if (existingDocumentUrl) {
-          hasDocument = true;
-          const oldWarning = warningsCache.find(w => w.id === editId);
-          if (oldWarning) {
-            documentName = oldWarning.documentName || 'Document';
-          }
-        }
-        
-        const data = { 
-          studentId, 
-          date, 
-          reason, 
-          issuedBy,
-          hasDocument: hasDocument,
-          documentName: documentName,
-          documentUrl: documentUrl
-        };
-        
         if (editId) { 
           await updateDoc(doc(db, 'warnings', editId), data); 
           showToast('Warning updated'); 
@@ -5384,20 +5050,14 @@
           await addDoc(collection(db, 'warnings'), data); 
           showToast('Warning issued'); 
         }
-        
-        // Reset state
-        warningFile = null;
-        warningFilePreview = null;
-        document.getElementById('w_documentFile').value = '';
-        document.getElementById('warningFilePreview').innerHTML = '';
-        document.getElementById('warningFileName').textContent = '';
-        
         closeModal();
+        // Reset file data
+        warningFileData = null;
+        document.getElementById('w_documentFile').value = '';
+        document.getElementById('w_documentData').value = '';
+        document.getElementById('warningFilePreview').innerHTML = '';
       } catch (err) { 
-        console.error('Error saving warning:', err);
-        showToast('Error: ' + err.message, 'error');
-        const progressContainer = document.getElementById('warningUploadProgress');
-        if (progressContainer) progressContainer.style.display = 'none';
+        showToast('Error: ' + err.message, 'error'); 
       }
     };
 
@@ -5410,10 +5070,11 @@
         const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
         const studentClass = student?.class || '-';
         
+        // Store student info on the warning for printing
         w.studentName = studentName;
         w.class = studentClass;
         
-        const hasDoc = w.hasDocument || w.documentUrl;
+        const hasDoc = w.hasDocument || (w.documentData && w.documentData.length > 0);
         
         return `
           <tr>
@@ -5445,27 +5106,54 @@
         return;
       }
       
-      const documentUrl = warning.documentUrl;
-      const documentName = warning.documentName || 'document';
+      let documentData = warning.documentData;
+      let documentName = warning.documentName || 'document';
       
-      if (!documentUrl) {
+      if (!documentData) {
         showToast('No document attached to this warning', 'warning');
         return;
       }
       
+      // Parse if it's JSON
+      let dataUrl = documentData;
+      let fileType = 'application/octet-stream';
+      
+      try {
+        const parsed = JSON.parse(documentData);
+        if (parsed && parsed.data) {
+          dataUrl = parsed.data;
+          fileType = parsed.type || 'application/octet-stream';
+          documentName = parsed.name || documentName;
+        }
+      } catch (e) {
+        // It's already a data URL
+        if (dataUrl.startsWith('data:')) {
+          const matches = dataUrl.match(/^data:([^;]+)/);
+          if (matches) {
+            fileType = matches[1];
+          }
+        }
+      }
+      
+      // Show preview modal
       const viewer = document.getElementById('docViewer');
       const title = document.getElementById('docPreviewTitle');
       const downloadBtn = document.getElementById('docDownloadBtn');
       
       title.textContent = `📄 ${documentName}`;
+      
+      // Store for download
       currentWarningFileId = warningId;
       
-      // Check if it's an image by URL
-      if (documentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-        viewer.innerHTML = `<img src="${documentUrl}" alt="${documentName}" style="max-width:100%;max-height:500px;">`;
-      } else if (documentUrl.match(/\.pdf$/i)) {
+      if (dataUrl.startsWith('data:image/')) {
+        viewer.innerHTML = `<img src="${dataUrl}" alt="${documentName}">`;
+      } else if (dataUrl.startsWith('data:application/pdf')) {
         viewer.innerHTML = `
-          <iframe src="${documentUrl}" style="width:100%;height:500px;border:none;"></iframe>
+          <div style="text-align:center;padding:20px;">
+            <span style="font-size:48px;">📄</span>
+            <p style="margin-top:10px;font-weight:600;">${documentName}</p>
+            <p style="color:#666;font-size:0.9em;">PDF Document - Click download to view</p>
+          </div>
         `;
       } else {
         viewer.innerHTML = `
@@ -5478,11 +5166,6 @@
         `;
       }
       
-      // Update download button
-      downloadBtn.onclick = function() {
-        window.open(documentUrl, '_blank');
-      };
-      
       document.getElementById('documentPreviewModal').classList.add('show');
     };
 
@@ -5493,12 +5176,50 @@
       }
       
       const warning = warningsCache.find(w => w.id === currentWarningFileId);
-      if (!warning || !warning.documentUrl) {
-        showToast('No document found', 'error');
+      if (!warning) {
+        showToast('Warning not found', 'error');
         return;
       }
       
-      window.open(warning.documentUrl, '_blank');
+      let documentData = warning.documentData;
+      let documentName = warning.documentName || 'document';
+      
+      if (!documentData) {
+        showToast('No document data found', 'error');
+        return;
+      }
+      
+      try {
+        const parsed = JSON.parse(documentData);
+        if (parsed && parsed.data) {
+          documentData = parsed.data;
+          documentName = parsed.name || documentName;
+        }
+      } catch (e) {
+        // It's already a data URL
+      }
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = documentData;
+      
+      // Get file extension from mime type if possible
+      let ext = '';
+      if (documentData.startsWith('data:image/')) {
+        const matches = documentData.match(/^data:image\/([^;]+)/);
+        if (matches) {
+          ext = matches[1];
+        }
+      } else if (documentData.startsWith('data:application/pdf')) {
+        ext = 'pdf';
+      }
+      
+      link.download = ext ? `${documentName}.${ext}` : documentName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('📥 Downloading document...', 'success');
     };
 
     window.deleteWarning = async function(id) {
@@ -5507,14 +5228,7 @@
         return;
       }
       if (!confirm('Delete this warning?')) return;
-      try {
-        const warning = warningsCache.find(w => w.id === id);
-        if (warning?.documentUrl) {
-          await deleteFileFromStorage(warning.documentUrl);
-        }
-        await deleteDoc(doc(db, 'warnings', id)); 
-        showToast('Warning deleted'); 
-      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+      try { await deleteDoc(doc(db, 'warnings', id)); showToast('Warning deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
     // ============================================================
@@ -5661,7 +5375,6 @@
       }
       const visit = editId ? clinicCache.find(c => c.id === editId) : null;
       const today = new Date().toISOString().split('T')[0];
-      const currentTime = new Date().toTimeString().slice(0, 5);
 
       const studentOptions = studentsCache.map(s => ({
         id: s.id,
@@ -5669,10 +5382,6 @@
         admNo: s.admNo || '',
         class: s.class || ''
       }));
-
-      const referralOptions = REFERRAL_OPTIONS.map(r => 
-        `<option value="${r}" ${visit?.referredTo === r ? 'selected' : ''}>${r}</option>`
-      ).join('');
 
       let dropdownHtml = `
         <div class="form-group">
@@ -5695,32 +5404,10 @@
         <div class="form-group"><label>Complaint *</label><textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea></div>
         <div class="form-group"><label>Diagnosis</label><textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea></div>
         <div class="form-group"><label>Treatment / Medication</label><input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg"></div>
-        
         <div class="form-grid">
-          <div class="form-group"><label>Follow-Up Appointment?</label><select id="c_followUp"><option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option><option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
+          <div class="form-group"><label>Need Follow-Up?</label><select id="c_followUp"><option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option><option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
           <div class="form-group" id="followUpDateGroup" style="display:${visit?.followUp === 'Yes' ? 'block' : 'none'}"><label>Follow-Up Date</label><input type="date" id="c_followUpDate" value="${visit?.followUpDate || ''}"></div>
         </div>
-        
-        <div class="clinic-section">
-          <h4>📋 Additional Information</h4>
-          <div class="form-grid">
-            <div class="form-group"><label>Referred To Specialist</label>
-              <select id="c_referredTo">
-                ${referralOptions}
-              </select>
-            </div>
-            <div class="form-group"><label>Time Sent Back to Class</label>
-              <div class="time-input">
-                <input type="time" id="c_timeBack" value="${visit?.timeBack || currentTime}">
-              </div>
-            </div>
-          </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="c_parentContacted" ${visit?.parentContacted ? 'checked' : ''}>
-            <label for="c_parentContacted">📞 Parent/Guardian Contacted</label>
-          </div>
-        </div>
-        
         <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
       `;
       openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
@@ -5815,34 +5502,13 @@
       const medication = document.getElementById('c_medication').value.trim();
       const followUp = document.getElementById('c_followUp').value;
       const followUpDate = document.getElementById('c_followUpDate').value;
-      const referredTo = document.getElementById('c_referredTo').value;
-      const timeBack = document.getElementById('c_timeBack').value;
-      const parentContacted = document.getElementById('c_parentContacted').checked;
 
       if (!studentId || !date || !doctor || !condition || !complaint) {
-        showToast('Please fill all required fields (*)', 'error');
+        showToast('Please fill all required fields', 'error');
         return;
       }
 
-      if (followUp === 'Yes' && !followUpDate) {
-        showToast('Please select a follow-up date', 'error');
-        return;
-      }
-
-      const data = { 
-        studentId, 
-        date, 
-        doctor, 
-        condition, 
-        complaint, 
-        diagnosis, 
-        medication, 
-        followUp, 
-        followUpDate: followUp === 'Yes' ? followUpDate : '',
-        referredTo: referredTo || 'None',
-        timeBack: timeBack || '',
-        parentContacted: parentContacted
-      };
+      const data = { studentId, date, doctor, condition, complaint, diagnosis, medication, followUp, followUpDate: followUp === 'Yes' ? followUpDate : '' };
 
       try {
         if (editId) { 
@@ -5866,29 +5532,24 @@
 
       document.getElementById('clinicTableBody').innerHTML = clinicCache.map(c => {
         const student = studentsCache.find(s => s.id === c.studentId);
-        const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
-        c.studentName = studentName;
         return `
           <tr>
             <td>${formatDate(c.date)}</td>
-            <td>${studentName}</td>
+            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
             <td>${c.doctor || '-'}</td>
-            <td><span class="badge badge-info">${c.condition || '-'}</span></td>
             <td>${c.complaint || '-'}</td>
+            <td><span class="badge badge-info">${c.condition || '-'}</span></td>
             <td>${c.diagnosis || '-'}</td>
             <td>${c.medication || '-'}</td>
-            <td>${c.followUp === 'Yes' ? '📅 Yes' : '❌ No'}</td>
+            <td>${c.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
             <td>${c.followUp === 'Yes' ? formatDate(c.followUpDate) : '-'}</td>
-            <td>${c.referredTo && c.referredTo !== 'None' ? c.referredTo : '-'}</td>
-            <td>${c.parentContacted ? '✅ Yes' : '❌ No'}</td>
-            <td>${c.timeBack || '-'}</td>
             <td>
               ${canEditClinic ? `<button class="btn btn-primary btn-sm" onclick="showAddClinicModal('${c.id}')">Edit</button>` : ''}
               ${canDeleteClinic ? `<button class="btn btn-danger btn-sm" onclick="deleteClinic('${c.id}')">Del</button>` : ''}
             </td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
     };
 
     window.deleteClinic = async function(id) {
@@ -6483,16 +6144,7 @@
         
         const subjects = validGrades.map(g => g.subject);
         const totals = validGrades.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
-        const colors = totals.map(t => {
-          const grade = getKenyanGrade(t, true);
-          const colorMap = {
-            'A': '#27ae60', 'A-': '#2ecc71', 'B+': '#85c1e9',
-            'B': '#5dade2', 'B-': '#a9cce3', 'C+': '#f5b041',
-            'C': '#f39c12', 'C-': '#f7dc6f', 'D+': '#e67e22',
-            'D': '#d35400', 'D-': '#f5b7b1', 'E': '#e74c3c'
-          };
-          return colorMap[grade?.grade] || '#95a5a6';
-        });
+        const colors = totals.map(t => getGradeColor(t, true));
         
         destroyChart('analyticsStudentChart');
         chartInstances['analyticsStudentChart'] = new Chart(document.getElementById('analyticsStudentChart'), {
@@ -6806,14 +6458,18 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 27.0.0 - Firebase Storage Support');
+      console.log('📚 Version 25.0.0 - Document Upload & Photo Upload Added');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📸 Student photos uploaded to Firebase Storage');
-      console.log('📎 Warning documents uploaded to Firebase Storage');
+      console.log('📎 Warnings now support document attachments (PDF, Images, Word, etc.)');
+      console.log('📸 Student photos can be uploaded from files');
       console.log('📈 Pass Mark: C (50% and above)');
       console.log('⭐ Prefects auto-populated from student records');
+      console.log('💰 Sponsorships auto-populated from student records');
       console.log('👤 Click View on any student to see full profile with photo');
+      console.log('🖨️ Student profile includes photo in printable report');
+      console.log('🏥 Doctors, Nurses, HRIO, Radiographers can manage clinic visits');
+      console.log('🔍 Searchable student dropdowns added for Grades and Clinic visits');
     });
   </script>
 </body>
