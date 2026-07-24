@@ -829,6 +829,12 @@
       font-weight: 700;
       flex-shrink: 0;
     }
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
     .profile-info h3 { margin: 0; color: var(--primary); }
     .profile-info p { margin: 2px 0; color: #666; font-size: 0.9em; }
     .profile-section {
@@ -1576,6 +1582,7 @@
       'Form 3 East', 'Form 3 West', 'Form 4 East', 'Form 4 West'
     ];
 
+    // UPDATED SUBJECTS - Added PRT/Coding
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
       'Biology', 'Chemistry', 'Physics',
@@ -1583,7 +1590,8 @@
       'Core Maths', 'Science', 'Social Studies',
       'CRE', 'Agriculture', 'Business Studies',
       'Computer Studies', 'History', 'Geography',
-      'Literature', 'Home Science', 'Art & Craft', 'CSL'
+      'Literature', 'Home Science', 'Art & Craft', 'CSL',
+      'PRT/Coding'
     ];
 
     const DORMS = [
@@ -1616,6 +1624,7 @@
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
 
     // KENYAN GRADING SYSTEM - A, A-, B+, B, B-, C+, C, C-, D+, D, D-, E
+    // PASS MARK IS C+ (55%) and above
     const KENYAN_GRADES = [
       { grade: 'A', min: 80, max: 100, class: 'badge-grade-a', label: 'A' },
       { grade: 'A-', min: 75, max: 79, class: 'badge-grade-a-', label: 'A-' },
@@ -1652,7 +1661,7 @@
     };
 
     // ============================================================
-    // 🏆 KENYAN GRADING SYSTEM - Pass mark is D+ (40%) and above
+    // 🏆 KENYAN GRADING SYSTEM - Pass mark is C+ (55%) and above
     // ============================================================
 
     function getKenyanGrade(score, hasScores = true) {
@@ -1671,10 +1680,10 @@
 
     function hasActualScores(grade) {
       if (!grade) return false;
-      const hasTest1 = grade.test1 !== undefined && grade.test1 !== null && grade.test1 !== '';
-      const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '';
-      const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '';
-      const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '';
+      const hasTest1 = grade.test1 !== undefined && grade.test1 !== null && grade.test1 !== '' && !isNaN(grade.test1);
+      const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '' && !isNaN(grade.test2);
+      const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '' && !isNaN(grade.test3);
+      const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '' && !isNaN(grade.exam);
       
       const hasAnyScore = hasTest1 || hasTest2 || hasTest3 || hasExam;
       return hasAnyScore;
@@ -1692,13 +1701,13 @@
       return `<span class="badge ${grade.class}">${grade.grade}</span>`;
     }
 
-    // PASS MARK IS NOW D+ (40%) and above - FIXED
+    // PASS MARK IS C+ (55%) and above - FIXED
     function isPass(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return false;
       }
-      // D+ is 40% and above is a pass in Kenyan system
-      return score >= 40;
+      // C+ is 55% and above is a pass in Kenyan system
+      return score >= 55;
     }
 
     function getGradeColor(score, hasScores = true) {
@@ -1783,7 +1792,7 @@
     }
 
     // ============================================================
-    // STUDENT PROFILE MODAL - View all student data
+    // STUDENT PROFILE MODAL - View all student data with photo
     // ============================================================
 
     window.showStudentProfile = function(studentId) {
@@ -1807,15 +1816,14 @@
       const totalScore = validGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
       const avgScore = validGrades.length > 0 ? Math.round(totalScore / validGrades.length) : null;
       
-      // Get subjects with scores
-      const subjects = validGrades.map(g => g.subject);
-      
-      // Build the profile HTML
+      // Build the profile HTML with photo support
       let html = `
         <div id="studentProfileContent">
-          <!-- Header -->
+          <!-- Header with Photo -->
           <div class="profile-header">
-            <div class="profile-avatar">${student.firstName?.charAt(0) || 'S'}</div>
+            <div class="profile-avatar">
+              ${student.photoUrl ? `<img src="${student.photoUrl}" alt="${student.firstName}">` : student.firstName?.charAt(0) || 'S'}
+            </div>
             <div class="profile-info">
               <h3>${student.firstName} ${student.lastName}</h3>
               <p>📚 ${student.class} • ${student.gender} • ${student.status || 'N/A'}</p>
@@ -1898,7 +1906,7 @@
               <div class="item"><strong>Average Score:</strong> ${avgScore}%</div>
               <div class="item"><strong>Grade:</strong> ${getGradeBadge(avgScore, true)}</div>
               <div class="item"><strong>Subjects Taken:</strong> ${validGrades.length}</div>
-              <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing' : '❌ Needs Improvement'}</div>
+              <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing (C+ and above)' : '❌ Needs Improvement'}</div>
             </div>
             <div style="height:150px;margin-top:10px;">
               <canvas id="profileGradeChart"></canvas>
@@ -2072,7 +2080,7 @@
     };
 
     // ============================================================
-    // PRINT STUDENT PROFILE
+    // PRINT STUDENT PROFILE WITH PHOTO
     // ============================================================
 
     window.printStudentProfile = function(studentId) {
@@ -2097,6 +2105,11 @@
 
       const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
+      // Photo URL or fallback
+      const photoHtml = student.photoUrl 
+        ? `<img src="${student.photoUrl}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #1a5276;">` 
+        : `<div style="width:100px;height:100px;border-radius:50%;background:#1a5276;color:white;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;margin:0 auto;">${student.firstName?.charAt(0) || 'S'}</div>`;
+
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
         <html>
@@ -2108,6 +2121,8 @@
             .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
             .header .sub { color: #666; font-size: 14px; }
             .header .date { color: #999; font-size: 12px; margin-top: 5px; }
+            .student-photo { text-align: center; margin: 10px 0 20px 0; }
+            .student-photo img { border-radius: 50%; border: 3px solid #1a5276; }
             .section { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; page-break-inside: avoid; }
             .section h3 { color: #1a5276; margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
             .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 15px; }
@@ -2150,6 +2165,10 @@
             <div class="date">Generated on: ${today}</div>
           </div>
 
+          <div class="student-photo">
+            ${photoHtml}
+          </div>
+
           <div class="section">
             <h3>👤 Personal Information</h3>
             <div class="grid">
@@ -2174,7 +2193,7 @@
                 <div class="item"><strong>Average Score:</strong> ${avgScore}%</div>
                 <div class="item"><strong>Overall Grade:</strong> ${getGradeBadge(avgScore, true)}</div>
                 <div class="item"><strong>Subjects:</strong> ${validGrades.length}</div>
-                <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing' : '❌ Needs Improvement'}</div>
+                <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing (C+ and above)' : '❌ Needs Improvement'}</div>
               </div>
               <table>
                 <thead><tr><th>Subject</th><th>Term</th><th>Exam Type</th><th>Test 1</th><th>Test 2</th><th>Test 3</th><th>Final</th><th>Total</th><th>Grade</th></tr></thead>
@@ -2292,7 +2311,7 @@
     };
 
     // ============================================================
-    // PRINT & SHARE FUNCTIONS (existing)
+    // PRINT & SHARE FUNCTIONS
     // ============================================================
 
     function getTabTitle(tab) {
@@ -2396,6 +2415,15 @@
             <td>${row.department || ''}</td>
             <td>${formatDate(row.date)}</td>
           `;
+        } else if (tab === 'sponsorship') {
+          cells = `
+            <td>${row.firstName || ''} ${row.lastName || ''}</td>
+            <td>${row.class || ''}</td>
+            <td>${row.sponsorshipType || ''}</td>
+            <td>${row.sponsorName || '-'}</td>
+            <td>${row.sponsorContact || '-'}</td>
+            <td>${row.sponsorNotes || '-'}</td>
+          `;
         } else {
           // Default for other tables
           const columns = data.columns;
@@ -2472,6 +2500,11 @@
         </html>
       `);
       printWindow.document.close();
+    };
+
+    window.shareTab = function(tab) {
+      // Use printTab functionality for sharing
+      printTab(tab);
     };
 
     // ============================================================
@@ -2987,32 +3020,34 @@
     };
 
     // ============================================================
-    // LOAD SAMPLE DATA
+    // LOAD SAMPLE DATA with PRT/Coding
     // ============================================================
 
     window.loadSampleData = function() {
       const sampleStudents = [
-        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics', parent: 'Mr. John Doe Sr.', parentPhone: '+254 700 111111', parentEmail: 'johndoe@email.com', health: 'No known allergies', notes: 'Excellent student' },
-        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Smith Foundation', sponsorContact: 'info@smithfoundation.org', sponsorNotes: 'Full scholarship for 2024', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline', parent: 'Mrs. Mary Smith', parentPhone: '+254 700 222222', parentEmail: 'mary@email.com', health: 'Asthma', notes: '' },
-        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports', parent: 'Mr. Peter Johnson', parentPhone: '+254 700 333333', parentEmail: 'peter@email.com', health: '', notes: '' },
-        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', sponsorName: 'World Vision Kenya', sponsorContact: '+254 700 123456', sponsorNotes: 'Partial sponsorship - covers fees only', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Susan Williams', parentPhone: '+254 700 444444', parentEmail: 'susan@email.com', health: '', notes: '' },
-        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: 'Full government sponsorship', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation', parent: 'Mr. James Brown', parentPhone: '+254 700 555555', parentEmail: 'james@email.com', health: '', notes: '' },
-        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Ann Jones', parentPhone: '+254 700 666666', parentEmail: 'ann@email.com', health: '', notes: '' },
-        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Dining Hall', parent: 'Mr. John Maina', parentPhone: '+254 700 777777', parentEmail: 'johnmaina@email.com', health: '', notes: '' },
-        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Equity Foundation', sponsorContact: '+254 722 987654', sponsorNotes: 'Wings to Fly Program', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Dormitory/Boarding', parent: 'Mrs. Grace Wanjiru', parentPhone: '+254 700 888888', parentEmail: 'grace@email.com', health: '', notes: '' },
-        { admNo: '2024-009', firstName: 'James', lastName: 'Odhiambo', class: 'Form 4 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Environment', parent: 'Mr. Samuel Odhiambo', parentPhone: '+254 700 999999', parentEmail: 'samuel@email.com', health: '', notes: '' },
-        { admNo: '2024-010', firstName: 'Grace', lastName: 'Akinyi', class: 'Form 4 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', sponsorName: 'Compassion International', sponsorContact: '+254 733 456789', sponsorNotes: 'Full sponsorship including boarding', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual', parent: 'Mrs. Faith Akinyi', parentPhone: '+254 700 101010', parentEmail: 'faith@email.com', health: '', notes: '' },
-        { admNo: '2024-011', firstName: 'Robert', lastName: 'Kiprop', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: '50% government sponsorship', isPrefect: 'No', prefectRole: '', prefectDepartment: '', parent: 'Mr. Joseph Kiprop', parentPhone: '+254 700 111212', parentEmail: 'joseph@email.com', health: '', notes: '' },
-        { admNo: '2024-012', firstName: 'Faith', lastName: 'Chepchumba', class: 'Form 4 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'No', prefectRole: '', prefectDepartment: '', parent: 'Mrs. Esther Chepchumba', parentPhone: '+254 700 131313', parentEmail: 'esther@email.com', health: '', notes: '' },
+        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics', parent: 'Mr. John Doe Sr.', parentPhone: '+254 700 111111', parentEmail: 'johndoe@email.com', health: 'No known allergies', notes: 'Excellent student', photoUrl: '' },
+        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Smith Foundation', sponsorContact: 'info@smithfoundation.org', sponsorNotes: 'Full scholarship for 2024', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline', parent: 'Mrs. Mary Smith', parentPhone: '+254 700 222222', parentEmail: 'mary@email.com', health: 'Asthma', notes: '', photoUrl: '' },
+        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports', parent: 'Mr. Peter Johnson', parentPhone: '+254 700 333333', parentEmail: 'peter@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', sponsorName: 'World Vision Kenya', sponsorContact: '+254 700 123456', sponsorNotes: 'Partial sponsorship - covers fees only', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Susan Williams', parentPhone: '+254 700 444444', parentEmail: 'susan@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: 'Full government sponsorship', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation', parent: 'Mr. James Brown', parentPhone: '+254 700 555555', parentEmail: 'james@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Ann Jones', parentPhone: '+254 700 666666', parentEmail: 'ann@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Dining Hall', parent: 'Mr. John Maina', parentPhone: '+254 700 777777', parentEmail: 'johnmaina@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Equity Foundation', sponsorContact: '+254 722 987654', sponsorNotes: 'Wings to Fly Program', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Dormitory/Boarding', parent: 'Mrs. Grace Wanjiru', parentPhone: '+254 700 888888', parentEmail: 'grace@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-009', firstName: 'James', lastName: 'Odhiambo', class: 'Form 4 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Environment', parent: 'Mr. Samuel Odhiambo', parentPhone: '+254 700 999999', parentEmail: 'samuel@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-010', firstName: 'Grace', lastName: 'Akinyi', class: 'Form 4 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', sponsorName: 'Compassion International', sponsorContact: '+254 733 456789', sponsorNotes: 'Full sponsorship including boarding', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual', parent: 'Mrs. Faith Akinyi', parentPhone: '+254 700 101010', parentEmail: 'faith@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-011', firstName: 'Robert', lastName: 'Kiprop', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: '50% government sponsorship', isPrefect: 'No', prefectRole: '', prefectDepartment: '', parent: 'Mr. Joseph Kiprop', parentPhone: '+254 700 111212', parentEmail: 'joseph@email.com', health: '', notes: '', photoUrl: '' },
+        { admNo: '2024-012', firstName: 'Faith', lastName: 'Chepchumba', class: 'Form 4 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'No', prefectRole: '', prefectDepartment: '', parent: 'Mrs. Esther Chepchumba', parentPhone: '+254 700 131313', parentEmail: 'esther@email.com', health: '', notes: '', photoUrl: '' },
       ];
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
       
+      // Sample grades with PRT/Coding included
       const sampleGrades = [
         { studentId: 'sample_2024-001', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 15, test2: 18, test3: 20, exam: 45 },
         { studentId: 'sample_2024-001', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 50 },
         { studentId: 'sample_2024-001', subject: 'Literature', term: 'Term 1', examType: 'Opener', test1: 16, test2: 19, test3: 17, exam: 42 },
         { studentId: 'sample_2024-001', subject: 'Core Maths', term: 'Term 1', examType: 'Midterm', test1: 14, test2: 16, test3: 15, exam: 38 },
+        { studentId: 'sample_2024-001', subject: 'PRT/Coding', term: 'Term 1', examType: 'Midterm', test1: 18, test2: 20, test3: 19, exam: 48 },
         { studentId: 'sample_2024-002', subject: 'Mathematics', term: 'Term 1', examType: 'End Term', test1: 12, test2: 14, test3: 10, exam: 30 },
         { studentId: 'sample_2024-002', subject: 'English', term: 'Term 1', examType: 'Opener', test1: 15, test2: 16, test3: 14, exam: 35 },
         { studentId: 'sample_2024-002', subject: 'Home Science', term: 'Term 1', examType: 'Midterm', test1: 18, test2: 20, test3: 16, exam: 42 },
@@ -3027,6 +3062,7 @@
         { studentId: 'sample_2024-007', subject: 'Computer Studies', term: 'Term 1', examType: 'Opener', test1: 24, test2: 26, test3: 22, exam: 58 },
         { studentId: 'sample_2024-007', subject: 'Core Maths', term: 'Term 1', examType: 'Midterm', test1: 16, test2: 18, test3: 14, exam: 40 },
         { studentId: 'sample_2024-007', subject: 'Art & Craft', term: 'Term 1', examType: 'End Term', test1: 22, test2: 24, test3: 20, exam: 52 },
+        { studentId: 'sample_2024-007', subject: 'PRT/Coding', term: 'Term 1', examType: 'Opener', test1: 20, test2: 22, test3: 21, exam: 50 },
         { studentId: 'sample_2024-009', subject: 'Creative Arts & Sports (CA)', term: 'Term 1', examType: 'Opener', test1: 26, test2: 28, test3: 24, exam: 60 },
         { studentId: 'sample_2024-009', subject: 'Science', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 48 },
         { studentId: 'sample_2024-009', subject: 'Literature', term: 'Term 1', examType: 'End Term', test1: 18, test2: 20, test3: 16, exam: 42 },
@@ -3717,6 +3753,7 @@
           <div class="form-group"><label>Status *</label><select id="s_status"><option value="Boarder" ${student?.status === 'Boarder' ? 'selected' : ''}>Boarder</option><option value="Day Scholar" ${student?.status === 'Day Scholar' ? 'selected' : ''}>Day Scholar</option></select></div>
           <div class="form-group"><label>Location</label><input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira"></div>
           <div class="form-group"><label>🏠 Dorm</label><select id="s_dorm">${dormSelectHtml(student?.dorm || '')}</select></div>
+          <div class="form-group"><label>Photo URL</label><input type="text" id="s_photoUrl" value="${student?.photoUrl || ''}" placeholder="https://example.com/photo.jpg"></div>
           <div class="form-group"><label>Is Prefect?</label><select id="s_isPrefect"><option value="No" ${student?.isPrefect !== 'Yes' ? 'selected' : ''}>No</option><option value="Yes" ${student?.isPrefect === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
           <div class="form-group"><label>Prefect Role</label><select id="s_prefectRole"><option value="">None</option>${PREFECT_ROLES.map(r => `<option value="${r}" ${student?.prefectRole === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
           <div class="form-group"><label>Prefect Department</label><select id="s_prefectDept"><option value="">None</option>${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${student?.prefectDepartment === d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
@@ -3753,6 +3790,7 @@
         status: document.getElementById('s_status').value,
         location: document.getElementById('s_location').value,
         dorm: document.getElementById('s_dorm').value || '',
+        photoUrl: document.getElementById('s_photoUrl').value || '',
         isPrefect: isPrefect,
         prefectRole: prefectRole,
         prefectDepartment: prefectDepartment,
@@ -4309,6 +4347,7 @@
         </tr>
       `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students with scores found</td></tr>';
 
+      // Subject Averages Chart
       const subjects = [...new Set(grades.filter(g => hasActualScores(g)).map(g => g.subject))];
       const subjectAverages = subjects.map(subj => {
         const sg = grades.filter(g => g.subject === subj && hasActualScores(g));
@@ -4324,6 +4363,7 @@
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
       });
 
+      // Student Performance Chart
       const topStudents = rankedStudents.slice(0, 10);
       const studentNames = topStudents.map(s => `${s.student.firstName}`);
       const studentAvgs = topStudents.map(s => s.avg);
@@ -4335,6 +4375,7 @@
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
       });
 
+      // Grade Distribution Chart
       const gradeCounts = {};
       KENYAN_GRADES.forEach(g => gradeCounts[g.grade] = 0);
       studentAverages.filter(s => s.hasScores).forEach(s => {
@@ -4366,6 +4407,7 @@
         }
       });
 
+      // Pass/Fail Ratio - C+ and above is pass
       const scoredStudents = studentAverages.filter(s => s.hasScores);
       const passed = scoredStudents.filter(s => isPass(s.avg, true)).length;
       const failed = scoredStudents.filter(s => !isPass(s.avg, true)).length;
@@ -4373,7 +4415,7 @@
       destroyChart('perfPassFailChart');
       chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
         type: 'doughnut',
-        data: { labels: ['✅ Passed (D+ and above)', '❌ Failed (D and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        data: { labels: ['✅ Passed (C+ and above)', '❌ Failed (C and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
     };
@@ -5445,53 +5487,6 @@
     };
 
     // ============================================================
-    // AUDIT LOG
-    // ============================================================
-
-    function populateAuditFilter() {
-      const select = document.getElementById('auditUserFilter');
-      if (!select) return;
-      const current = select.value;
-      const users = [...new Set(auditCache.map(a => a.user).filter(Boolean))];
-      select.innerHTML = '<option value="">All Users</option>' + users.map(u => `<option value="${u}">${u}</option>`).join('');
-      if (current && users.includes(current)) select.value = current;
-    }
-
-    function renderAudit() {
-      const filter = document.getElementById('auditUserFilter').value;
-      let logs = auditCache;
-
-      if (filter) {
-        logs = logs.filter(a => a.user === filter);
-      }
-
-      document.getElementById('auditLogContent').innerHTML = logs.slice(0, 100).map(a => `
-        <div class="log-entry" style="padding:10px 14px;border-left:3px solid var(--primary-light);margin-bottom:8px;background:#f8f9fa;border-radius:0 6px 6px 0;">
-          <strong>${a.user || 'system'}</strong>
-          <span class="badge badge-info">${a.role || 'user'}</span>
-          — <strong>${a.action}</strong>: ${a.details || ''}
-          <div style="color:#999;font-size:0.8em;">${formatTimestamp(a.time)}</div>
-        </div>
-      `).join('') || '<div style="text-align:center;color:#999;padding:20px;">No audit logs found</div>';
-    }
-
-    async function addAuditLog(action, details) {
-      if (isTestMode) return;
-      try {
-        await addDoc(collection(db, 'auditLog'), { 
-          user: currentUser?.fullName || currentUser?.email || 'system',
-          email: currentUser?.email || 'system',
-          role: currentUser?.role || 'system', 
-          action, 
-          details: details || '', 
-          time: serverTimestamp() 
-        });
-      } catch (err) { 
-        console.warn('Failed to write audit log:', err); 
-      }
-    }
-
-    // ============================================================
     // REGISTRATIONS
     // ============================================================
 
@@ -5548,6 +5543,53 @@
     };
 
     // ============================================================
+    // AUDIT LOG
+    // ============================================================
+
+    function populateAuditFilter() {
+      const select = document.getElementById('auditUserFilter');
+      if (!select) return;
+      const current = select.value;
+      const users = [...new Set(auditCache.map(a => a.user).filter(Boolean))];
+      select.innerHTML = '<option value="">All Users</option>' + users.map(u => `<option value="${u}">${u}</option>`).join('');
+      if (current && users.includes(current)) select.value = current;
+    }
+
+    function renderAudit() {
+      const filter = document.getElementById('auditUserFilter').value;
+      let logs = auditCache;
+
+      if (filter) {
+        logs = logs.filter(a => a.user === filter);
+      }
+
+      document.getElementById('auditLogContent').innerHTML = logs.slice(0, 100).map(a => `
+        <div class="log-entry" style="padding:10px 14px;border-left:3px solid var(--primary-light);margin-bottom:8px;background:#f8f9fa;border-radius:0 6px 6px 0;">
+          <strong>${a.user || 'system'}</strong>
+          <span class="badge badge-info">${a.role || 'user'}</span>
+          — <strong>${a.action}</strong>: ${a.details || ''}
+          <div style="color:#999;font-size:0.8em;">${formatTimestamp(a.time)}</div>
+        </div>
+      `).join('') || '<div style="text-align:center;color:#999;padding:20px;">No audit logs found</div>';
+    }
+
+    async function addAuditLog(action, details) {
+      if (isTestMode) return;
+      try {
+        await addDoc(collection(db, 'auditLog'), { 
+          user: currentUser?.fullName || currentUser?.email || 'system',
+          email: currentUser?.email || 'system',
+          role: currentUser?.role || 'system', 
+          action, 
+          details: details || '', 
+          time: serverTimestamp() 
+        });
+      } catch (err) { 
+        console.warn('Failed to write audit log:', err); 
+      }
+    }
+
+    // ============================================================
     // INITIALIZATION
     // ============================================================
 
@@ -5560,15 +5602,16 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 24.2.0 - Fixed: No grade awarded without scores, D+ is pass mark');
+      console.log('📚 Version 25.0.0 - PRT/Coding Added, C+ Pass Mark, Student Photos');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📊 Kenyan Grading: A, A-, B+, B, B-, C+, C, C-, D+, D, D-, E');
-      console.log('📈 Pass Mark: D+ (40% and above)');
+      console.log('📊 New Subject: PRT/Coding');
+      console.log('📈 Pass Mark: C+ (55% and above)');
+      console.log('📸 Student Photos support added for profiles and print reports');
       console.log('⭐ Prefects auto-populated from student records');
-      console.log('👤 Click View on any student to see full profile with grades, discipline, clinic visits, attendance, and more');
-      console.log('🖨️ Student profile includes a printable report option');
-      console.log('✅ FIXED: Students with no scores show N/A instead of E');
+      console.log('💰 Sponsorships auto-populated from student records');
+      console.log('👤 Click View on any student to see full profile with photo');
+      console.log('🖨️ Student profile includes photo in printable report');
     });
   </script>
 </body>
