@@ -485,6 +485,8 @@
     .btn-approve:hover { background: #219a52; }
     .btn-reject { background: #e74c3c; color: white; }
     .btn-reject:hover { background: #c0392b; }
+    .btn-view { background: #8e44ad; color: white; }
+    .btn-view:hover { background: #7d3c98; }
 
     .share-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -507,7 +509,7 @@
 
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
     .modal-overlay.show { display: flex; }
-    .modal { background: var(--white); border-radius: var(--radius); padding: 30px; width: 100%; max-width: 720px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s ease; }
+    .modal { background: var(--white); border-radius: var(--radius); padding: 30px; width: 100%; max-width: 900px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s ease; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--light); }
     .modal-header h2 { color: var(--primary); font-size: 1.3em; }
     .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--gray); padding: 0 8px; transition: var(--transition); }
@@ -802,6 +804,52 @@
     .registration-stat-card.approved { border-top-color: #27ae60; }
     .registration-stat-card.rejected { border-top-color: #e74c3c; }
     .registration-stat-card.total { border-top-color: #2e86c1; }
+
+    /* Student Profile Styles */
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .profile-info h3 { margin: 0; color: var(--primary); }
+    .profile-info p { margin: 2px 0; color: #666; font-size: 0.9em; }
+    .profile-section {
+      margin: 15px 0;
+      padding: 15px;
+      background: #fafbfc;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary-light);
+    }
+    .profile-section h4 { margin: 0 0 10px 0; color: var(--primary); }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    .profile-grid .item { padding: 4px 0; font-size: 0.9em; }
+    .profile-grid .item strong { color: var(--dark); }
+    .profile-section .mini-chart { height: 150px; margin-top: 10px; }
+    .profile-section table { font-size: 0.8em; }
+    .profile-section table th { padding: 6px 10px; font-size: 0.75em; }
+    .profile-section table td { padding: 5px 10px; font-size: 0.8em; }
   </style>
 </head>
 <body>
@@ -1528,8 +1576,6 @@
       'Form 3 East', 'Form 3 West', 'Form 4 East', 'Form 4 West'
     ];
 
-    // UPDATED SUBJECTS - Added Literature, Home Science, Art & Craft, CSL
-    // Fixed "Cose Maths" to "Core Maths"
     const SUBJECTS = [
       'Mathematics', 'English', 'Kiswahili',
       'Biology', 'Chemistry', 'Physics',
@@ -1606,57 +1652,34 @@
     };
 
     // ============================================================
-    // 🏆 KENYAN GRADING SYSTEM - FIXED: No grade for missing scores
+    // 🏆 KENYAN GRADING SYSTEM - Pass mark is D+ (40%) and above
     // ============================================================
 
-    /**
-     * Get Kenyan grade from a score.
-     * @param {number} score - The total score (out of 130)
-     * @param {boolean} hasScores - Whether the student actually has scores captured
-     * @returns {object|null} - The grade object or null if no scores
-     */
     function getKenyanGrade(score, hasScores = true) {
-      // If no scores have been captured, return null (no grade)
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return null;
       }
       
       const percentage = Math.round(score);
-      
-      // If score is 0 but we know scores exist, it could be a valid 0
-      // But if all components are 0, we should check if scores were actually entered
-      
       for (const grade of KENYAN_GRADES) {
         if (percentage >= grade.min && percentage <= grade.max) {
           return grade;
         }
       }
-      return KENYAN_GRADES[KENYAN_GRADES.length - 1]; // Return E as default for valid scores
+      return KENYAN_GRADES[KENYAN_GRADES.length - 1];
     }
 
-    /**
-     * Check if a grade record has any actual scores entered
-     */
     function hasActualScores(grade) {
       if (!grade) return false;
-      // Check if any of the test scores or exam score have been filled (not null/undefined)
-      // Note: 0 is a valid score, so we need to check if the field exists at all
       const hasTest1 = grade.test1 !== undefined && grade.test1 !== null && grade.test1 !== '';
       const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '';
       const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '';
       const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '';
       
-      // Also check if values are numbers and not empty strings
       const hasAnyScore = hasTest1 || hasTest2 || hasTest3 || hasExam;
       return hasAnyScore;
     }
 
-    /**
-     * Get a grade badge HTML
-     * @param {number} score - The total score
-     * @param {boolean} hasScores - Whether scores exist
-     * @returns {string} - HTML for the badge
-     */
     function getGradeBadge(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return `<span class="badge badge-na">N/A</span>`;
@@ -1669,22 +1692,18 @@
       return `<span class="badge ${grade.class}">${grade.grade}</span>`;
     }
 
-    /**
-     * Check if a student has passed (C+ and above = 55%+)
-     */
+    // PASS MARK IS NOW D+ (40%) and above - FIXED
     function isPass(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
         return false;
       }
-      return score >= 55;
+      // D+ is 40% and above is a pass in Kenyan system
+      return score >= 40;
     }
 
-    /**
-     * Get grade color for charts
-     */
     function getGradeColor(score, hasScores = true) {
       if (!hasScores || score === undefined || score === null || isNaN(score)) {
-        return '#95a5a6'; // Gray for N/A
+        return '#95a5a6';
       }
       const grade = getKenyanGrade(score, hasScores);
       if (!grade) return '#95a5a6';
@@ -1764,7 +1783,516 @@
     }
 
     // ============================================================
-    // PRINT & SHARE FUNCTIONS
+    // STUDENT PROFILE MODAL - View all student data
+    // ============================================================
+
+    window.showStudentProfile = function(studentId) {
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) {
+        showToast('Student not found', 'error');
+        return;
+      }
+
+      // Get all related data
+      const studentGrades = gradesCache.filter(g => g.studentId === studentId);
+      const studentAttendance = attendanceCache.filter(a => a.studentId === studentId);
+      const studentWarnings = warningsCache.filter(w => w.studentId === studentId);
+      const studentSuspensions = suspensionsCache.filter(s => s.studentId === studentId);
+      const studentExpulsions = expulsionsCache.filter(e => e.studentId === studentId);
+      const studentClinic = clinicCache.filter(c => c.studentId === studentId);
+      const studentPrefect = prefectsCache.find(p => p.studentId === studentId);
+
+      // Calculate academic summary
+      const validGrades = studentGrades.filter(g => hasActualScores(g));
+      const totalScore = validGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
+      const avgScore = validGrades.length > 0 ? Math.round(totalScore / validGrades.length) : null;
+      
+      // Get subjects with scores
+      const subjects = validGrades.map(g => g.subject);
+      
+      // Build the profile HTML
+      let html = `
+        <div id="studentProfileContent">
+          <!-- Header -->
+          <div class="profile-header">
+            <div class="profile-avatar">${student.firstName?.charAt(0) || 'S'}</div>
+            <div class="profile-info">
+              <h3>${student.firstName} ${student.lastName}</h3>
+              <p>📚 ${student.class} • ${student.gender} • ${student.status || 'N/A'}</p>
+              <p>🆔 Adm: ${student.admNo || 'N/A'} ${student.dorm ? '• 🏠 ' + student.dorm : ''}</p>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;">
+              ${student.isPrefect === 'Yes' ? `<span class="badge badge-gold">⭐ ${student.prefectRole || 'Prefect'}</span>` : ''}
+              ${student.sponsorshipType && student.sponsorshipType !== 'Self Sponsored' ? `<span class="badge badge-info">💰 ${student.sponsorshipType}</span>` : ''}
+              <button class="btn btn-print btn-sm" onclick="printStudentProfile('${studentId}')">🖨️ Print Report</button>
+            </div>
+          </div>
+
+          <!-- Personal Information -->
+          <div class="profile-section">
+            <h4>👤 Personal Information</h4>
+            <div class="profile-grid">
+              <div class="item"><strong>Full Name:</strong> ${student.firstName} ${student.lastName}</div>
+              <div class="item"><strong>Admission No:</strong> ${student.admNo || 'N/A'}</div>
+              <div class="item"><strong>Class:</strong> ${student.class || 'N/A'}</div>
+              <div class="item"><strong>Gender:</strong> ${student.gender || 'N/A'}</div>
+              <div class="item"><strong>Status:</strong> ${student.status || 'N/A'}</div>
+              <div class="item"><strong>Dorm:</strong> ${student.dorm || 'N/A'}</div>
+              <div class="item"><strong>Location:</strong> ${student.location || 'N/A'}</div>
+              <div class="item"><strong>Date of Birth:</strong> ${student.dob ? formatDate(student.dob) : 'N/A'}</div>
+            </div>
+          </div>
+
+          <!-- Prefect Information -->
+          ${student.isPrefect === 'Yes' ? `
+          <div class="profile-section" style="border-left-color:#f1c40f;">
+            <h4>⭐ Prefect Information</h4>
+            <div class="profile-grid">
+              <div class="item"><strong>Role:</strong> ${student.prefectRole || 'N/A'}</div>
+              <div class="item"><strong>Department:</strong> ${student.prefectDepartment || 'N/A'}</div>
+              ${studentPrefect ? `<div class="item"><strong>Assigned:</strong> ${formatDate(studentPrefect.date)}</div>` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Sponsorship Information -->
+          ${student.sponsorshipType && student.sponsorshipType !== 'Self Sponsored' ? `
+          <div class="profile-section" style="border-left-color:#2ecc71;">
+            <h4>💰 Sponsorship</h4>
+            <div class="profile-grid">
+              <div class="item"><strong>Type:</strong> ${student.sponsorshipType}</div>
+              <div class="item"><strong>Sponsor:</strong> ${student.sponsorName || 'N/A'}</div>
+              <div class="item"><strong>Contact:</strong> ${student.sponsorContact || 'N/A'}</div>
+              <div class="item"><strong>Notes:</strong> ${student.sponsorNotes || 'N/A'}</div>
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Parent/Guardian -->
+          ${student.parent || student.parentPhone || student.parentEmail ? `
+          <div class="profile-section" style="border-left-color:#3498db;">
+            <h4>👨‍👩‍👦 Parent/Guardian</h4>
+            <div class="profile-grid">
+              <div class="item"><strong>Name:</strong> ${student.parent || 'N/A'}</div>
+              <div class="item"><strong>Phone:</strong> ${student.parentPhone || 'N/A'}</div>
+              <div class="item"><strong>Email:</strong> ${student.parentEmail || 'N/A'}</div>
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Health History -->
+          ${student.health ? `
+          <div class="profile-section" style="border-left-color:#e74c3c;">
+            <h4>🏥 Health History</h4>
+            <p>${student.health}</p>
+          </div>
+          ` : ''}
+      `;
+
+      // Academic Performance
+      html += `
+        <div class="profile-section" style="border-left-color:#8e44ad;">
+          <h4>📊 Academic Performance</h4>
+          ${validGrades.length > 0 ? `
+            <div class="profile-grid" style="margin-bottom:10px;">
+              <div class="item"><strong>Average Score:</strong> ${avgScore}%</div>
+              <div class="item"><strong>Grade:</strong> ${getGradeBadge(avgScore, true)}</div>
+              <div class="item"><strong>Subjects Taken:</strong> ${validGrades.length}</div>
+              <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing' : '❌ Needs Improvement'}</div>
+            </div>
+            <div style="height:150px;margin-top:10px;">
+              <canvas id="profileGradeChart"></canvas>
+            </div>
+            <div style="margin-top:10px;max-height:200px;overflow-y:auto;">
+              <table>
+                <thead><tr><th>Subject</th><th>Term</th><th>Exam Type</th><th>Test 1</th><th>Test 2</th><th>Test 3</th><th>Final</th><th>Total</th><th>Grade</th></tr></thead>
+                <tbody>
+                  ${validGrades.map(g => {
+                    const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+                    return `<tr>
+                      <td>${g.subject}</td>
+                      <td>${g.term}</td>
+                      <td><span class="exam-type-badge ${g.examType === 'Opener' ? 'opener' : g.examType === 'Midterm' ? 'midterm' : 'endterm'}">${g.examType}</span></td>
+                      <td>${g.test1 || 0}</td>
+                      <td>${g.test2 || 0}</td>
+                      <td>${g.test3 || 0}</td>
+                      <td>${g.exam || 0}</td>
+                      <td><strong>${total}</strong></td>
+                      <td>${getGradeBadge(total, true)}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : `
+            <p style="color:#999;">No grades recorded for this student.</p>
+          `}
+        </div>
+      `;
+
+      // Attendance
+      html += `
+        <div class="profile-section" style="border-left-color:#f39c12;">
+          <h4>📋 Attendance Records (${studentAttendance.length})</h4>
+          ${studentAttendance.length > 0 ? `
+            <div style="max-height:150px;overflow-y:auto;">
+              <table>
+                <thead><tr><th>Date</th><th>Status</th><th>Reason</th><th>Marked By</th></tr></thead>
+                <tbody>
+                  ${studentAttendance.slice().reverse().slice(0, 20).map(a => `
+                    <tr>
+                      <td>${formatDate(a.date)}</td>
+                      <td><span class="badge ${a.status === 'Present' ? 'badge-success' : a.status === 'Absent' ? 'badge-danger' : 'badge-warning'}">${a.status}</span></td>
+                      <td>${a.reason || '-'}</td>
+                      <td>${a.markedBy || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : `
+            <p style="color:#999;">No attendance records found.</p>
+          `}
+        </div>
+      `;
+
+      // Discipline Records
+      const hasDiscipline = studentWarnings.length > 0 || studentSuspensions.length > 0 || studentExpulsions.length > 0;
+      html += `
+        <div class="profile-section" style="border-left-color:#e74c3c;">
+          <h4>⚠️ Discipline Records</h4>
+          ${hasDiscipline ? `
+            ${studentWarnings.length > 0 ? `
+              <div><strong>Warnings (${studentWarnings.length}):</strong></div>
+              <ul style="margin:5px 0 10px 20px;">
+                ${studentWarnings.map(w => `<li>${formatDate(w.date)} - ${w.reason} (by ${w.issuedBy || 'N/A'})</li>`).join('')}
+              </ul>
+            ` : ''}
+            ${studentSuspensions.length > 0 ? `
+              <div><strong>Suspensions (${studentSuspensions.length}):</strong></div>
+              <ul style="margin:5px 0 10px 20px;">
+                ${studentSuspensions.map(s => `<li>${formatDate(s.date)} - ${s.reason} (${s.duration}) - <span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></li>`).join('')}
+              </ul>
+            ` : ''}
+            ${studentExpulsions.length > 0 ? `
+              <div><strong>Expulsions (${studentExpulsions.length}):</strong></div>
+              <ul style="margin:5px 0 10px 20px;">
+                ${studentExpulsions.map(e => `<li>${formatDate(e.date)} - ${e.reason} (approved by ${e.approvedBy || 'N/A'})</li>`).join('')}
+              </ul>
+            ` : ''}
+          ` : `
+            <p style="color:#999;">No discipline records found.</p>
+          `}
+        </div>
+      `;
+
+      // Clinic Visits
+      html += `
+        <div class="profile-section" style="border-left-color:#2ecc71;">
+          <h4>🏥 Clinic Visits (${studentClinic.length})</h4>
+          ${studentClinic.length > 0 ? `
+            <div style="max-height:150px;overflow-y:auto;">
+              <table>
+                <thead><tr><th>Date</th><th>Doctor</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th></tr></thead>
+                <tbody>
+                  ${studentClinic.slice().reverse().slice(0, 20).map(c => `
+                    <tr>
+                      <td>${formatDate(c.date)}</td>
+                      <td>${c.doctor || '-'}</td>
+                      <td>${c.condition || '-'}</td>
+                      <td>${c.diagnosis || '-'}</td>
+                      <td>${c.medication || '-'}</td>
+                      <td>${c.followUp === 'Yes' ? '📅 ' + formatDate(c.followUpDate) : '✅ No'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : `
+            <p style="color:#999;">No clinic visits recorded.</p>
+          `}
+        </div>
+      `;
+
+      // Notes
+      if (student.notes) {
+        html += `
+          <div class="profile-section" style="border-left-color:#95a5a6;">
+            <h4>📝 Notes</h4>
+            <p>${student.notes}</p>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+
+      openModal(`📋 Student Profile: ${student.firstName} ${student.lastName}`, html);
+
+      // Render grade chart after modal opens
+      setTimeout(() => {
+        const canvas = document.getElementById('profileGradeChart');
+        if (canvas && validGrades.length > 0) {
+          const ctx = canvas.getContext('2d');
+          const subjects = validGrades.map(g => g.subject);
+          const scores = validGrades.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+          const colors = scores.map(s => getGradeColor(s, true));
+          
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: subjects,
+              datasets: [{
+                data: scores,
+                backgroundColor: colors,
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: { beginAtZero: true, max: 130 }
+              },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const score = context.parsed.y;
+                      const grade = getKenyanGrade(score, true);
+                      return `Score: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+      }, 300);
+    };
+
+    // ============================================================
+    // PRINT STUDENT PROFILE
+    // ============================================================
+
+    window.printStudentProfile = function(studentId) {
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) {
+        showToast('Student not found', 'error');
+        return;
+      }
+
+      // Get all related data
+      const studentGrades = gradesCache.filter(g => g.studentId === studentId);
+      const studentAttendance = attendanceCache.filter(a => a.studentId === studentId);
+      const studentWarnings = warningsCache.filter(w => w.studentId === studentId);
+      const studentSuspensions = suspensionsCache.filter(s => s.studentId === studentId);
+      const studentExpulsions = expulsionsCache.filter(e => e.studentId === studentId);
+      const studentClinic = clinicCache.filter(c => c.studentId === studentId);
+      const studentPrefect = prefectsCache.find(p => p.studentId === studentId);
+
+      const validGrades = studentGrades.filter(g => hasActualScores(g));
+      const totalScore = validGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
+      const avgScore = validGrades.length > 0 ? Math.round(totalScore / validGrades.length) : null;
+
+      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Student Report - ${student.firstName} ${student.lastName}</title>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; max-width: 1100px; margin: 0 auto; }
+            .header { text-align: center; border-bottom: 3px solid #1a5276; padding-bottom: 15px; margin-bottom: 20px; }
+            .header h1 { color: #1a5276; margin: 0; font-size: 24px; }
+            .header .sub { color: #666; font-size: 14px; }
+            .header .date { color: #999; font-size: 12px; margin-top: 5px; }
+            .section { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; page-break-inside: avoid; }
+            .section h3 { color: #1a5276; margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 15px; }
+            .grid .item { font-size: 12px; padding: 2px 0; }
+            .grid .item strong { color: #2c3e50; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 5px; }
+            th { background: #1a5276; color: white; padding: 4px 8px; text-align: left; font-size: 10px; }
+            td { padding: 3px 8px; border-bottom: 1px solid #eee; }
+            .badge { padding: 1px 8px; border-radius: 12px; font-size: 9px; font-weight: 600; display: inline-block; }
+            .badge-success { background: #d5f5e3; color: #27ae60; }
+            .badge-danger { background: #fadbd8; color: #e74c3c; }
+            .badge-warning { background: #fdebd0; color: #f39c12; }
+            .badge-info { background: #d6eaf8; color: #2e86c1; }
+            .badge-gold { background: #f9e79f; color: #8e6b00; }
+            .badge-na { background: #f0f0f0; color: #999; }
+            .badge-grade-a { background: #27ae60; color: white; }
+            .badge-grade-a- { background: #2ecc71; color: white; }
+            .badge-grade-b-plus { background: #85c1e9; color: #1a5276; }
+            .badge-grade-b { background: #5dade2; color: white; }
+            .badge-grade-b- { background: #a9cce3; color: #1a5276; }
+            .badge-grade-c-plus { background: #f5b041; color: white; }
+            .badge-grade-c { background: #f39c12; color: white; }
+            .badge-grade-c- { background: #f7dc6f; color: #7d6608; }
+            .badge-grade-d-plus { background: #e67e22; color: white; }
+            .badge-grade-d { background: #d35400; color: white; }
+            .badge-grade-d- { background: #f5b7b1; color: #922b21; }
+            .badge-grade-e { background: #e74c3c; color: white; }
+            .exam-type { padding: 1px 6px; border-radius: 10px; font-size: 9px; font-weight: 600; }
+            .exam-type.opener { background: #d6eaf8; color: #1a5276; }
+            .exam-type.midterm { background: #fdebd0; color: #a04000; }
+            .exam-type.endterm { background: #d5f5e3; color: #1a7a3a; }
+            .footer { text-align: center; font-size: 11px; color: #999; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
+            @media print { body { padding: 10px; } .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Mara Christian High School</h1>
+            <div class="sub">Student Academic Report</div>
+            <div class="date">Generated on: ${today}</div>
+          </div>
+
+          <div class="section">
+            <h3>👤 Personal Information</h3>
+            <div class="grid">
+              <div class="item"><strong>Name:</strong> ${student.firstName} ${student.lastName}</div>
+              <div class="item"><strong>Admission No:</strong> ${student.admNo || 'N/A'}</div>
+              <div class="item"><strong>Class:</strong> ${student.class || 'N/A'}</div>
+              <div class="item"><strong>Gender:</strong> ${student.gender || 'N/A'}</div>
+              <div class="item"><strong>Status:</strong> ${student.status || 'N/A'}</div>
+              <div class="item"><strong>Dorm:</strong> ${student.dorm || 'N/A'}</div>
+              <div class="item"><strong>Location:</strong> ${student.location || 'N/A'}</div>
+              <div class="item"><strong>DOB:</strong> ${student.dob ? formatDate(student.dob) : 'N/A'}</div>
+              ${student.isPrefect === 'Yes' ? `<div class="item"><strong>Prefect:</strong> ${student.prefectRole || 'Yes'} (${student.prefectDepartment || 'N/A'})</div>` : ''}
+              ${student.sponsorshipType && student.sponsorshipType !== 'Self Sponsored' ? `<div class="item"><strong>Sponsorship:</strong> ${student.sponsorshipType}${student.sponsorName ? ' - ' + student.sponsorName : ''}</div>` : ''}
+              ${student.parent ? `<div class="item"><strong>Parent:</strong> ${student.parent}${student.parentPhone ? ' (' + student.parentPhone + ')' : ''}</div>` : ''}
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>📊 Academic Performance</h3>
+            ${validGrades.length > 0 ? `
+              <div class="grid" style="margin-bottom:8px;">
+                <div class="item"><strong>Average Score:</strong> ${avgScore}%</div>
+                <div class="item"><strong>Overall Grade:</strong> ${getGradeBadge(avgScore, true)}</div>
+                <div class="item"><strong>Subjects:</strong> ${validGrades.length}</div>
+                <div class="item"><strong>Status:</strong> ${isPass(avgScore, true) ? '✅ Passing' : '❌ Needs Improvement'}</div>
+              </div>
+              <table>
+                <thead><tr><th>Subject</th><th>Term</th><th>Exam Type</th><th>Test 1</th><th>Test 2</th><th>Test 3</th><th>Final</th><th>Total</th><th>Grade</th></tr></thead>
+                <tbody>
+                  ${validGrades.map(g => {
+                    const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+                    return `<tr>
+                      <td>${g.subject}</td>
+                      <td>${g.term}</td>
+                      <td><span class="exam-type ${g.examType === 'Opener' ? 'opener' : g.examType === 'Midterm' ? 'midterm' : 'endterm'}">${g.examType}</span></td>
+                      <td>${g.test1 || 0}</td>
+                      <td>${g.test2 || 0}</td>
+                      <td>${g.test3 || 0}</td>
+                      <td>${g.exam || 0}</td>
+                      <td><strong>${total}</strong></td>
+                      <td>${getGradeBadge(total, true)}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <p style="color:#999;font-size:12px;">No grades recorded for this student.</p>
+            `}
+          </div>
+
+          <div class="section">
+            <h3>📋 Attendance Records (${studentAttendance.length})</h3>
+            ${studentAttendance.length > 0 ? `
+              <table>
+                <thead><tr><th>Date</th><th>Status</th><th>Reason</th><th>Marked By</th></tr></thead>
+                <tbody>
+                  ${studentAttendance.slice().reverse().slice(0, 30).map(a => `
+                    <tr>
+                      <td>${formatDate(a.date)}</td>
+                      <td><span class="badge ${a.status === 'Present' ? 'badge-success' : a.status === 'Absent' ? 'badge-danger' : 'badge-warning'}">${a.status}</span></td>
+                      <td>${a.reason || '-'}</td>
+                      <td>${a.markedBy || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <p style="color:#999;font-size:12px;">No attendance records found.</p>
+            `}
+          </div>
+
+          <div class="section">
+            <h3>⚠️ Discipline Records</h3>
+            ${studentWarnings.length > 0 || studentSuspensions.length > 0 || studentExpulsions.length > 0 ? `
+              ${studentWarnings.length > 0 ? `
+                <div><strong>Warnings (${studentWarnings.length}):</strong></div>
+                <ul style="font-size:12px;margin:3px 0 8px 20px;">
+                  ${studentWarnings.map(w => `<li>${formatDate(w.date)} - ${w.reason} (by ${w.issuedBy || 'N/A'})</li>`).join('')}
+                </ul>
+              ` : ''}
+              ${studentSuspensions.length > 0 ? `
+                <div><strong>Suspensions (${studentSuspensions.length}):</strong></div>
+                <ul style="font-size:12px;margin:3px 0 8px 20px;">
+                  ${studentSuspensions.map(s => `<li>${formatDate(s.date)} - ${s.reason} (${s.duration}) - <span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></li>`).join('')}
+                </ul>
+              ` : ''}
+              ${studentExpulsions.length > 0 ? `
+                <div><strong>Expulsions (${studentExpulsions.length}):</strong></div>
+                <ul style="font-size:12px;margin:3px 0 8px 20px;">
+                  ${studentExpulsions.map(e => `<li>${formatDate(e.date)} - ${e.reason} (approved by ${e.approvedBy || 'N/A'})</li>`).join('')}
+                </ul>
+              ` : ''}
+            ` : `
+              <p style="color:#999;font-size:12px;">No discipline records found.</p>
+            `}
+          </div>
+
+          <div class="section">
+            <h3>🏥 Clinic Visits (${studentClinic.length})</h3>
+            ${studentClinic.length > 0 ? `
+              <table>
+                <thead><tr><th>Date</th><th>Doctor</th><th>Condition</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th></tr></thead>
+                <tbody>
+                  ${studentClinic.slice().reverse().slice(0, 30).map(c => `
+                    <tr>
+                      <td>${formatDate(c.date)}</td>
+                      <td>${c.doctor || '-'}</td>
+                      <td>${c.condition || '-'}</td>
+                      <td>${c.diagnosis || '-'}</td>
+                      <td>${c.medication || '-'}</td>
+                      <td>${c.followUp === 'Yes' ? '📅 ' + formatDate(c.followUpDate) : '✅ No'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <p style="color:#999;font-size:12px;">No clinic visits recorded.</p>
+            `}
+          </div>
+
+          ${student.notes ? `
+            <div class="section">
+              <h3>📝 Notes</h3>
+              <p style="font-size:12px;margin:0;">${student.notes}</p>
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>Mara Christian High School - Educating For Eternity</p>
+            <p>This is a system-generated student report.</p>
+          </div>
+
+          <script>
+            window.onload = function() { window.print(); }
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
+
+    // ============================================================
+    // PRINT & SHARE FUNCTIONS (existing)
     // ============================================================
 
     function getTabTitle(tab) {
@@ -1841,15 +2369,6 @@
             <td>${row.prefectDepartment || '-'}</td>
             <td>${row.parent || '-'}</td>
           `;
-        } else if (tab === 'sponsorship') {
-          cells = `
-            <td>${row.firstName || ''} ${row.lastName || ''}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.sponsorshipType || ''}</td>
-            <td>${row.sponsorName || '-'}</td>
-            <td>${row.sponsorContact || '-'}</td>
-            <td>${row.sponsorNotes || '-'}</td>
-          `;
         } else if (tab === 'grades') {
           const student = studentsCache.find(s => s.id === row.studentId);
           const hasScores = hasActualScores(row);
@@ -1868,57 +2387,6 @@
             <td><strong>${hasScores ? total : '-'}</strong></td>
             <td>${gradeDisplay}</td>
           `;
-        } else if (tab === 'attendance') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'warnings') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.issuedBy || '-'}</td>
-          `;
-        } else if (tab === 'suspensions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.duration || ''}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'expulsions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.approvedBy || '-'}</td>
-          `;
-        } else if (tab === 'clinic') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${row.doctor || '-'}</td>
-            <td>${row.complaint || '-'}</td>
-            <td>${row.condition || '-'}</td>
-            <td>${row.diagnosis || '-'}</td>
-            <td>${row.medication || '-'}</td>
-            <td>${row.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
-            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
-          `;
         } else if (tab === 'prefects') {
           const student = studentsCache.find(s => s.id === row.studentId);
           cells = `
@@ -1928,62 +2396,13 @@
             <td>${row.department || ''}</td>
             <td>${formatDate(row.date)}</td>
           `;
-        } else if (tab === 'teachers') {
-          cells = `
-            <td>${row.name || ''}</td>
-            <td>${row.empId || ''}</td>
-            <td>${row.type || ''}</td>
-            <td>${row.specialization || '-'}</td>
-            <td>${(row.subjects || []).join(', ') || '-'}</td>
-            <td>${(row.classes || []).join(', ') || '-'}</td>
-            <td>${row.classTeacher || '-'}</td>
-            <td>${row.dormRole || '-'}</td>
-            <td>${row.dorm || '-'}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'teacherAttendance') {
-          const teacher = teachersCache.find(t => t.id === row.teacherId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${teacher?.name || 'Unknown'}</td>
-            <td>${teacher?.type || ''}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.lessonsToday || 0}</td>
-            <td>${row.lessonsWeek || 0}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'maintenance' || tab === 'maintenanceDept') {
-          const teacher = teachersCache.find(t => t.id === row.assignedTo);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.issueType || ''}</td>
-            <td>${row.description || ''}</td>
-            <td>${row.reportedBy || '-'}</td>
-            <td>${teacher?.name || row.assignedTo || 'Unassigned'}</td>
-            <td>${row.status || ''}</td>
-            <td>${tab === 'maintenanceDept' ? (row.notes || '-') : (row.status === 'Resolved' ? formatDate(row.resolvedDate) : '-')}</td>
-          `;
-        } else if (tab === 'users') {
-          cells = `
-            <td>${row.email || row.id}</td>
-            <td>${row.fullName || '-'}</td>
-            <td>${row.role || 'user'}</td>
-            <td>${row.approvalStatus || 'approved'}</td>
-            <td>${row.class || '-'}</td>
-            <td>${formatTimestamp(row.lastLogin)}</td>
-          `;
-        } else if (tab === 'registrations') {
-          const statusBadge = row.status === 'pending' ? '⏳ Pending' : row.status === 'approved' ? '✅ Approved' : '❌ Rejected';
-          cells = `
-            <td>${formatDate(row.createdAt)}</td>
-            <td>${row.email || ''}</td>
-            <td>${row.fullName || ''}</td>
-            <td>${row.requestedRole || ''}</td>
-            <td>${row.class || '-'}</td>
-            <td>${statusBadge}</td>
-          `;
+        } else {
+          // Default for other tables
+          const columns = data.columns;
+          cells = columns.map(col => {
+            const val = row[col.toLowerCase().replace(/ /g, '')] || row[col] || '-';
+            return `<td>${val}</td>`;
+          }).join('');
         }
         return `<tr>${cells}</tr>`;
       }).join('');
@@ -2053,295 +2472,6 @@
         </html>
       `);
       printWindow.document.close();
-    };
-
-    window.shareTab = function(tab) {
-      const title = getTabTitle(tab);
-      const data = getTableData(tab);
-      
-      if (data.rows.length === 0) {
-        showToast('No data to share for ' + title, 'warning');
-        return;
-      }
-
-      const modal = document.getElementById('shareModal');
-      const body = document.getElementById('shareModalBody');
-      const titleEl = document.getElementById('shareModalTitle');
-      titleEl.textContent = `📤 Share: ${title}`;
-
-      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      
-      let tableRows = data.rows.map(row => {
-        let cells = '';
-        if (tab === 'students') {
-          cells = `
-            <td>${row.admNo || ''}</td>
-            <td>${row.firstName || ''} ${row.lastName || ''}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.gender || ''}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.dorm || '-'}</td>
-            <td>${row.sponsorshipType || '-'}</td>
-            <td>${row.isPrefect === 'Yes' ? '⭐ Yes' : '-'}</td>
-            <td>${row.prefectRole || '-'}</td>
-            <td>${row.prefectDepartment || '-'}</td>
-            <td>${row.parent || '-'}</td>
-          `;
-        } else if (tab === 'sponsorship') {
-          cells = `
-            <td>${row.firstName || ''} ${row.lastName || ''}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.sponsorshipType || ''}</td>
-            <td>${row.sponsorName || '-'}</td>
-            <td>${row.sponsorContact || '-'}</td>
-            <td>${row.sponsorNotes || '-'}</td>
-          `;
-        } else if (tab === 'grades') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          const hasScores = hasActualScores(row);
-          const total = hasScores ? (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0) : null;
-          const gradeDisplay = hasScores ? getKenyanGrade(total, true)?.grade || 'E' : 'N/A';
-          cells = `
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.subject || ''}</td>
-            <td>${row.term || ''}</td>
-            <td>${row.examType || ''}</td>
-            <td>${row.test1 ?? '-'}</td>
-            <td>${row.test2 ?? '-'}</td>
-            <td>${row.test3 ?? '-'}</td>
-            <td>${row.exam ?? '-'}</td>
-            <td><strong>${hasScores ? total : '-'}</strong></td>
-            <td>${gradeDisplay}</td>
-          `;
-        } else if (tab === 'attendance') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'warnings') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.issuedBy || '-'}</td>
-          `;
-        } else if (tab === 'suspensions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.duration || ''}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'expulsions') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.reason || ''}</td>
-            <td>${row.approvedBy || '-'}</td>
-          `;
-        } else if (tab === 'clinic') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${row.doctor || '-'}</td>
-            <td>${row.complaint || '-'}</td>
-            <td>${row.condition || '-'}</td>
-            <td>${row.diagnosis || '-'}</td>
-            <td>${row.medication || '-'}</td>
-            <td>${row.followUp === 'Yes' ? '📅 Yes' : '✅ No'}</td>
-            <td>${row.followUp === 'Yes' ? formatDate(row.followUpDate) : '-'}</td>
-          `;
-        } else if (tab === 'prefects') {
-          const student = studentsCache.find(s => s.id === row.studentId);
-          cells = `
-            <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${row.role || ''}</td>
-            <td>${row.department || ''}</td>
-            <td>${formatDate(row.date)}</td>
-          `;
-        } else if (tab === 'teachers') {
-          cells = `
-            <td>${row.name || ''}</td>
-            <td>${row.empId || ''}</td>
-            <td>${row.type || ''}</td>
-            <td>${row.specialization || '-'}</td>
-            <td>${(row.subjects || []).join(', ') || '-'}</td>
-            <td>${(row.classes || []).join(', ') || '-'}</td>
-            <td>${row.classTeacher || '-'}</td>
-            <td>${row.dormRole || '-'}</td>
-            <td>${row.dorm || '-'}</td>
-            <td>${row.status || ''}</td>
-          `;
-        } else if (tab === 'teacherAttendance') {
-          const teacher = teachersCache.find(t => t.id === row.teacherId);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${teacher?.name || 'Unknown'}</td>
-            <td>${teacher?.type || ''}</td>
-            <td>${row.status || ''}</td>
-            <td>${row.reason || '-'}</td>
-            <td>${row.lessonsToday || 0}</td>
-            <td>${row.lessonsWeek || 0}</td>
-            <td>${row.markedBy || '-'}</td>
-          `;
-        } else if (tab === 'maintenance' || tab === 'maintenanceDept') {
-          const teacher = teachersCache.find(t => t.id === row.assignedTo);
-          cells = `
-            <td>${formatDate(row.date)}</td>
-            <td>${row.class || ''}</td>
-            <td>${row.issueType || ''}</td>
-            <td>${row.description || ''}</td>
-            <td>${row.reportedBy || '-'}</td>
-            <td>${teacher?.name || row.assignedTo || 'Unassigned'}</td>
-            <td>${row.status || ''}</td>
-            <td>${tab === 'maintenanceDept' ? (row.notes || '-') : (row.status === 'Resolved' ? formatDate(row.resolvedDate) : '-')}</td>
-          `;
-        } else if (tab === 'users') {
-          cells = `
-            <td>${row.email || row.id}</td>
-            <td>${row.fullName || '-'}</td>
-            <td>${row.role || 'user'}</td>
-            <td>${row.approvalStatus || 'approved'}</td>
-            <td>${row.class || '-'}</td>
-            <td>${formatTimestamp(row.lastLogin)}</td>
-          `;
-        } else if (tab === 'registrations') {
-          const statusBadge = row.status === 'pending' ? '⏳ Pending' : row.status === 'approved' ? '✅ Approved' : '❌ Rejected';
-          cells = `
-            <td>${formatDate(row.createdAt)}</td>
-            <td>${row.email || ''}</td>
-            <td>${row.fullName || ''}</td>
-            <td>${row.requestedRole || ''}</td>
-            <td>${row.class || '-'}</td>
-            <td>${statusBadge}</td>
-          `;
-        }
-        return `<tr>${cells}</tr>`;
-      }).join('');
-
-      const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join('');
-
-      body.innerHTML = `
-        <div class="share-preview-content" id="shareContent">
-          <div style="text-align:center;margin-bottom:15px;">
-            <h2 style="color:#1a5276;margin:0;">Mara Christian High School</h2>
-            <p style="color:#666;font-size:14px;margin:2px 0;">${title}</p>
-            <p style="color:#999;font-size:12px;">Generated on: ${today}</p>
-          </div>
-          <div style="max-height:400px;overflow-y:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:11px;">
-              <thead><tr style="background:#1a5276;color:white;">${tableHeaders}</tr></thead>
-              <tbody>${tableRows}</tbody>
-            </table>
-          </div>
-          <div style="text-align:center;font-size:11px;color:#999;margin-top:15px;padding-top:10px;border-top:1px solid #ddd;">
-            <p>Mara Christian High School - Educating For Eternity</p>
-            <p>Total records: ${data.rows.length}</p>
-          </div>
-        </div>
-        <div class="share-actions no-print">
-          <button class="btn btn-print" onclick="printShareContent()">🖨️ Print</button>
-          <button class="btn btn-share" onclick="downloadShareContent()">📥 Download as Image</button>
-          <button class="btn btn-success" onclick="shareContentViaEmail()">📧 Share via Email</button>
-          <button class="btn btn-danger" onclick="document.getElementById('shareModal').classList.remove('show')">Close</button>
-        </div>
-      `;
-
-      modal.classList.add('show');
-      window._shareContent = document.getElementById('shareContent');
-    };
-
-    window.printShareContent = function() {
-      const content = document.getElementById('shareContent');
-      if (!content) return;
-      
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>Mara Christian High School - Share</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; }
-            td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
-            tr:nth-child(even) { background: #f8f9fa; }
-            .header { text-align: center; margin-bottom: 15px; }
-            .header h2 { color: #1a5276; margin: 0; }
-            .footer { text-align: center; font-size: 11px; color: #999; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; }
-            @media print { body { padding: 10px; } }
-          </style>
-        </head>
-        <body>
-          ${content.innerHTML}
-          <script>window.onload = function() { window.print(); window.close(); }<\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-    };
-
-    window.downloadShareContent = function() {
-      const content = document.getElementById('shareContent');
-      if (!content) return;
-
-      showToast('📸 Generating image...', 'info');
-      
-      html2canvas(content, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `MCHS_Share_${new Date().toISOString().slice(0,10)}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('✅ Image downloaded successfully!', 'success');
-      }).catch(err => {
-        console.error('Error generating image:', err);
-        showToast('❌ Error generating image. Try printing instead.', 'error');
-      });
-    };
-
-    window.shareContentViaEmail = function() {
-      const content = document.getElementById('shareContent');
-      if (!content) return;
-
-      const rows = content.querySelectorAll('tbody tr');
-      let textData = '';
-      rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        const rowData = Array.from(cells).map(cell => cell.textContent.trim()).join(' | ');
-        textData += rowData + '\n';
-      });
-
-      const subject = encodeURIComponent('Mara Christian High School - Data Share');
-      const body = encodeURIComponent(
-        `Mara Christian High School\n\n` +
-        `Data Share\n` +
-        `Generated: ${new Date().toLocaleString()}\n\n` +
-        `${textData}\n\n` +
-        `---\nMara Christian High School - Educating For Eternity`
-      );
-
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
-      showToast('📧 Email client opened', 'info');
     };
 
     // ============================================================
@@ -2441,10 +2571,9 @@
     };
 
     // ============================================================
-    // 🔐 AUTHENTICATION WITH ADMIN APPROVAL
+    // 🔐 AUTHENTICATION
     // ============================================================
 
-    // Show signup modal
     window.showSignupModal = function() {
       const html = `
         <div class="signup-form">
@@ -2559,7 +2688,6 @@
       }, 100);
     };
 
-    // Handle signup with admin approval
     window.handleSignup = async function() {
       const email = document.getElementById('signupEmail').value.trim();
       const name = document.getElementById('signupName').value.trim();
@@ -2584,11 +2712,9 @@
       }
 
       try {
-        // Create user in Firebase Auth (but account will be disabled initially)
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const uid = userCredential.user.uid;
 
-        // Create pending registration in Firestore
         await setDoc(doc(db, 'pendingRegistrations', uid), {
           email: email,
           fullName: name,
@@ -2599,7 +2725,6 @@
           uid: uid
         });
 
-        // Create user document with disabled status
         await setDoc(doc(db, 'users', uid), {
           email: email,
           fullName: name,
@@ -2610,7 +2735,6 @@
           loginCount: 0
         });
 
-        // Sign out immediately
         await signOut(auth);
 
         showToast('✅ Registration submitted! Please wait for admin approval.', 'success');
@@ -2624,10 +2748,6 @@
       }
     };
 
-    // ============================================================
-    // LOGIN FUNCTION - FIXED: Added try-catch and proper error handling
-    // ============================================================
-
     window.handleLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -2637,7 +2757,6 @@
       console.log('🔐 Login attempt:', { email, passwordLength: password.length });
       errorEl.textContent = '';
       
-      // Test mode login - always works regardless of Firebase
       if (email === 'test@test.com' && password === 'test123') {
         window.testLogin();
         return;
@@ -2650,10 +2769,8 @@
       btn.innerHTML = '<span class="spinner"></span> Signing in...';
       
       try {
-        console.log('📡 Attempting Firebase sign in...');
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         console.log('✅ Login successful:', userCredential.user.email);
-        // Don't set currentUser here - auth state listener will handle it
       } catch (err) {
         console.error('❌ Login error:', err.code, err.message);
         
@@ -2678,10 +2795,6 @@
         btn.textContent = 'Sign In';
       }
     };
-
-    // ============================================================
-    // TEST LOGIN - FIXED: Reliable test login that always works
-    // ============================================================
 
     window.testLogin = function() {
       try {
@@ -2708,10 +2821,6 @@
       }
     };
 
-    // ============================================================
-    // LOGOUT
-    // ============================================================
-
     window.handleLogout = async function() {
       try {
         if (!isTestMode) {
@@ -2727,10 +2836,6 @@
       }
     };
 
-    // ============================================================
-    // AUTH STATE CHANGED - FIXED: Better error handling
-    // ============================================================
-
     onAuthStateChanged(auth, async (user) => {
       try {
         if (user && !isTestMode) {
@@ -2738,7 +2843,6 @@
             const snap = await getDoc(doc(db, 'users', user.uid));
             
             if (!snap.exists()) {
-              // Check if there's a pending registration
               const pendingSnap = await getDoc(doc(db, 'pendingRegistrations', user.uid));
               if (pendingSnap.exists()) {
                 const pendingData = pendingSnap.data();
@@ -2755,7 +2859,6 @@
             
             const data = snap.data();
             
-            // Check approval status
             if (data.approvalStatus === 'pending') {
               showToast('⏳ Your account is pending admin approval.', 'warning');
               await signOut(auth);
@@ -2786,13 +2889,11 @@
           } catch (err) {
             console.error('Error loading user profile:', err);
             document.getElementById('loginError').textContent = 'Error loading profile. Try again.';
-            // Still allow test login fallback
             if (user.email === 'test@test.com') {
               window.testLogin();
             }
           }
         } else if (!user && !isTestMode) {
-          // Don't reset if in test mode
           if (!isTestMode) {
             currentUser = null;
             stopListeners();
@@ -2805,11 +2906,6 @@
       }
     });
 
-    // ============================================================
-    // ADMIN FUNCTIONS - Approve/Reject Registrations
-    // ============================================================
-
-    // Approve registration
     window.approveRegistration = async function(uid) {
       if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'director')) {
         showToast('Only Admin and Director can approve registrations', 'error');
@@ -2819,7 +2915,6 @@
       if (!confirm('Approve this registration? The user will be able to login.')) return;
       
       try {
-        // Get pending registration
         const pendingSnap = await getDoc(doc(db, 'pendingRegistrations', uid));
         if (!pendingSnap.exists()) {
           showToast('Registration not found', 'error');
@@ -2827,14 +2922,12 @@
         }
         const pendingData = pendingSnap.data();
         
-        // Update user document
         await updateDoc(doc(db, 'users', uid), {
           approvalStatus: 'approved',
           approvedAt: serverTimestamp(),
           approvedBy: currentUser.email
         });
         
-        // Update pending registration
         await updateDoc(doc(db, 'pendingRegistrations', uid), {
           status: 'approved',
           approvedAt: serverTimestamp(),
@@ -2851,7 +2944,6 @@
       }
     };
 
-    // Reject registration
     window.rejectRegistration = async function(uid) {
       if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'director')) {
         showToast('Only Admin and Director can reject registrations', 'error');
@@ -2870,7 +2962,6 @@
         }
         const pendingData = pendingSnap.data();
         
-        // Update user document
         await updateDoc(doc(db, 'users', uid), {
           approvalStatus: 'rejected',
           rejectedAt: serverTimestamp(),
@@ -2878,7 +2969,6 @@
           rejectionReason: reason || 'No reason provided'
         });
         
-        // Update pending registration
         await updateDoc(doc(db, 'pendingRegistrations', uid), {
           status: 'rejected',
           rejectedAt: serverTimestamp(),
@@ -2897,29 +2987,27 @@
     };
 
     // ============================================================
-    // LOAD SAMPLE DATA - Updated with new subjects, prefects, and sponsorships
+    // LOAD SAMPLE DATA
     // ============================================================
 
     window.loadSampleData = function() {
       const sampleStudents = [
-        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics' },
-        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Smith Foundation', sponsorContact: 'info@smithfoundation.org', sponsorNotes: 'Full scholarship for 2024', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline' },
-        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports' },
-        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', sponsorName: 'World Vision Kenya', sponsorContact: '+254 700 123456', sponsorNotes: 'Partial sponsorship - covers fees only', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect' },
-        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: 'Full government sponsorship', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation' },
-        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect' },
-        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Dining Hall' },
-        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Equity Foundation', sponsorContact: '+254 722 987654', sponsorNotes: 'Wings to Fly Program', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Dormitory/Boarding' },
-        { admNo: '2024-009', firstName: 'James', lastName: 'Odhiambo', class: 'Form 4 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Environment' },
-        { admNo: '2024-010', firstName: 'Grace', lastName: 'Akinyi', class: 'Form 4 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', sponsorName: 'Compassion International', sponsorContact: '+254 733 456789', sponsorNotes: 'Full sponsorship including boarding', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual' },
-        { admNo: '2024-011', firstName: 'Robert', lastName: 'Kiprop', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: '50% government sponsorship', isPrefect: 'No', prefectRole: '', prefectDepartment: '' },
-        { admNo: '2024-012', firstName: 'Faith', lastName: 'Chepchumba', class: 'Form 4 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'No', prefectRole: '', prefectDepartment: '' },
+        { admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics', parent: 'Mr. John Doe Sr.', parentPhone: '+254 700 111111', parentEmail: 'johndoe@email.com', health: 'No known allergies', notes: 'Excellent student' },
+        { admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Smith Foundation', sponsorContact: 'info@smithfoundation.org', sponsorNotes: 'Full scholarship for 2024', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline', parent: 'Mrs. Mary Smith', parentPhone: '+254 700 222222', parentEmail: 'mary@email.com', health: 'Asthma', notes: '' },
+        { admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Games & Sports', parent: 'Mr. Peter Johnson', parentPhone: '+254 700 333333', parentEmail: 'peter@email.com', health: '', notes: '' },
+        { admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', sponsorName: 'World Vision Kenya', sponsorContact: '+254 700 123456', sponsorNotes: 'Partial sponsorship - covers fees only', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Susan Williams', parentPhone: '+254 700 444444', parentEmail: 'susan@email.com', health: '', notes: '' },
+        { admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: 'Full government sponsorship', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation', parent: 'Mr. James Brown', parentPhone: '+254 700 555555', parentEmail: 'james@email.com', health: '', notes: '' },
+        { admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Grade 9 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Assistant Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Ann Jones', parentPhone: '+254 700 666666', parentEmail: 'ann@email.com', health: '', notes: '' },
+        { admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Dining Hall', parent: 'Mr. John Maina', parentPhone: '+254 700 777777', parentEmail: 'johnmaina@email.com', health: '', notes: '' },
+        { admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 3 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Organization', sponsorName: 'Equity Foundation', sponsorContact: '+254 722 987654', sponsorNotes: 'Wings to Fly Program', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Dormitory/Boarding', parent: 'Mrs. Grace Wanjiru', parentPhone: '+254 700 888888', parentEmail: 'grace@email.com', health: '', notes: '' },
+        { admNo: '2024-009', firstName: 'James', lastName: 'Odhiambo', class: 'Form 4 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Environment', parent: 'Mr. Samuel Odhiambo', parentPhone: '+254 700 999999', parentEmail: 'samuel@email.com', health: '', notes: '' },
+        { admNo: '2024-010', firstName: 'Grace', lastName: 'Akinyi', class: 'Form 4 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', sponsorName: 'Compassion International', sponsorContact: '+254 733 456789', sponsorNotes: 'Full sponsorship including boarding', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual', parent: 'Mrs. Faith Akinyi', parentPhone: '+254 700 101010', parentEmail: 'faith@email.com', health: '', notes: '' },
+        { admNo: '2024-011', firstName: 'Robert', lastName: 'Kiprop', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', sponsorNotes: '50% government sponsorship', isPrefect: 'No', prefectRole: '', prefectDepartment: '', parent: 'Mr. Joseph Kiprop', parentPhone: '+254 700 111212', parentEmail: 'joseph@email.com', health: '', notes: '' },
+        { admNo: '2024-012', firstName: 'Faith', lastName: 'Chepchumba', class: 'Form 4 West', gender: 'Female', status: 'Day Scholar', dorm: '', sponsorshipType: 'Self Sponsored', sponsorName: '', sponsorContact: '', sponsorNotes: '', isPrefect: 'No', prefectRole: '', prefectDepartment: '', parent: 'Mrs. Esther Chepchumba', parentPhone: '+254 700 131313', parentEmail: 'esther@email.com', health: '', notes: '' },
       ];
       
       sampleStudents.forEach(s => studentsCache.push({ id: `sample_${s.admNo}`, ...s }));
       
-      // Updated sample grades with new subjects and Kenyan grading
-      // Some students have NO grades to test the N/A display
       const sampleGrades = [
         { studentId: 'sample_2024-001', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 15, test2: 18, test3: 20, exam: 45 },
         { studentId: 'sample_2024-001', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 50 },
@@ -2933,27 +3021,18 @@
         { studentId: 'sample_2024-003', subject: 'English', term: 'Term 1', examType: 'End Term', test1: 18, test2: 20, test3: 16, exam: 45 },
         { studentId: 'sample_2024-003', subject: 'CSL', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 20, exam: 50 },
         { studentId: 'sample_2024-003', subject: 'Core Maths', term: 'Term 1', examType: 'End Term', test1: 16, test2: 18, test3: 14, exam: 40 },
-        // Student 004 has NO grades - will show N/A
-        // Student 005 has some grades
         { studentId: 'sample_2024-005', subject: 'Biology', term: 'Term 1', examType: 'Opener', test1: 18, test2: 20, test3: 16, exam: 44 },
         { studentId: 'sample_2024-005', subject: 'Chemistry', term: 'Term 1', examType: 'Midterm', test1: 15, test2: 17, test3: 14, exam: 38 },
         { studentId: 'sample_2024-005', subject: 'Physics', term: 'Term 1', examType: 'End Term', test1: 12, test2: 14, test3: 10, exam: 30 },
-        // Student 006 has NO grades - will show N/A
-        // Student 007 has some grades
         { studentId: 'sample_2024-007', subject: 'Computer Studies', term: 'Term 1', examType: 'Opener', test1: 24, test2: 26, test3: 22, exam: 58 },
         { studentId: 'sample_2024-007', subject: 'Core Maths', term: 'Term 1', examType: 'Midterm', test1: 16, test2: 18, test3: 14, exam: 40 },
         { studentId: 'sample_2024-007', subject: 'Art & Craft', term: 'Term 1', examType: 'End Term', test1: 22, test2: 24, test3: 20, exam: 52 },
-        // Student 008 has NO grades - will show N/A
-        // Student 009 has some grades
         { studentId: 'sample_2024-009', subject: 'Creative Arts & Sports (CA)', term: 'Term 1', examType: 'Opener', test1: 26, test2: 28, test3: 24, exam: 60 },
         { studentId: 'sample_2024-009', subject: 'Science', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 48 },
         { studentId: 'sample_2024-009', subject: 'Literature', term: 'Term 1', examType: 'End Term', test1: 18, test2: 20, test3: 16, exam: 42 },
-        // Student 010 has some grades
         { studentId: 'sample_2024-010', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 14, test2: 16, test3: 12, exam: 34 },
         { studentId: 'sample_2024-010', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 16, test2: 18, test3: 14, exam: 38 },
         { studentId: 'sample_2024-010', subject: 'Home Science', term: 'Term 1', examType: 'End Term', test1: 22, test2: 24, test3: 20, exam: 52 },
-        // Student 011 has NO grades - will show N/A
-        // Student 012 has NO grades - will show N/A
       ];
       
       sampleGrades.forEach(g => gradesCache.push({ id: `sample_${Math.random().toString(36).substr(2, 6)}`, ...g }));
@@ -2969,7 +3048,6 @@
         });
       });
 
-      // Create prefects from student data - AUTO-POPULATED
       sampleStudents.forEach(s => {
         if (s.isPrefect === 'Yes') {
           prefectsCache.push({
@@ -2983,21 +3061,18 @@
         }
       });
 
-      // Sample warnings
       const sampleWarnings = [
         { studentId: 'sample_2024-001', date: today, reason: 'Consistent lateness to class', issuedBy: 'Mr. Peter' },
         { studentId: 'sample_2024-003', date: today, reason: 'Failure to complete homework', issuedBy: 'Mrs. Jane' },
       ];
       sampleWarnings.forEach(w => warningsCache.push({ id: `sample_warn_${Math.random().toString(36).substr(2, 6)}`, ...w }));
 
-      // Sample suspensions
       const sampleSuspensions = [
         { studentId: 'sample_2024-002', date: today, reason: 'Disrespecting a teacher', duration: '3 days', status: 'Active' },
         { studentId: 'sample_2024-005', date: today, reason: 'Fighting with another student', duration: '5 days', status: 'Active' },
       ];
       sampleSuspensions.forEach(s => suspensionsCache.push({ id: `sample_sus_${Math.random().toString(36).substr(2, 6)}`, ...s }));
 
-      // Sample expulsions
       const sampleExpulsions = [
         { studentId: 'sample_2024-008', date: today, reason: 'Gross misconduct and repeated offenses', approvedBy: 'Dr. Principal' },
       ];
@@ -3043,7 +3118,6 @@
         teachersCache.push({ id: `mnt_${m.empId}`, ...m });
       });
       
-      // Add sample pending registrations
       const sampleRegistrations = [
         {
           email: 'teacher1@mchsschool.com',
@@ -3110,20 +3184,17 @@
         maintDeptNav.style.display = (isAdmin || isDirector || isMaintenance) ? 'flex' : 'none';
       }
 
-      // Students - Secretary can add and edit students
       const addStudentBtn = document.getElementById('addStudentBtn');
       if (addStudentBtn) {
         addStudentBtn.style.display = (isAdmin || isDirector || isTeacher || isSecretary) ? 'inline-block' : 'none';
       }
 
-      // Grades - Secretary can add and edit grades
       const addGradeBtn = document.getElementById('addGradeBtn');
       if (addGradeBtn) addGradeBtn.style.display = (isAdmin || isDirector || isTeacher || isSecretary) ? 'inline-block' : 'none';
 
       const addAttendanceBtn = document.getElementById('addAttendanceBtn');
       if (addAttendanceBtn) addAttendanceBtn.style.display = (isAdmin || isDirector || isTeacher) ? 'inline-block' : 'none';
 
-      // Discipline permissions - Admin, Director, and Principal can manage discipline
       const canManageDiscipline = isAdmin || isDirector || isPrincipal;
       
       const addWarningBtn = document.getElementById('addWarningBtn');
@@ -3167,17 +3238,10 @@
       const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
       
-      // Admin, Director, Principal can edit everything
       if (isAdmin || isDirector || isPrincipal) return true;
-      
-      // Secretary can edit students and grades
       if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
-      
-      // Teacher can edit students, grades, and attendance
       if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
-      
       if (role === 'maintenance' && tab === 'maintenanceDept') return true;
-      
       return false;
     }
 
@@ -3190,17 +3254,10 @@
       const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
       
-      // Admin, Director, Principal can add everything
       if (isAdmin || isDirector || isPrincipal) return true;
-      
-      // Secretary can add students and grades
       if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
-      
-      // Teacher can add students, grades, and attendance
       if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
-      
       if (role === 'maintenance' && (tab === 'maintenance' || tab === 'maintenanceDept')) return true;
-      
       return false;
     }
 
@@ -3213,15 +3270,9 @@
       const isSecretary = role === 'secretary';
       const isTeacher = role === 'teacher';
       
-      // Admin, Director, Principal can delete everything
       if (isAdmin || isDirector || isPrincipal) return true;
-      
-      // Secretary can delete students and grades
       if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
-      
-      // Teacher can delete students, grades, and attendance
       if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
-      
       return false;
     }
 
@@ -3428,7 +3479,6 @@
       const today = new Date().toISOString().split('T')[0];
       const presentToday = attendance.filter(a => a.date === today && a.status === 'Present').length;
 
-      // Calculate average grade - only include grades that actually have scores
       let totalScore = 0;
       let gradeCount = 0;
       grades.forEach(g => {
@@ -3593,7 +3643,6 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { ticks: { maxRotation: 45 } } } }
       });
 
-      // Grade distribution with Kenyan grading system - only count grades with actual scores
       const gradeDist = {};
       KENYAN_GRADES.forEach(g => gradeDist[g.grade] = 0);
       grades.forEach(g => {
@@ -3649,7 +3698,7 @@
     function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
     // ============================================================
-    // STUDENTS - Full CRUD with Teacher Permissions
+    // STUDENTS
     // ============================================================
 
     window.showAddStudentModal = function(editId) {
@@ -3817,6 +3866,7 @@
           <td>${s.prefectDepartment || '-'}</td>
           <td>${s.parent || '-'}</td>
           <td>
+            <button class="btn btn-view btn-sm" onclick="showStudentProfile('${s.id}')">📋 View</button>
             ${canEditStudents ? `<button class="btn btn-primary btn-sm" onclick="showAddStudentModal('${s.id}')">Edit</button>` : ''}
             ${canDeleteStudents ? `<button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Del</button>` : ''}
           </td>
@@ -3842,15 +3892,13 @@
     };
 
     // ============================================================
-    // SPONSORSHIP - AUTO-POPULATED FROM STUDENT RECORDS
+    // SPONSORSHIP
     // ============================================================
 
     window.renderSponsorship = function() {
-      // Get all students with sponsorship (not Self Sponsored)
       const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
       
       document.getElementById('sponsorshipTableBody').innerHTML = sponsored.map(s => {
-        // Get sponsor type badge color
         const typeColors = {
           'Organization': 'badge-primary',
           'Government': 'badge-success',
@@ -3942,7 +3990,7 @@
     };
 
     // ============================================================
-    // GRADES - Updated with Kenyan Grading System & N/A for missing scores
+    // GRADES
     // ============================================================
 
     window.showAddGradeModal = function(editId) {
@@ -3950,7 +3998,6 @@
       const grade = editId ? gradesCache.find(g => g.id === editId) : null;
       const examTypeOptions = EXAM_TYPES.map(t => `<option value="${t}" ${grade?.examType === t ? 'selected' : ''}>${t}</option>`).join('');
       
-      // Updated subject options with new subjects
       const subjectOptions = SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('');
       
       const html = `
@@ -3992,7 +4039,6 @@
       const test3 = parseInt(document.getElementById('g_test3').value) || '';
       const exam = parseInt(document.getElementById('g_exam').value) || '';
       
-      // Check if any scores have been entered
       const hasAnyScore = (test1 !== '' && !isNaN(test1)) || 
                           (test2 !== '' && !isNaN(test2)) || 
                           (test3 !== '' && !isNaN(test3)) || 
@@ -4024,7 +4070,6 @@
       const term = document.getElementById('g_term').value;
       const examType = document.getElementById('g_examType').value;
       
-      // Parse values - treat empty as null (not 0)
       const test1Val = document.getElementById('g_test1').value.trim();
       const test2Val = document.getElementById('g_test2').value.trim();
       const test3Val = document.getElementById('g_test3').value.trim();
@@ -4042,7 +4087,6 @@
         subject, 
         term, 
         examType,
-        // Only include scores if they have values, otherwise omit (or set to null)
         ...(test1 !== null && !isNaN(test1) ? { test1 } : { test1: null }),
         ...(test2 !== null && !isNaN(test2) ? { test2 } : { test2: null }),
         ...(test3 !== null && !isNaN(test3) ? { test3 } : { test3: null }),
@@ -4072,7 +4116,6 @@
       const classSelect = document.getElementById('gradeClassFilter');
       if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
 
-      // Populate subject filter with updated subjects
       const subjectSelect = document.getElementById('gradeSubjectFilter');
       if (subjectSelect.options.length <= 1) {
         subjectSelect.innerHTML = '<option value="">All Subjects</option>' +
@@ -4094,7 +4137,6 @@
         const total = hasScores ? (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0) : null;
         const examTypeClass = g.examType === 'Opener' ? 'opener' : g.examType === 'Midterm' ? 'midterm' : 'endterm';
         
-        // Display scores - show '-' if null
         const t1 = g.test1 !== undefined && g.test1 !== null && g.test1 !== '' ? g.test1 : '-';
         const t2 = g.test2 !== undefined && g.test2 !== null && g.test2 !== '' ? g.test2 : '-';
         const t3 = g.test3 !== undefined && g.test3 !== null && g.test3 !== '' ? g.test3 : '-';
@@ -4132,7 +4174,7 @@
     };
 
     // ============================================================
-    // STUDENT ATTENDANCE - Teacher CRUD Permissions
+    // ATTENDANCE
     // ============================================================
 
     window.showAddAttendanceModal = function(editId) {
@@ -4216,7 +4258,7 @@
     };
 
     // ============================================================
-    // CLASS PERFORMANCE - Updated with Kenyan Grading & N/A handling
+    // CLASS PERFORMANCE
     // ============================================================
 
     window.renderClassPerformance = function() {
@@ -4240,7 +4282,6 @@
         return;
       }
 
-      // Only include students who have at least one grade with actual scores
       const studentAverages = students.map(s => {
         const sg = grades.filter(g => g.studentId === s.id && hasActualScores(g));
         if (!sg.length) return { student: s, avg: null, hasScores: false };
@@ -4249,14 +4290,12 @@
         return { student: s, avg, hasScores: true };
       });
 
-      // Sort: students with scores first, then by average descending
       const sorted = [...studentAverages].sort((a, b) => {
         if (a.hasScores && !b.hasScores) return -1;
         if (!a.hasScores && b.hasScores) return 1;
         return (b.avg || 0) - (a.avg || 0);
       });
 
-      // Only include students with scores for ranking display
       const rankedStudents = sorted.filter(s => s.hasScores);
 
       document.getElementById('perfRankingsBody').innerHTML = rankedStudents.map((s, index) => `
@@ -4270,7 +4309,6 @@
         </tr>
       `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students with scores found</td></tr>';
 
-      // Subject Averages Chart - only include subjects with actual scores
       const subjects = [...new Set(grades.filter(g => hasActualScores(g)).map(g => g.subject))];
       const subjectAverages = subjects.map(subj => {
         const sg = grades.filter(g => g.subject === subj && hasActualScores(g));
@@ -4286,7 +4324,6 @@
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
       });
 
-      // Student Performance Chart - only show students with scores
       const topStudents = rankedStudents.slice(0, 10);
       const studentNames = topStudents.map(s => `${s.student.firstName}`);
       const studentAvgs = topStudents.map(s => s.avg);
@@ -4298,7 +4335,6 @@
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
       });
 
-      // Grade Distribution Chart with Kenyan grades - only include students with scores
       const gradeCounts = {};
       KENYAN_GRADES.forEach(g => gradeCounts[g.grade] = 0);
       studentAverages.filter(s => s.hasScores).forEach(s => {
@@ -4330,7 +4366,6 @@
         }
       });
 
-      // Pass/Fail Ratio - only include students with scores
       const scoredStudents = studentAverages.filter(s => s.hasScores);
       const passed = scoredStudents.filter(s => isPass(s.avg, true)).length;
       const failed = scoredStudents.filter(s => !isPass(s.avg, true)).length;
@@ -4338,13 +4373,13 @@
       destroyChart('perfPassFailChart');
       chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
         type: 'doughnut',
-        data: { labels: ['✅ Passed (C+ and above)', '❌ Failed (C and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        data: { labels: ['✅ Passed (D+ and above)', '❌ Failed (D and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
     };
 
     // ============================================================
-    // WARNINGS - Principal can manage
+    // WARNINGS
     // ============================================================
 
     window.showAddWarningModal = function(editId) {
@@ -4408,7 +4443,7 @@
     };
 
     // ============================================================
-    // SUSPENSIONS - Principal can manage
+    // SUSPENSIONS
     // ============================================================
 
     window.showAddSuspensionModal = function(editId) {
@@ -4475,7 +4510,7 @@
     };
 
     // ============================================================
-    // EXPULSIONS - Principal can manage
+    // EXPULSIONS
     // ============================================================
 
     window.showAddExpulsionModal = function(editId) {
@@ -4948,7 +4983,6 @@
       const report = editId ? maintenanceCache.find(m => m.id === editId) : null;
       const today = new Date().toISOString().split('T')[0];
       
-      // Get maintenance staff for assignment
       const maintenanceStaff = teachersCache.filter(t => t.type === 'maintenance' && t.status === 'Active');
       
       const html = `
@@ -5032,7 +5066,6 @@
       const statusFilter = document.getElementById('maintenanceStatusFilter').value;
       const typeFilter = document.getElementById('maintenanceTypeFilter').value;
 
-      // Populate class filter
       const classSelect = document.getElementById('maintenanceClassFilter');
       if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
 
@@ -5041,7 +5074,6 @@
       if (statusFilter) filtered = filtered.filter(m => m.status === statusFilter);
       if (typeFilter) filtered = filtered.filter(m => m.issueType === typeFilter);
 
-      // Stats
       const total = maintenanceCache.length;
       const pending = maintenanceCache.filter(m => m.status === 'Pending').length;
       const inProgress = maintenanceCache.filter(m => m.status === 'In Progress').length;
@@ -5106,7 +5138,6 @@
       const teamFilter = document.getElementById('maintenanceDeptTeamFilter').value;
       const typeFilter = document.getElementById('maintenanceDeptTypeFilter').value;
 
-      // Populate team filter
       const teamSelect = document.getElementById('maintenanceDeptTeamFilter');
       const maintenanceStaff = teachersCache.filter(t => t.type === 'maintenance' && t.status === 'Active');
       if (teamSelect.options.length <= 1) {
@@ -5119,7 +5150,6 @@
       if (teamFilter) filtered = filtered.filter(m => m.assignedTo === teamFilter);
       if (typeFilter) filtered = filtered.filter(m => m.issueType === typeFilter);
 
-      // Stats
       const total = maintenanceCache.length;
       const pending = maintenanceCache.filter(m => m.status === 'Pending').length;
       const inProgress = maintenanceCache.filter(m => m.status === 'In Progress').length;
@@ -5170,11 +5200,10 @@
     };
 
     // ============================================================
-    // ANALYTICS - Updated with Kenyan Grading & N/A handling
+    // ANALYTICS
     // ============================================================
 
     window.renderAnalytics = function() {
-      // Populate student and class selects
       const studentSelect = document.getElementById('analyticsStudentSelect');
       const classSelect = document.getElementById('analyticsClassSelect');
       
@@ -5200,7 +5229,6 @@
       
       showToast('📊 Loading analytics data...', 'info');
       
-      // Student grade chart
       if (studentId) {
         const student = studentsCache.find(s => s.id === studentId);
         const grades = gradesCache.filter(g => g.studentId === studentId);
@@ -5210,7 +5238,6 @@
           return;
         }
         
-        // Only include subjects with actual scores
         const validGrades = grades.filter(g => hasActualScores(g));
         if (validGrades.length === 0) {
           showToast('No scores have been entered for this student yet', 'warning');
@@ -5240,7 +5267,6 @@
           }
         });
         
-        // Grade trend chart - using Kenyan grading for labels
         const terms = ['Term 1', 'Term 2', 'Term 3'];
         const termAverages = terms.map(term => {
           const termGrades = grades.filter(g => g.term === term && hasActualScores(g));
@@ -5285,7 +5311,6 @@
         });
       }
       
-      // Class average chart
       if (classVal) {
         const students = studentsCache.filter(s => s.class === classVal);
         const studentIds = students.map(s => s.id);
@@ -5467,6 +5492,62 @@
     }
 
     // ============================================================
+    // REGISTRATIONS
+    // ============================================================
+
+    window.renderRegistrations = function() {
+      const statusFilter = document.getElementById('registrationStatusFilter').value;
+      const search = document.getElementById('registrationSearch').value.toLowerCase();
+
+      let filtered = pendingRegistrationsCache;
+      if (statusFilter) filtered = filtered.filter(r => r.status === statusFilter);
+      if (search) filtered = filtered.filter(r => 
+        (r.email || '').toLowerCase().includes(search) || 
+        (r.fullName || '').toLowerCase().includes(search)
+      );
+
+      const stats = {
+        total: pendingRegistrationsCache.length,
+        pending: pendingRegistrationsCache.filter(r => r.status === 'pending').length,
+        approved: pendingRegistrationsCache.filter(r => r.status === 'approved').length,
+        rejected: pendingRegistrationsCache.filter(r => r.status === 'rejected').length
+      };
+
+      document.getElementById('registrationStats').innerHTML = `
+        <div class="registration-stat-card total"><div class="stat-number">${stats.total}</div><div class="stat-label">📋 Total</div></div>
+        <div class="registration-stat-card pending"><div class="stat-number">${stats.pending}</div><div class="stat-label">⏳ Pending</div></div>
+        <div class="registration-stat-card approved"><div class="stat-number">${stats.approved}</div><div class="stat-label">✅ Approved</div></div>
+        <div class="registration-stat-card rejected"><div class="stat-number">${stats.rejected}</div><div class="stat-label">❌ Rejected</div></div>
+      `;
+
+      const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'director';
+
+      document.getElementById('registrationsTableBody').innerHTML = filtered.map(r => {
+        const statusBadge = r.status === 'pending' ? 'pending-approval-badge pending' : 
+                            r.status === 'approved' ? 'pending-approval-badge approved' : 'pending-approval-badge rejected';
+        const statusLabel = r.status === 'pending' ? '⏳ Pending' : 
+                            r.status === 'approved' ? '✅ Approved' : '❌ Rejected';
+        const canApprove = isAdmin && r.status === 'pending';
+        return `
+          <tr>
+            <td>${formatDate(r.createdAt)}</td>
+            <td>${r.email || ''}</td>
+            <td>${r.fullName || ''}</td>
+            <td><span class="badge badge-primary">${r.requestedRole || ''}</span></td>
+            <td>${r.class || '-'}</td>
+            <td><span class="${statusBadge}">${statusLabel}</span></td>
+            <td>
+              ${canApprove ? `
+                <button class="btn btn-approve btn-sm" onclick="approveRegistration('${r.id}')">✅ Approve</button>
+                <button class="btn btn-reject btn-sm" onclick="rejectRegistration('${r.id}')">❌ Reject</button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No registrations found</td></tr>';
+    };
+
+    // ============================================================
     // INITIALIZATION
     // ============================================================
 
@@ -5479,18 +5560,14 @@
       document.getElementById('loginEmail').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 
       console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 24.1.0 - Fixed: No grade awarded without scores');
+      console.log('📚 Version 24.2.0 - Fixed: No grade awarded without scores, D+ is pass mark');
       console.log('💡 Made with ❤️ for education');
       console.log('🔑 Test Login: test@test.com / test123');
-      console.log('📝 Subjects: Mathematics, English, Kiswahili, Biology, Chemistry, Physics, KSL, Creative Arts & Sports (CA), Core Maths, Science, Social Studies, CRE, Agriculture, Business Studies, Computer Studies, History, Geography, Literature, Home Science, Art & Craft, CSL');
       console.log('📊 Kenyan Grading: A, A-, B+, B, B-, C+, C, C-, D+, D, D-, E');
-      console.log('📈 Pass Mark: C+ (55% and above)');
+      console.log('📈 Pass Mark: D+ (40% and above)');
       console.log('⭐ Prefects auto-populated from student records');
-      console.log('💰 Sponsorships auto-populated from student records');
-      console.log('👔 Principal can manage Warnings, Suspensions, and Expulsions');
-      console.log('📋 Secretary can Add, Edit, and Delete Students and Grades');
-      console.log('👩‍🏫 Teachers can Add, Edit, and Delete Student Data');
-      console.log('🔒 Login Bug Fixed - Test login always works');
+      console.log('👤 Click View on any student to see full profile with grades, discipline, clinic visits, attendance, and more');
+      console.log('🖨️ Student profile includes a printable report option');
       console.log('✅ FIXED: Students with no scores show N/A instead of E');
     });
   </script>
