@@ -1694,16 +1694,8 @@
     // ============================================================
     // ADD STUDENT MODAL
     // ============================================================
-   
     window.showAddStudentModal = function(editId) {
-      // Check if user can add students - if not, show a message but still open the modal for testing
-      if (!canAdd('students')) { 
-        // For test mode, allow it anyway
-        if (!isTestMode) {
-          showToast('You do not have permission to add students', 'error');
-          return;
-        }
-      }
+      if (!canAdd('students')) { showToast('You do not have permission to add students', 'error'); return; }
       
       const student = editId ? studentsCache.find(s => s.id === editId) : null;
       
@@ -1753,6 +1745,7 @@
       `;
       openModal(editId ? 'Edit Student' : 'Add New Student', html);
     };
+
     window.handleStudentPhotoUpload = function(event, studentId = null) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1823,11 +1816,17 @@
       showToast('Photo removed', 'info');
     };
 
-        window.saveStudent = async function(editId) {
+    window.saveStudent = async function(editId) {
       const admNo = document.getElementById('s_admNo').value.trim();
       const firstName = document.getElementById('s_firstName').value.trim();
       const lastName = document.getElementById('s_lastName').value.trim();
       if (!admNo || !firstName || !lastName) { showToast('Please fill all required fields', 'error'); return; }
+
+      const isPrefect = document.getElementById('s_isPrefect').value;
+      const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
+      const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
+
+      const photoUrl = document.getElementById('s_photoData').value || '';
 
       const data = {
         admNo, firstName, lastName,
@@ -1837,10 +1836,10 @@
         status: document.getElementById('s_status').value,
         location: document.getElementById('s_location').value,
         dorm: document.getElementById('s_dorm').value || '',
-        photoUrl: document.getElementById('s_photoData').value || '',
-        isPrefect: document.getElementById('s_isPrefect').value,
-        prefectRole: document.getElementById('s_prefectRole').value,
-        prefectDepartment: document.getElementById('s_prefectDept').value,
+        photoUrl: photoUrl,
+        isPrefect: isPrefect,
+        prefectRole: prefectRole,
+        prefectDepartment: prefectDepartment,
         sponsorshipType: document.getElementById('s_sponsorshipType').value,
         sponsorName: document.getElementById('s_sponsorName').value,
         sponsorContact: document.getElementById('s_sponsorContact').value,
@@ -1849,26 +1848,19 @@
         parentPhone: document.getElementById('s_parentPhone').value,
         parentEmail: document.getElementById('s_parentEmail').value,
         health: document.getElementById('s_health').value,
-        notes: document.getElementById('s_notes').value,
-        id: editId || 'student_' + Date.now()
+        notes: document.getElementById('s_notes').value
       };
 
       try {
         if (editId) {
-          // Update existing student in cache
-          const index = studentsCache.findIndex(s => s.id === editId);
-          if (index !== -1) {
-            studentsCache[index] = { ...studentsCache[index], ...data };
-          }
+          await updateDoc(doc(db, 'students', editId), data);
           showToast('✅ Student updated successfully!');
         } else {
-          // Add new student to cache
-          studentsCache.push(data);
+          data.createdAt = serverTimestamp();
+          const docRef = await addDoc(collection(db, 'students'), data);
           showToast('✅ Student added successfully!');
         }
         closeModal();
-        renderStudents();
-        renderDashboard();
       } catch (err) {
         showToast('❌ Error: ' + err.message, 'error');
       }
@@ -1885,24 +1877,12 @@
         showToast('Student deleted');
       } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
-    // ============================================================
-    // DEBUG - Check if functions are working
-    // ============================================================
-    console.log('✅ All functions loaded');
-    console.log('✅ showAddStudentModal:', typeof window.showAddStudentModal);
-    console.log('✅ showAddGradeModal:', typeof window.showAddGradeModal);
-    console.log('✅ canAdd:', typeof canAdd);
-    console.log('✅ currentUser:', currentUser);
+
     // ============================================================
     // ADD GRADE MODAL
     // ============================================================
-       window.showAddGradeModal = function(editId) {
-      if (!canAdd('grades')) { 
-        if (!isTestMode) {
-          showToast('You do not have permission to add grades', 'error');
-          return;
-        }
-      }
+    window.showAddGradeModal = function(editId) {
+      if (!canAdd('grades')) { showToast('You do not have permission to add grades', 'error'); return; }
       const grade = editId ? gradesCache.find(g => g.id === editId) : null;
       
       const html = `
@@ -1916,35 +1896,46 @@
           <div class="form-group"><label>Test 3</label><input type="number" id="g_test3" value="${grade?.test3 !== undefined && grade?.test3 !== null ? grade.test3 : ''}" min="0" max="30"></div>
           <div class="form-group"><label>Final Exam</label><input type="number" id="g_exam" value="${grade?.exam !== undefined && grade?.exam !== null ? grade.exam : ''}" min="0" max="70"></div>
         </div>
-        <div style="background:#f8f9fa;padding:12px;border-radius:8px;margin:10px 0;">
-          <p style="margin:0;font-size:0.9em;color:#666;">
-            <strong>📊 Total Score:</strong> <span id="totalScoreDisplay">-</span> / 130
-          </p>
-          <p style="margin:0;font-size:0.9em;color:#666;margin-top:4px;">
-            <strong>📈 Grade:</strong> <span id="gradeDisplay">N/A</span>
-          </p>
-        </div>
         <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Grade</button>
       `;
       openModal(editId ? 'Edit Grade' : 'Add Grade', html);
-      
-      // Add the total score update function
-      setTimeout(() => {
-        ['g_test1', 'g_test2', 'g_test3', 'g_exam'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.addEventListener('input', function() {
-              const t1 = parseInt(document.getElementById('g_test1').value) || 0;
-              const t2 = parseInt(document.getElementById('g_test2').value) || 0;
-              const t3 = parseInt(document.getElementById('g_test3').value) || 0;
-              const exam = parseInt(document.getElementById('g_exam').value) || 0;
-              const total = t1 + t2 + t3 + exam;
-              document.getElementById('totalScoreDisplay').textContent = total;
-              document.getElementById('gradeDisplay').innerHTML = getGradeBadge(total);
-            });
-          }
-        });
-      }, 100);
+    };
+
+    window.saveGrade = async function(editId) {
+      const studentId = document.getElementById('g_student').value;
+      const subject = document.getElementById('g_subject').value;
+      const term = document.getElementById('g_term').value;
+      const examType = document.getElementById('g_examType').value;
+      const test1 = parseInt(document.getElementById('g_test1').value) || null;
+      const test2 = parseInt(document.getElementById('g_test2').value) || null;
+      const test3 = parseInt(document.getElementById('g_test3').value) || null;
+      const exam = parseInt(document.getElementById('g_exam').value) || null;
+
+      if (!studentId || !subject || !term || !examType) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, subject, term, examType, test1, test2, test3, exam };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'grades', editId), data);
+          showToast('Grade updated!');
+        } else {
+          data.recordedBy = currentUser?.email || 'unknown';
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'grades'), data);
+          showToast('Grade added!');
+        }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    window.deleteGrade = async function(id) {
+      if (!canDeleteSpecific('grades')) {
+        showToast('You do not have permission to delete grades', 'error');
+        return;
+      }
+      if (!confirm('Delete this grade record?')) return;
+      try { await deleteDoc(doc(db, 'grades', id)); showToast('Grade deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
     // ============================================================
@@ -2542,300 +2533,9 @@
       }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No attendance records</td></tr>';
     }
 
-            function renderClassPerformance() {
-      const classSelect = document.getElementById('performanceClassSelect');
-      const termSelect = document.getElementById('performanceTermSelect');
-      
-      // Clear and populate the class dropdown
-      classSelect.innerHTML = '<option value="">Select a class...</option>';
-      CLASSES.forEach(c => {
-        const option = document.createElement('option');
-        option.value = c;
-        option.textContent = c;
-        classSelect.appendChild(option);
-      });
-      
-      // Populate term dropdown
-      termSelect.innerHTML = '<option value="">All Terms</option>';
-      ['Term 1', 'Term 2', 'Term 3'].forEach(t => {
-        const option = document.createElement('option');
-        option.value = t;
-        option.textContent = t;
-        termSelect.appendChild(option);
-      });
-      
-      // If a class was previously selected, keep it
-      const urlParams = new URLSearchParams(window.location.search);
-      const savedClass = localStorage.getItem('selectedPerformanceClass');
-      if (savedClass && CLASSES.includes(savedClass)) {
-        classSelect.value = savedClass;
-      }
-      
-      const className = classSelect.value;
-      if (!className) {
-        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Select a class to view performance</td></tr>';
-        // Clear charts
-        destroyChart('perfSubjectChart');
-        destroyChart('perfStudentChart');
-        destroyChart('perfGradeChart');
-        destroyChart('perfPassFailChart');
-        return;
-      }
-
-      // Save the selected class
-      localStorage.setItem('selectedPerformanceClass', className);
-
-      // Get students in the selected class
-      const students = studentsCache.filter(s => s.class === className);
-      const studentIds = students.map(s => s.id);
-      let grades = gradesCache.filter(g => studentIds.includes(g.studentId));
-
-      if (!grades.length) {
-        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No grades found for this class</td></tr>';
-        return;
-      }
-
-      // Filter by term if selected
-      const termFilter = termSelect.value;
-      if (termFilter) {
-        grades = grades.filter(g => g.term === termFilter);
-      }
-
-      if (!grades.length) {
-        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No grades found for this term</td></tr>';
-        return;
-      }
-
-      // Calculate student averages
-      const studentAverages = students.map(s => {
-        const sg = grades.filter(g => g.studentId === s.id && hasActualScores(g));
-        if (!sg.length) return { student: s, avg: null, hasScores: false };
-        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
-        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-        return { student: s, avg, hasScores: true };
-      });
-
-      // Sort by average
-      const sorted = [...studentAverages].sort((a, b) => {
-        if (a.hasScores && !b.hasScores) return -1;
-        if (!a.hasScores && b.hasScores) return 1;
-        return (b.avg || 0) - (a.avg || 0);
-      });
-
-      const rankedStudents = sorted.filter(s => s.hasScores);
-
-      // Render rankings
-      document.getElementById('perfRankingsBody').innerHTML = rankedStudents.map((s, index) => `
-        <tr class="${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}">
-          <td>${index + 1}</td>
-          <td>${s.student.firstName} ${s.student.lastName}</td>
-          <td><strong>${s.avg}%</strong></td>
-          <td>${getGradeBadge(s.avg)}</td>
-          <td>${isPass(s.avg) ? '✅' : '❌'}</td>
-          <td>${isPass(s.avg) ? '0' : '1'}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students with scores found</td></tr>';
-
-      // Subject averages chart
-      const subjects = [...new Set(grades.filter(g => hasActualScores(g)).map(g => g.subject))];
-      const subjectAverages = subjects.map(subj => {
-        const sg = grades.filter(g => g.subject === subj && hasActualScores(g));
-        if (!sg.length) return 0;
-        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
-        return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-      });
-
-      destroyChart('perfSubjectChart');
-      if (subjects.length > 0) {
-        chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
-          type: 'bar',
-          data: { labels: subjects, datasets: [{ data: subjectAverages, backgroundColor: '#3498db' }] },
-          options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            scales: { y: { beginAtZero: true, max: 130 } }, 
-            plugins: { legend: { display: false } } 
-          }
-        });
-      }
-
-      // Top students chart
-      const topStudents = rankedStudents.slice(0, 10);
-      const studentNames = topStudents.map(s => `${s.student.firstName}`);
-      const studentAvgs = topStudents.map(s => s.avg);
-
-      destroyChart('perfStudentChart');
-      if (studentNames.length > 0) {
-        chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
-          type: 'bar',
-          data: { 
-            labels: studentNames, 
-            datasets: [{ 
-              data: studentAvgs, 
-              backgroundColor: studentAvgs.map(a => isPass(a) ? '#27ae60' : '#e74c3c') 
-            }] 
-          },
-          options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            scales: { y: { beginAtZero: true, max: 130 } }, 
-            plugins: { legend: { display: false } } 
-          }
-        });
-      }
-
-      // Grade distribution
-      const gradeCounts = {};
-      KENYAN_GRADES.forEach(g => gradeCounts[g.grade] = 0);
-      studentAverages.filter(s => s.hasScores).forEach(s => {
-        const grade = getKenyanGrade(s.avg);
-        if (grade) {
-          gradeCounts[grade.grade] = (gradeCounts[grade.grade] || 0) + 1;
-        }
-      });
-      
-      const gradeLabels = KENYAN_GRADES.map(g => g.grade);
-      const gradeData = KENYAN_GRADES.map(g => gradeCounts[g.grade] || 0);
-      const gradeColors = KENYAN_GRADES.map(g => getGradeColor(g.grade));
-
-      destroyChart('perfGradeChart');
-      chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
-        type: 'bar',
-        data: { 
-          labels: gradeLabels, 
-          datasets: [{ 
-            data: gradeData, 
-            backgroundColor: gradeColors 
-          }] 
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false, 
-          scales: { y: { beginAtZero: true } }, 
-          plugins: { legend: { display: false } } 
-        }
-      });
-
-      // Pass/Fail ratio
-      const scoredStudents = studentAverages.filter(s => s.hasScores);
-      const passed = scoredStudents.filter(s => isPass(s.avg)).length;
-      const failed = scoredStudents.filter(s => !isPass(s.avg)).length;
-
-      destroyChart('perfPassFailChart');
-      if (scoredStudents.length > 0) {
-        chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
-          type: 'doughnut',
-          data: { 
-            labels: ['✅ Passed (C and above)', '❌ Failed (C- and below)'], 
-            datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] 
-          },
-          options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { legend: { position: 'bottom' } } 
-          }
-        });
-      }
-    }
-
-      // Calculate student averages
-      const studentAverages = students.map(s => {
-        const sg = grades.filter(g => g.studentId === s.id && hasActualScores(g));
-        if (!sg.length) return { student: s, avg: null, hasScores: false };
-        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
-        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-        return { student: s, avg, hasScores: true };
-      });
-
-      // Sort by average
-      const sorted = [...studentAverages].sort((a, b) => {
-        if (a.hasScores && !b.hasScores) return -1;
-        if (!a.hasScores && b.hasScores) return 1;
-        return (b.avg || 0) - (a.avg || 0);
-      });
-
-      const rankedStudents = sorted.filter(s => s.hasScores);
-
-      // Render rankings
-      document.getElementById('perfRankingsBody').innerHTML = rankedStudents.map((s, index) => `
-        <tr class="${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}">
-          <td>${index + 1}</td>
-          <td>${s.student.firstName} ${s.student.lastName}</td>
-          <td><strong>${s.avg}%</strong></td>
-          <td>${getGradeBadge(s.avg)}</td>
-          <td>${isPass(s.avg) ? '✅' : '❌'}</td>
-          <td>${isPass(s.avg) ? '0' : '1'}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students with scores found</td></tr>';
-
-      // Subject averages chart
-      const subjects = [...new Set(grades.filter(g => hasActualScores(g)).map(g => g.subject))];
-      const subjectAverages = subjects.map(subj => {
-        const sg = grades.filter(g => g.subject === subj && hasActualScores(g));
-        if (!sg.length) return 0;
-        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
-        return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-      });
-
-      destroyChart('perfSubjectChart');
-      chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
-        type: 'bar',
-        data: { labels: subjects, datasets: [{ data: subjectAverages, backgroundColor: '#3498db' }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
-      });
-
-      // Top students chart
-      const topStudents = rankedStudents.slice(0, 10);
-      const studentNames = topStudents.map(s => `${s.student.firstName} ${s.student.lastName}`);
-      const studentAvgs = topStudents.map(s => s.avg);
-
-      destroyChart('perfStudentChart');
-      chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
-        type: 'bar',
-        data: { labels: studentNames, datasets: [{ data: studentAvgs, backgroundColor: studentAvgs.map(a => isPass(a) ? '#27ae60' : '#e74c3c') }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
-      });
-
-      // Grade distribution
-      const gradeCounts = {};
-      KENYAN_GRADES.forEach(g => gradeCounts[g.grade] = 0);
-      studentAverages.filter(s => s.hasScores).forEach(s => {
-        const grade = getKenyanGrade(s.avg);
-        if (grade) {
-          gradeCounts[grade.grade] = (gradeCounts[grade.grade] || 0) + 1;
-        }
-      });
-      
-      const gradeLabels = KENYAN_GRADES.map(g => g.grade);
-      const gradeData = KENYAN_GRADES.map(g => gradeCounts[g.grade] || 0);
-      const gradeColors = KENYAN_GRADES.map(g => {
-        const colors = {
-          'A': '#27ae60', 'A-': '#2ecc71', 'B+': '#85c1e9',
-          'B': '#5dade2', 'B-': '#a9cce3', 'C+': '#f5b041',
-          'C': '#f39c12', 'C-': '#f7dc6f', 'D+': '#e67e22',
-          'D': '#d35400', 'D-': '#f5b7b1', 'E': '#e74c3c'
-        };
-        return colors[g.grade] || '#95a5a6';
-      });
-
-      destroyChart('perfGradeChart');
-      chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
-        type: 'bar',
-        data: { labels: gradeLabels, datasets: [{ data: gradeData, backgroundColor: gradeColors }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-      });
-
-      // Pass/Fail ratio
-      const scoredStudents = studentAverages.filter(s => s.hasScores);
-      const passed = scoredStudents.filter(s => isPass(s.avg)).length;
-      const failed = scoredStudents.filter(s => !isPass(s.avg)).length;
-
-      destroyChart('perfPassFailChart');
-      chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
-        type: 'doughnut',
-        data: { labels: ['✅ Passed (C and above)', '❌ Failed (C- and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-      });
+    function renderClassPerformance() {
+      // Simple placeholder
+      document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Select a class to view performance</td></tr>';
     }
 
     function renderWarnings() {
@@ -3895,10 +3595,7 @@
       return false;
     }
 
-        function canAdd(tab) {
-      // If in test mode, allow everything
-      if (isTestMode) return true;
-      
+    function canAdd(tab) {
       if (!currentUser) return false;
       const role = currentUser.role;
       const isAdmin = role === 'admin';
@@ -3908,17 +3605,12 @@
       const isTeacher = role === 'teacher';
       const isClinician = ['doctor', 'nurse', 'hrio', 'radiographer', 'clinician', 'labtech'].includes(role);
 
-      // Admin can do everything
       if (isAdmin || isDirector || isPrincipal) return true;
-      
-      // Specific permissions
       if (isSecretary && (tab === 'students' || tab === 'grades')) return true;
       if (isTeacher && (tab === 'students' || tab === 'grades' || tab === 'attendance')) return true;
       if (isClinician && tab === 'clinic') return true;
       if (role === 'maintenance' && (tab === 'maintenance' || tab === 'maintenanceDept')) return true;
-      
-      // Default: allow if in test mode or if user is admin
-      return isTestMode || isAdmin;
+      return false;
     }
 
     function canDeleteSpecific(tab) {
