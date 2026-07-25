@@ -600,7 +600,51 @@
       { grade: 'D-', min: 30, max: 34, class: 'badge-grade-d-' },
       { grade: 'E', min: 0, max: 29, class: 'badge-grade-e' }
     ];
-
+    const PREFECT_ROLES = ['Head Prefect', 'Deputy Head Prefect', 'Class Prefect', 'Assistant Class Prefect'];
+    const PREFECT_DEPARTMENTS = [
+      'Academics', 'Discipline', 'Games & Sports', 'Entertainment',
+      'Health & Sanitation', 'Dining Hall', 'Dormitory/Boarding',
+      'Chapel/Spiritual', 'Environment', 'Class Prefect'
+    ];
+    const MAINTENANCE_TYPES = [
+      { value: 'Electrical', label: '⚡ Electrical' },
+      { value: 'Plumbing', label: '💧 Plumbing' },
+      { value: 'Carpentry', label: '🪑 Carpentry' },
+      { value: 'Welding', label: '🔩 Welding' },
+      { value: 'Locksmith', label: '🔐 Locksmith' },
+      { value: 'IT', label: '💻 IT' },
+      { value: 'Other', label: '🔧 Other' }
+    ];
+    const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
+    const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
+    const REFERRAL_OPTIONS = ['None', 'Dentist', 'Eye Specialist', 'Orthopedic', 'Dermatologist', 'ENT Specialist', 'Psychologist', 'Nutritionist', 'Other'];
+    const CONDITIONS = ['New Illness', 'Pre-existing Condition', 'Injury', 'Chronic Condition'];
+    const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director', 'hrio', 'nutritionist', 'labtech', 'radiographer', 'maintenance'];
+    const DORMS = ['Boys Dorm (Upstairs)', 'Boys Dorm (Downstairs)', 'Girls Dorm (Upstairs)', 'Girls Dorm (Downstairs)'];
+    function dormSelectHtml(selected = '') {
+      let html = '<option value="">None</option>';
+      const groups = {
+        'Boys Dorms': ['Boys Dorm (Upstairs)', 'Boys Dorm (Downstairs)'],
+        'Girls Dorms': ['Girls Dorm (Upstairs)', 'Girls Dorm (Downstairs)']
+      };
+      for (const [group, dorms] of Object.entries(groups)) {
+        html += `<optgroup label="${group}">`;
+        for (const dorm of dorms) {
+          html += `<option value="${dorm}" ${selected === dorm ? 'selected' : ''}>${dorm}</option>`;
+        }
+        html += '</optgroup>';
+      }
+      return html;
+    }
+    function getStaffTypeBadge(type) {
+      if (type === 'teaching') {
+        return '<span class="staff-type-badge teacher">👨‍🏫 Teaching</span>';
+      } else if (type === 'maintenance') {
+        return '<span class="staff-type-badge maintenance">🔧 Maintenance</span>';
+      } else {
+        return '<span class="staff-type-badge clinician">🏥 Clinician</span>';
+      }
+    }
     // ============================================================
     // HELPER FUNCTIONS
     // ============================================================
@@ -1553,7 +1597,802 @@
       renderRegistrations();
       showToast('📚 Sample data loaded!', 'success');
     };
+    // ============================================================
+    // MODAL FUNCTIONS (Add these after renderRegistrations())
+    // ============================================================
 
+    // ADD STUDENT
+    window.showAddStudentModal = function(editId) {
+      if (!canAdd('students')) { showToast('You do not have permission to add students', 'error'); return; }
+      
+      const student = editId ? studentsCache.find(s => s.id === editId) : null;
+      
+      const html = `
+        <div class="form-grid">
+          <div style="grid-column:1/-1;text-align:center;margin-bottom:10px;">
+            <div class="photo-upload-wrapper">
+              <img id="s_photoPreview" src="${student?.photoUrl || ''}" style="display:${student?.photoUrl ? 'block' : 'none'};width:100%;height:100%;object-fit:cover;">
+              <span class="photo-placeholder" id="s_photoPlaceholder" style="display:${student?.photoUrl ? 'none' : 'block'};">📸</span>
+              <div class="photo-overlay">Click to upload photo</div>
+              <input type="file" id="s_photoFile" accept="image/*" onchange="handleStudentPhotoUpload(event, '${editId || ''}')">
+              <input type="hidden" id="s_photoData" value="${student?.photoUrl || ''}">
+            </div>
+            <div style="margin-top:5px;font-size:0.8em;color:var(--gray);">
+              ${student?.photoUrl ? `<button class="btn btn-danger btn-sm" onclick="removeStudentPhoto()">🗑️ Remove Photo</button>` : 'Upload student photo (JPG, PNG, etc.)'}
+            </div>
+          </div>
+          <div class="form-group"><label>Admission Number *</label><input type="text" id="s_admNo" value="${student?.admNo || ''}" placeholder="e.g., 2024-001"></div>
+          <div class="form-group"><label>First Name *</label><input type="text" id="s_firstName" value="${student?.firstName || ''}" placeholder="First name"></div>
+          <div class="form-group"><label>Last Name *</label><input type="text" id="s_lastName" value="${student?.lastName || ''}" placeholder="Last name"></div>
+          <div class="form-group"><label>Class *</label><select id="s_class">${classSelectHtml(student?.class || '')}</select></div>
+          <div class="form-group"><label>Gender *</label><select id="s_gender"><option value="Male" ${student?.gender === 'Male' ? 'selected' : ''}>Male</option><option value="Female" ${student?.gender === 'Female' ? 'selected' : ''}>Female</option></select></div>
+          <div class="form-group"><label>Date of Birth</label><input type="date" id="s_dob" value="${student?.dob || ''}"></div>
+          <div class="form-group"><label>Status *</label><select id="s_status"><option value="Boarder" ${student?.status === 'Boarder' ? 'selected' : ''}>Boarder</option><option value="Day Scholar" ${student?.status === 'Day Scholar' ? 'selected' : ''}>Day Scholar</option></select></div>
+          <div class="form-group"><label>Location</label><input type="text" id="s_location" value="${student?.location || ''}" placeholder="e.g., Nyamira"></div>
+          <div class="form-group"><label>🏠 Dorm</label><select id="s_dorm">${dormSelectHtml(student?.dorm || '')}</select></div>
+          <div class="form-group"><label>Is Prefect?</label><select id="s_isPrefect"><option value="No" ${student?.isPrefect !== 'Yes' ? 'selected' : ''}>No</option><option value="Yes" ${student?.isPrefect === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
+          <div class="form-group"><label>Prefect Role</label><select id="s_prefectRole"><option value="">None</option>${PREFECT_ROLES.map(r => `<option value="${r}" ${student?.prefectRole === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Prefect Department</label><select id="s_prefectDept"><option value="">None</option>${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${student?.prefectDepartment === d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Sponsorship Type</label><select id="s_sponsorshipType"><option value="Self Sponsored" ${student?.sponsorshipType === 'Self Sponsored' ? 'selected' : ''}>Self Sponsored</option><option value="Organization" ${student?.sponsorshipType === 'Organization' ? 'selected' : ''}>Organization</option><option value="Government" ${student?.sponsorshipType === 'Government' ? 'selected' : ''}>Government</option><option value="NGO" ${student?.sponsorshipType === 'NGO' ? 'selected' : ''}>NGO</option><option value="Other" ${student?.sponsorshipType === 'Other' ? 'selected' : ''}>Other</option></select></div>
+          <div class="form-group"><label>Sponsor Name</label><input type="text" id="s_sponsorName" value="${student?.sponsorName || ''}" placeholder="e.g., The Smith Foundation"></div>
+          <div class="form-group"><label>Sponsor Contact</label><input type="text" id="s_sponsorContact" value="${student?.sponsorContact || ''}" placeholder="Phone or Email"></div>
+          <div class="form-group"><label>Sponsor Notes</label><input type="text" id="s_sponsorNotes" value="${student?.sponsorNotes || ''}" placeholder="e.g., Full scholarship"></div>
+          <div class="form-group"><label>Parent/Guardian Name</label><input type="text" id="s_parent" value="${student?.parent || ''}"></div>
+          <div class="form-group"><label>Parent Phone</label><input type="text" id="s_parentPhone" value="${student?.parentPhone || ''}"></div>
+          <div class="form-group"><label>Parent Email</label><input type="email" id="s_parentEmail" value="${student?.parentEmail || ''}"></div>
+          <div class="form-group" style="grid-column:1/-1;"><label>Health History</label><textarea id="s_health" rows="2">${student?.health || ''}</textarea></div>
+          <div class="form-group" style="grid-column:1/-1;"><label>Notes</label><textarea id="s_notes" rows="2">${student?.notes || ''}</textarea></div>
+        </div>
+        <button class="btn btn-success" onclick="saveStudent('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Student</button>
+      `;
+      openModal(editId ? 'Edit Student' : 'Add New Student', html);
+    };
+
+    window.handleStudentPhotoUpload = function(event, studentId = null) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file (JPG, JPEG, PNG, etc.)', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image size should be less than 5MB', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const previewImg = document.getElementById('s_photoPreview');
+        if (previewImg) {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+        }
+        const placeholder = document.getElementById('s_photoPlaceholder');
+        if (placeholder) {
+          placeholder.style.display = 'none';
+        }
+        const hiddenInput = document.getElementById('s_photoData');
+        if (hiddenInput) {
+          hiddenInput.value = e.target.result;
+        }
+        showToast('📸 Photo uploaded successfully!', 'success');
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.removeStudentPhoto = function() {
+      const hiddenInput = document.getElementById('s_photoData');
+      if (hiddenInput) hiddenInput.value = '';
+      const previewImg = document.getElementById('s_photoPreview');
+      if (previewImg) {
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+      }
+      const placeholder = document.getElementById('s_photoPlaceholder');
+      if (placeholder) placeholder.style.display = 'block';
+      const fileInput = document.getElementById('s_photoFile');
+      if (fileInput) fileInput.value = '';
+      showToast('Photo removed', 'info');
+    };
+
+    window.saveStudent = async function(editId) {
+      const admNo = document.getElementById('s_admNo').value.trim();
+      const firstName = document.getElementById('s_firstName').value.trim();
+      const lastName = document.getElementById('s_lastName').value.trim();
+      if (!admNo || !firstName || !lastName) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = {
+        admNo, firstName, lastName,
+        class: document.getElementById('s_class').value,
+        gender: document.getElementById('s_gender').value,
+        dob: document.getElementById('s_dob').value,
+        status: document.getElementById('s_status').value,
+        location: document.getElementById('s_location').value,
+        dorm: document.getElementById('s_dorm').value || '',
+        photoUrl: document.getElementById('s_photoData').value || '',
+        isPrefect: document.getElementById('s_isPrefect').value,
+        prefectRole: document.getElementById('s_prefectRole').value,
+        prefectDepartment: document.getElementById('s_prefectDept').value,
+        sponsorshipType: document.getElementById('s_sponsorshipType').value,
+        sponsorName: document.getElementById('s_sponsorName').value,
+        sponsorContact: document.getElementById('s_sponsorContact').value,
+        sponsorNotes: document.getElementById('s_sponsorNotes').value,
+        parent: document.getElementById('s_parent').value,
+        parentPhone: document.getElementById('s_parentPhone').value,
+        parentEmail: document.getElementById('s_parentEmail').value,
+        health: document.getElementById('s_health').value,
+        notes: document.getElementById('s_notes').value
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'students', editId), data);
+          showToast('✅ Student updated successfully!');
+        } else {
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'students'), data);
+          showToast('✅ Student added successfully!');
+        }
+        closeModal();
+      } catch (err) { showToast('❌ Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // ADD GRADE MODAL
+    // ============================================================
+    window.showAddGradeModal = function(editId) {
+      if (!canAdd('grades')) { showToast('You do not have permission to add grades', 'error'); return; }
+      const grade = editId ? gradesCache.find(g => g.id === editId) : null;
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label><select id="g_student">${studentsCache.map(s => `<option value="${s.id}" ${grade?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
+          <div class="form-group"><label>Subject *</label><select id="g_subject">${SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Term *</label><select id="g_term"><option value="Term 1" ${grade?.term === 'Term 1' ? 'selected' : ''}>Term 1</option><option value="Term 2" ${grade?.term === 'Term 2' ? 'selected' : ''}>Term 2</option><option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option></select></div>
+          <div class="form-group"><label>Exam Type *</label><select id="g_examType">${EXAM_TYPES.map(t => `<option value="${t}" ${grade?.examType === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Test 1</label><input type="number" id="g_test1" value="${grade?.test1 !== undefined && grade?.test1 !== null ? grade.test1 : ''}" min="0" max="30"></div>
+          <div class="form-group"><label>Test 2</label><input type="number" id="g_test2" value="${grade?.test2 !== undefined && grade?.test2 !== null ? grade.test2 : ''}" min="0" max="30"></div>
+          <div class="form-group"><label>Test 3</label><input type="number" id="g_test3" value="${grade?.test3 !== undefined && grade?.test3 !== null ? grade.test3 : ''}" min="0" max="30"></div>
+          <div class="form-group"><label>Final Exam</label><input type="number" id="g_exam" value="${grade?.exam !== undefined && grade?.exam !== null ? grade.exam : ''}" min="0" max="70"></div>
+        </div>
+        <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Grade</button>
+      `;
+      openModal(editId ? 'Edit Grade' : 'Add Grade', html);
+    };
+
+    window.saveGrade = async function(editId) {
+      const studentId = document.getElementById('g_student').value;
+      const subject = document.getElementById('g_subject').value;
+      const term = document.getElementById('g_term').value;
+      const examType = document.getElementById('g_examType').value;
+      const test1 = parseInt(document.getElementById('g_test1').value) || null;
+      const test2 = parseInt(document.getElementById('g_test2').value) || null;
+      const test3 = parseInt(document.getElementById('g_test3').value) || null;
+      const exam = parseInt(document.getElementById('g_exam').value) || null;
+
+      if (!studentId || !subject || !term || !examType) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, subject, term, examType, test1, test2, test3, exam };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'grades', editId), data);
+          showToast('Grade updated!');
+        } else {
+          data.recordedBy = currentUser?.email || 'unknown';
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'grades'), data);
+          showToast('Grade added!');
+        }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // ADD ATTENDANCE MODAL
+    // ============================================================
+    window.showAddAttendanceModal = function(editId) {
+      if (!canAdd('attendance')) { showToast('You do not have permission to mark attendance', 'error'); return; }
+      const existing = editId ? attendanceCache.find(a => a.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
+      
+      const html = `
+        <div class="form-group"><label>Date</label><input type="date" id="attDate" value="${existing?.date || today}"></div>
+        <div class="form-group"><label>Student *</label><select id="attStudent">${studentsCache.map(s => `<option value="${s.id}" ${existing?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
+        <div class="form-group"><label>Status *</label><select id="attStatus"><option value="Present" ${existing?.status === 'Present' ? 'selected' : ''}>Present</option><option value="Absent" ${existing?.status === 'Absent' ? 'selected' : ''}>Absent</option><option value="Late" ${existing?.status === 'Late' ? 'selected' : ''}>Late</option><option value="Excused" ${existing?.status === 'Excused' ? 'selected' : ''}>Excused</option></select></div>
+        <div class="form-group"><label>Reason</label><input type="text" id="attReason" value="${existing?.reason || ''}" placeholder="Reason for absence"></div>
+        <button class="btn btn-success" onclick="saveAttendance('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Attendance</button>
+      `;
+      openModal(editId ? 'Edit Attendance' : 'Mark Attendance', html);
+    };
+
+    window.saveAttendance = async function(editId) {
+      const date = document.getElementById('attDate').value;
+      const studentId = document.getElementById('attStudent').value;
+      const status = document.getElementById('attStatus').value;
+      const reason = document.getElementById('attReason').value.trim();
+
+      if (!date || !studentId || !status) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, date, status, reason, markedBy: currentUser?.email || 'unknown' };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'attendance', editId), data);
+          showToast('Attendance updated!');
+        } else {
+          const id = `${studentId}_${date}`;
+          await setDoc(doc(db, 'attendance', id), data);
+          showToast('Attendance saved!');
+        }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // WARNINGS MODAL
+    // ============================================================
+    window.showAddWarningModal = function(editId) {
+      if (!canAdd('warnings')) { showToast('Only Admin, Director, and Principal can issue warnings', 'error'); return; }
+      const warning = editId ? warningsCache.find(w => w.id === editId) : null;
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label><select id="w_student">${studentsCache.map(s => `<option value="${s.id}" ${warning?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
+          <div class="form-group"><label>Date *</label><input type="date" id="w_date" value="${warning?.date || new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="w_reason" rows="3">${warning?.reason || ''}</textarea></div>
+        <div class="form-group"><label>Issued By</label><input type="text" id="w_issuedBy" value="${warning?.issuedBy || currentUser?.fullName || currentUser?.email || ''}" placeholder="Name of issuer"></div>
+        <button class="btn btn-success" onclick="saveWarning('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Issue'} Warning</button>
+      `;
+      openModal(editId ? 'Edit Warning' : 'Issue Warning', html);
+    };
+
+    window.saveWarning = async function(editId) {
+      const studentId = document.getElementById('w_student').value;
+      const date = document.getElementById('w_date').value;
+      const reason = document.getElementById('w_reason').value.trim();
+      const issuedBy = document.getElementById('w_issuedBy').value.trim() || currentUser?.fullName || currentUser?.email || 'unknown';
+
+      if (!studentId || !date || !reason) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, date, reason, issuedBy, hasDocument: false };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'warnings', editId), data);
+          showToast('Warning updated');
+        } else {
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'warnings'), data);
+          showToast('Warning issued');
+        }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // SUSPENSIONS MODAL
+    // ============================================================
+    window.showAddSuspensionModal = function(editId) {
+      if (!canAdd('suspensions')) { showToast('Only Admin, Director, and Principal can add suspensions', 'error'); return; }
+      const suspension = editId ? suspensionsCache.find(s => s.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label><select id="su_student">${studentsCache.map(s => `<option value="${s.id}" ${suspension?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
+          <div class="form-group"><label>Date *</label><input type="date" id="su_date" value="${suspension?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Duration *</label><input type="text" id="su_duration" value="${suspension?.duration || ''}" placeholder="e.g., 3 days"></div>
+          <div class="form-group"><label>Status</label><select id="su_status"><option value="Active" ${suspension?.status === 'Active' ? 'selected' : ''}>Active</option><option value="Completed" ${suspension?.status === 'Completed' ? 'selected' : ''}>Completed</option><option value="Appealed" ${suspension?.status === 'Appealed' ? 'selected' : ''}>Appealed</option></select></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="su_reason" rows="3">${suspension?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveSuspension('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Suspension</button>
+      `;
+      openModal(editId ? 'Edit Suspension' : 'Add Suspension', html);
+    };
+
+    window.saveSuspension = async function(editId) {
+      const studentId = document.getElementById('su_student').value;
+      const date = document.getElementById('su_date').value;
+      const duration = document.getElementById('su_duration').value.trim();
+      const status = document.getElementById('su_status').value;
+      const reason = document.getElementById('su_reason').value.trim();
+      if (!studentId || !date || !duration || !reason) { showToast('Please fill all fields', 'error'); return; }
+      const data = { studentId, date, duration, status, reason };
+      try {
+        if (editId) { await updateDoc(doc(db, 'suspensions', editId), data); showToast('Suspension updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'suspensions'), data); showToast('Suspension added'); }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // EXPULSIONS MODAL
+    // ============================================================
+    window.showAddExpulsionModal = function(editId) {
+      if (!canAdd('expulsions')) { showToast('Only Admin, Director, and Principal can record expulsions', 'error'); return; }
+      const expulsion = editId ? expulsionsCache.find(e => e.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label><select id="e_student">${studentsCache.map(s => `<option value="${s.id}" ${expulsion?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
+          <div class="form-group"><label>Date *</label><input type="date" id="e_date" value="${expulsion?.date || new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group"><label>Approved By</label><input type="text" id="e_approvedBy" value="${expulsion?.approvedBy || currentUser?.fullName || currentUser?.email || ''}" placeholder="Name of approver"></div>
+        </div>
+        <div class="form-group"><label>Reason *</label><textarea id="e_reason" rows="3">${expulsion?.reason || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveExpulsion('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Record'} Expulsion</button>
+      `;
+      openModal(editId ? 'Edit Expulsion' : 'Record Expulsion', html);
+    };
+
+    window.saveExpulsion = async function(editId) {
+      const studentId = document.getElementById('e_student').value;
+      const date = document.getElementById('e_date').value;
+      const approvedBy = document.getElementById('e_approvedBy').value.trim() || currentUser?.fullName || currentUser?.email || 'unknown';
+      const reason = document.getElementById('e_reason').value.trim();
+      if (!studentId || !date || !reason) { showToast('Please fill all required fields', 'error'); return; }
+      const data = { studentId, date, approvedBy, reason };
+      try {
+        if (editId) { await updateDoc(doc(db, 'expulsions', editId), data); showToast('Expulsion updated'); }
+        else { data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; data.createdAt = serverTimestamp(); await addDoc(collection(db, 'expulsions'), data); showToast('Expulsion recorded'); }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // CLINIC MODAL
+    // ============================================================
+    window.showAddClinicModal = function(editId) {
+      const role = currentUser?.role || '';
+      const clinicRoles = ['admin', 'nurse', 'doctor', 'hrio', 'principal', 'director', 'radiographer', 'clinician', 'labtech'];
+      if (!clinicRoles.includes(role)) {
+        showToast('Only Admin, Doctors, Nurses, HRIO, Radiographers, and other clinicians can manage clinic visits', 'error');
+        return;
+      }
+      const visit = editId ? clinicCache.find(c => c.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
+      const currentTime = new Date().toTimeString().slice(0, 5);
+
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label><select id="c_student">${studentsCache.map(s => `<option value="${s.id}" ${visit?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
+          <div class="form-group"><label>Date *</label><input type="date" id="c_date" value="${visit?.date || today}"></div>
+          <div class="form-group"><label>Doctor/Nurse *</label><input type="text" id="c_doctor" value="${visit?.doctor || ''}" placeholder="Full name"></div>
+          <div class="form-group"><label>Condition Type *</label><select id="c_condition"><option value="">Select...</option>${CONDITIONS.map(c => `<option value="${c}" ${visit?.condition === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-group"><label>Complaint *</label><textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea></div>
+        <div class="form-group"><label>Diagnosis</label><textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea></div>
+        <div class="form-group"><label>Treatment / Medication</label><input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg"></div>
+        
+        <div class="form-grid">
+          <div class="form-group"><label>Follow-Up Appointment?</label><select id="c_followUp"><option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option><option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
+          <div class="form-group" id="followUpDateGroup" style="display:${visit?.followUp === 'Yes' ? 'block' : 'none'}"><label>Follow-Up Date</label><input type="date" id="c_followUpDate" value="${visit?.followUpDate || ''}"></div>
+        </div>
+        
+        <div class="clinic-section">
+          <h4>📋 Additional Information</h4>
+          <div class="form-grid">
+            <div class="form-group"><label>Referred To Specialist</label>
+              <select id="c_referredTo">
+                ${REFERRAL_OPTIONS.map(r => `<option value="${r}" ${visit?.referredTo === r ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group"><label>Time Sent Back to Class</label>
+              <div class="time-input">
+                <input type="time" id="c_timeBack" value="${visit?.timeBack || currentTime}">
+              </div>
+            </div>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="c_parentContacted" ${visit?.parentContacted ? 'checked' : ''}>
+            <label for="c_parentContacted">📞 Parent/Guardian Contacted</label>
+          </div>
+        </div>
+        
+        <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
+      `;
+      openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
+    };
+
+    window.saveClinic = async function(editId) {
+      const studentId = document.getElementById('c_student').value;
+      const date = document.getElementById('c_date').value;
+      const doctor = document.getElementById('c_doctor').value.trim();
+      const condition = document.getElementById('c_condition').value;
+      const complaint = document.getElementById('c_complaint').value.trim();
+      const diagnosis = document.getElementById('c_diagnosis').value.trim();
+      const medication = document.getElementById('c_medication').value.trim();
+      const followUp = document.getElementById('c_followUp').value;
+      const followUpDate = document.getElementById('c_followUpDate').value;
+      const referredTo = document.getElementById('c_referredTo').value;
+      const timeBack = document.getElementById('c_timeBack').value;
+      const parentContacted = document.getElementById('c_parentContacted').checked;
+
+      if (!studentId || !date || !doctor || !condition || !complaint) {
+        showToast('Please fill all required fields (*)', 'error');
+        return;
+      }
+
+      if (followUp === 'Yes' && !followUpDate) {
+        showToast('Please select a follow-up date', 'error');
+        return;
+      }
+
+      const data = { 
+        studentId, date, doctor, condition, complaint, diagnosis, medication, 
+        followUp, followUpDate: followUp === 'Yes' ? followUpDate : '',
+        referredTo: referredTo || 'None', timeBack: timeBack || '', parentContacted
+      };
+
+      try {
+        if (editId) { 
+          await updateDoc(doc(db, 'clinic', editId), data); 
+          showToast('Visit updated'); 
+        } else { 
+          data.recordedBy = currentUser?.fullName || currentUser?.email || 'unknown'; 
+          data.createdAt = serverTimestamp(); 
+          await addDoc(collection(db, 'clinic'), data); 
+          showToast('Visit recorded'); 
+        }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // PREFECTS MODAL
+    // ============================================================
+    window.showAddPrefectModal = function(editId) {
+      if (!canAdd('prefects')) { showToast('Only Admin and Director can add prefects', 'error'); return; }
+      const prefect = editId ? prefectsCache.find(p => p.id === editId) : null;
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Student *</label>
+            <select id="p_student">${studentsCache.map(s => `<option value="${s.id}" ${prefect?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Prefect Role *</label>
+            <select id="p_role">${PREFECT_ROLES.map(r => `<option value="${r}" ${prefect?.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Department *</label>
+            <select id="p_department">${PREFECT_DEPARTMENTS.map(d => `<option value="${d}" ${prefect?.department === d ? 'selected' : ''}>${d}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label>Assigned Date</label><input type="date" id="p_date" value="${prefect?.date || new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="p_notes" rows="2">${prefect?.notes || ''}</textarea></div>
+        <button class="btn btn-success" onclick="savePrefect('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Prefect</button>
+      `;
+      openModal(editId ? 'Edit Prefect' : 'Add Prefect Role', html);
+    };
+
+    window.savePrefect = async function(editId) {
+      const studentId = document.getElementById('p_student').value;
+      const role = document.getElementById('p_role').value;
+      const department = document.getElementById('p_department').value;
+      const date = document.getElementById('p_date').value;
+      const notes = document.getElementById('p_notes').value.trim();
+
+      if (!studentId || !role || !department) { showToast('Please fill all required fields', 'error'); return; }
+
+      const data = { studentId, role, department, date, notes };
+
+      try {
+        if (editId) { 
+          await updateDoc(doc(db, 'prefects', editId), data); 
+          showToast('Prefect updated');
+        } else { 
+          data.createdAt = serverTimestamp(); 
+          await addDoc(collection(db, 'prefects'), data); 
+          showToast('Prefect added');
+        }
+        await updateDoc(doc(db, 'students', studentId), { 
+          isPrefect: 'Yes', 
+          prefectRole: role, 
+          prefectDepartment: department 
+        });
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // TEACHERS MODAL
+    // ============================================================
+    window.showAddTeacherModal = function(editId) {
+      if (!canAdd('teachers')) { showToast('You do not have permission to add teachers', 'error'); return; }
+      const teacher = editId ? teachersCache.find(t => t.id === editId) : null;
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="t_name" value="${teacher?.name || ''}" placeholder="Full name"></div>
+          <div class="form-group"><label>Employee ID *</label><input type="text" id="t_empId" value="${teacher?.empId || ''}" placeholder="e.g., STF-001"></div>
+          <div class="form-group"><label>Teacher Type *</label><select id="t_type"><option value="teaching" ${teacher?.type === 'teaching' ? 'selected' : ''}>👨‍🏫 Teaching Staff</option><option value="clinician" ${teacher?.type === 'clinician' ? 'selected' : ''}>🏥 Medical</option><option value="maintenance" ${teacher?.type === 'maintenance' ? 'selected' : ''}>🔧 Maintenance</option></select></div>
+          <div class="form-group"><label>Specialization</label><input type="text" id="t_specialization" value="${teacher?.specialization || ''}" placeholder="e.g., Mathematics Teacher"></div>
+          <div class="form-group"><label>TSC Number</label><input type="text" id="t_tsc" value="${teacher?.tsc || ''}"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="t_phone" value="${teacher?.phone || ''}"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="t_email" value="${teacher?.email || ''}"></div>
+          <div class="form-group"><label>Status</label><select id="t_status"><option value="Active" ${teacher?.status === 'Active' ? 'selected' : ''}>Active</option><option value="Inactive" ${teacher?.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div>
+        </div>
+        <button class="btn btn-success" onclick="saveTeacher('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Teacher</button>
+      `;
+      openModal(editId ? 'Edit Teacher' : 'Add Teacher', html);
+    };
+
+    window.saveTeacher = async function(editId) {
+      const name = document.getElementById('t_name').value.trim();
+      const empId = document.getElementById('t_empId').value.trim();
+      if (!name || !empId) { showToast('Name and Employee ID are required', 'error'); return; }
+      
+      const data = {
+        name, empId,
+        type: document.getElementById('t_type').value,
+        specialization: document.getElementById('t_specialization').value,
+        tsc: document.getElementById('t_tsc').value.trim(),
+        phone: document.getElementById('t_phone').value.trim(),
+        email: document.getElementById('t_email').value.trim(),
+        status: document.getElementById('t_status').value
+      };
+      
+      try {
+        if (editId) { await updateDoc(doc(db, 'teachers', editId), data); showToast('Teacher updated'); }
+        else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'teachers'), data); showToast(`Teacher ${name} added`); }
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // TEACHERS ATTENDANCE MODAL
+    // ============================================================
+    window.showTeacherAttendanceModal = function() {
+      if (!canAdd('teacherAttendance')) { showToast('You do not have permission to mark teachers attendance', 'error'); return; }
+      const today = new Date().toISOString().split('T')[0];
+      const activeTeachers = teachersCache.filter(t => t.status === 'Active');
+
+      if (!activeTeachers.length) { showToast('No active teachers found', 'error'); return; }
+
+      let html = `
+        <div class="form-group"><label>Date</label><input type="date" id="ta_date" value="${today}"></div>
+        <div style="font-size:0.85em;color:#666;margin-bottom:10px;">Total: ${activeTeachers.length} active teachers</div>
+        ${activeTeachers.map(t => `
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;flex-wrap:wrap;">
+            <span style="flex:1;min-width:150px;font-size:0.8em;">${t.name}</span>
+            <select id="ta_status_${t.id}" style="width:100px;padding:4px;font-size:0.8em;">
+              <option value="Present">Present</option>
+              <option value="Absent">Absent</option>
+              <option value="Late">Late</option>
+              <option value="Leave">On Leave</option>
+            </select>
+            <input type="text" id="ta_reason_${t.id}" placeholder="Reason" style="width:120px;padding:4px;font-size:0.8em;">
+          </div>
+        `).join('')}
+        <button class="btn btn-success" onclick="saveTeacherAttendance()" style="width:100%;margin-top:16px;">💾 Save Teachers Attendance</button>
+      `;
+      openModal('📅 Teachers Attendance', html);
+    };
+
+    window.saveTeacherAttendance = async function() {
+      const date = document.getElementById('ta_date').value;
+      if (!date) { showToast('Please select a date', 'error'); return; }
+
+      const activeTeachers = teachersCache.filter(t => t.status === 'Active');
+
+      try {
+        const promises = [];
+        activeTeachers.forEach(t => {
+          const statusEl = document.getElementById('ta_status_' + t.id);
+          if (!statusEl) return;
+          const reasonEl = document.getElementById('ta_reason_' + t.id);
+          const status = statusEl.value;
+          const reason = (status === 'Absent' || status === 'Leave') ? (reasonEl?.value || '') : '';
+          const id = `${t.id}_${date}`;
+          promises.push(setDoc(doc(db, 'teacherAttendance', id), {
+            teacherId: t.id,
+            date,
+            status,
+            reason,
+            markedBy: currentUser?.fullName || currentUser?.email || 'unknown'
+          }));
+        });
+
+        await Promise.all(promises);
+        showToast(`✅ Teachers attendance saved for ${activeTeachers.length} teachers`);
+        closeModal();
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // MAINTENANCE MODAL
+    // ============================================================
+    window.showAddMaintenanceModal = function(editId) {
+      if (!canAdd('maintenance')) { showToast('You do not have permission to add maintenance reports', 'error'); return; }
+      const report = editId ? maintenanceCache.find(m => m.id === editId) : null;
+      const today = new Date().toISOString().split('T')[0];
+      
+      const maintenanceStaff = teachersCache.filter(t => t.type === 'maintenance' && t.status === 'Active');
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Class *</label><select id="m_class">${classSelectHtml(report?.class || '')}</select></div>
+          <div class="form-group"><label>Issue Type *</label>
+            <select id="m_issueType">
+              ${MAINTENANCE_TYPES.map(t => `<option value="${t.value}" ${report?.issueType === t.value ? 'selected' : ''}>${t.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="m_status">
+              ${MAINTENANCE_STATUSES.map(s => `<option value="${s}" ${report?.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Date Reported</label><input type="date" id="m_date" value="${report?.date || today}"></div>
+          <div class="form-group"><label>Reported By</label><input type="text" id="m_reportedBy" value="${report?.reportedBy || currentUser?.fullName || ''}" placeholder="Name of reporter"></div>
+          <div class="form-group"><label>Damaged By</label><input type="text" id="m_damagedBy" value="${report?.damagedBy || ''}" placeholder="Who caused the damage"></div>
+          <div class="form-group"><label>Assigned To</label>
+            <select id="m_assignedTo">
+              <option value="">Unassigned</option>
+              ${maintenanceStaff.map(t => `<option value="${t.id}" ${report?.assignedTo === t.id ? 'selected' : ''}>${t.name} (${t.specialization})</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Resolved Date</label><input type="date" id="m_resolvedDate" value="${report?.resolvedDate || ''}"></div>
+        </div>
+        <div class="form-group"><label>Description *</label><textarea id="m_description" rows="3">${report?.description || ''}</textarea></div>
+        <div class="form-group"><label>Notes</label><textarea id="m_notes" rows="2">${report?.notes || ''}</textarea></div>
+        <button class="btn btn-success" onclick="saveMaintenance('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Add'} Report</button>
+      `;
+      openModal(editId ? 'Edit Maintenance Report' : 'Add Maintenance Report', html);
+    };
+
+    window.saveMaintenance = async function(editId) {
+      const classVal = document.getElementById('m_class').value;
+      const issueType = document.getElementById('m_issueType').value;
+      const status = document.getElementById('m_status').value;
+      const date = document.getElementById('m_date').value;
+      const reportedBy = document.getElementById('m_reportedBy').value.trim();
+      const damagedBy = document.getElementById('m_damagedBy').value.trim();
+      const assignedTo = document.getElementById('m_assignedTo').value;
+      const resolvedDate = document.getElementById('m_resolvedDate').value;
+      const description = document.getElementById('m_description').value.trim();
+      const notes = document.getElementById('m_notes').value.trim();
+
+      if (!classVal || !issueType || !date || !description) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const data = {
+        class: classVal, issueType, status, date,
+        reportedBy: reportedBy || currentUser?.fullName || 'Unknown',
+        damagedBy, assignedTo, resolvedDate, description, notes
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'maintenance', editId), data);
+          showToast('Maintenance report updated!');
+        } else {
+          data.createdAt = serverTimestamp();
+          await addDoc(collection(db, 'maintenance'), data);
+          showToast('Maintenance report added!');
+        }
+        closeModal();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    };
+
+    // ============================================================
+    // USER MANAGEMENT MODAL
+    // ============================================================
+    window.showAddUserModal = function(editId) {
+      if (!canAdd('users')) { showToast('You do not have permission to manage users', 'error'); return; }
+      const user = editId ? usersCache.find(u => u.id === editId) : null;
+      const roleOptions = ROLES.map(r => `<option value="${r}" ${user?.role === r ? 'selected' : ''}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join('');
+      
+      const html = `
+        <div class="form-grid">
+          <div class="form-group"><label>Email *</label><input type="email" id="u_email" value="${user?.email || ''}" ${user ? 'readonly' : ''}></div>
+          <div class="form-group"><label>Full Name *</label><input type="text" id="u_name" value="${user?.fullName || ''}"></div>
+          ${!user ? `<div class="form-group"><label>Password * (min 6 chars)</label><input type="text" id="u_password" placeholder="Enter temporary password"></div>` : ''}
+          <div class="form-group"><label>Role *</label><select id="u_role">${roleOptions}</select></div>
+          <div class="form-group"><label>Class (for teachers)</label><select id="u_class"><option value="">None</option>${CLASSES.map(c => `<option value="${c}" ${user?.class === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+        </div>
+        <button class="btn btn-success" onclick="saveUser('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Create'} User</button>
+      `;
+      openModal(editId ? 'Edit User' : 'Add User', html);
+    };
+
+    window.saveUser = async function(editId) {
+      const email = document.getElementById('u_email').value.trim();
+      const name = document.getElementById('u_name').value.trim();
+      const role = document.getElementById('u_role').value;
+      const classValue = document.getElementById('u_class').value;
+      if (!email || !name || !role) { showToast('Please fill all required fields', 'error'); return; }
+      try {
+        if (editId) {
+          await updateDoc(doc(db, 'users', editId), { fullName: name, role, class: classValue, approvalStatus: 'approved' });
+          showToast('User updated');
+        } else {
+          const password = document.getElementById('u_password').value;
+          if (!password || password.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+          showToast('User creation requires Firebase Admin SDK. Use Firebase Console.', 'warning');
+        }
+        closeModal();
+      } catch (err) { showToast(err.message || 'Error', 'error'); }
+    };
+
+    window.deleteUser = async function(userId) {
+      if (!confirm('Delete this user permanently?')) return;
+      try { 
+        await deleteDoc(doc(db, 'users', userId)); 
+        await deleteDoc(doc(db, 'pendingRegistrations', userId)); 
+        showToast('User deleted'); 
+      } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    };
+
+    // ============================================================
+    // SPONSORSHIP EDIT MODAL
+    // ============================================================
+    window.showEditSponsorshipModal = function() {
+      const sponsored = studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored');
+      if (!sponsored.length) {
+        showToast('No sponsored students to edit', 'warning');
+        return;
+      }
+
+      let html = `
+        <p style="color:#666;margin-bottom:10px;">Select a student to edit their sponsorship details:</p>
+        <div class="form-group">
+          <label>Select Student</label>
+          <select id="sponsorStudentSelect" onchange="loadSponsorshipData()">
+            <option value="">Select a student...</option>
+            ${sponsored.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}
+          </select>
+        </div>
+        <div id="sponsorEditForm" style="display:none;">
+          <div class="form-grid">
+            <div class="form-group"><label>Sponsor Type</label><select id="sp_editType"><option value="Organization">Organization</option><option value="Government">Government</option><option value="NGO">NGO</option><option value="Other">Other</option></select></div>
+            <div class="form-group"><label>Sponsor Name</label><input type="text" id="sp_editName" placeholder="Sponsor name"></div>
+            <div class="form-group"><label>Sponsor Contact</label><input type="text" id="sp_editContact" placeholder="Phone or Email"></div>
+          </div>
+          <div class="form-group"><label>Notes</label><textarea id="sp_editNotes" rows="2"></textarea></div>
+          <button class="btn btn-success" onclick="saveSponsorshipEdit()" style="width:100%;margin-top:10px;">💾 Save Changes</button>
+        </div>
+      `;
+      openModal('✏️ Edit Sponsorship', html);
+    };
+
+    window.loadSponsorshipData = function() {
+      const studentId = document.getElementById('sponsorStudentSelect').value;
+      const form = document.getElementById('sponsorEditForm');
+      if (!studentId) { form.style.display = 'none'; return; }
+      
+      const student = studentsCache.find(s => s.id === studentId);
+      if (!student) { form.style.display = 'none'; return; }
+      
+      form.style.display = 'block';
+      document.getElementById('sp_editType').value = student.sponsorshipType || 'Organization';
+      document.getElementById('sp_editName').value = student.sponsorName || '';
+      document.getElementById('sp_editContact').value = student.sponsorContact || '';
+      document.getElementById('sp_editNotes').value = student.sponsorNotes || '';
+    };
+
+    window.saveSponsorshipEdit = async function() {
+      const studentId = document.getElementById('sponsorStudentSelect').value;
+      if (!studentId) { showToast('Please select a student', 'error'); return; }
+      
+      const data = {
+        sponsorshipType: document.getElementById('sp_editType').value,
+        sponsorName: document.getElementById('sp_editName').value.trim(),
+        sponsorContact: document.getElementById('sp_editContact').value.trim(),
+        sponsorNotes: document.getElementById('sp_editNotes').value.trim()
+      };
+      
+      try {
+        await updateDoc(doc(db, 'students', studentId), data);
+        showToast('✅ Sponsorship updated successfully!');
+        closeModal();
+      } catch (err) {
+        showToast('❌ Error: ' + err.message, 'error');
+      }
+    };
     // ============================================================
     // INITIALIZATION
     // ============================================================
