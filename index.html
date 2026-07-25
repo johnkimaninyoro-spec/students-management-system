@@ -3215,11 +3215,34 @@
         showToast('❌ Error: ' + err.message, 'error');
       }
     };
-    // ============================================================
+   
+       // ============================================================
     // AUTHENTICATION FUNCTIONS
     // ============================================================
-  
-    // Rename your existing async login to this
+
+    // Main login handler - checks for test mode first
+    window.handleLogin = function() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      
+      // Check for test credentials FIRST
+      if (email === 'test@test.com' && password === 'test123') {
+        forceTestLogin();
+        return;
+      }
+      
+      // If offline, force test mode
+      if (!navigator.onLine) {
+        showToast('📶 You are offline. Using test mode.', 'warning');
+        forceTestLogin();
+        return;
+      }
+      
+      // Otherwise, try Firebase login
+      firebaseLogin();
+    };
+
+    // Firebase login function - COMPLETE VERSION
     window.firebaseLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -3229,20 +3252,6 @@
       console.log('🔐 Firebase login attempt:', { email });
       errorEl.textContent = '';
 
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Signing in...';
-
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('✅ Login successful:', userCredential.user.email);
-        // ... rest of your Firebase login code
-      } catch (err) {
-        // ... error handling
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Sign In';
-      }
-    };
       if (!email) { errorEl.textContent = 'Please enter your email'; return; }
       if (!password) { errorEl.textContent = 'Please enter your password'; return; }
 
@@ -3442,139 +3451,6 @@
         showToast(err.message || 'Error submitting registration', 'error');
       }
     };
-
-    onAuthStateChanged(auth, async (user) => {
-      try {
-        if (user && !isTestMode) {
-          const snap = await getDoc(doc(db, 'users', user.uid));
-
-          if (!snap.exists()) {
-            const pendingSnap = await getDoc(doc(db, 'pendingRegistrations', user.uid));
-            if (pendingSnap.exists() && pendingSnap.data().status === 'pending') {
-              showToast('⏳ Your account is pending admin approval.', 'warning');
-              await signOut(auth);
-              return;
-            }
-            showToast('⚠️ Account not found. Please contact administrator.', 'error');
-            await signOut(auth);
-            return;
-          }
-
-          const data = snap.data();
-
-          if (data.approvalStatus === 'pending') {
-            showToast('⏳ Your account is pending admin approval.', 'warning');
-            await signOut(auth);
-            return;
-          }
-
-          if (data.approvalStatus === 'rejected') {
-            showToast('❌ Your account has been rejected. Contact administrator.', 'error');
-            await signOut(auth);
-            return;
-          }
-
-          currentUser = { uid: user.uid, email: user.email, ...data };
-          await updateDoc(doc(db, 'users', user.uid), {
-            lastLogin: serverTimestamp(),
-            loginCount: (data.loginCount || 0) + 1
-          });
-
-          document.getElementById('loginPage').style.display = 'none';
-          document.getElementById('appContainer').style.display = 'block';
-          document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
-          document.getElementById('currentRoleBadge').textContent = (currentUser.role || '').toUpperCase();
-
-          setupPermissions();
-          startListeners();
-          showTab('dashboard');
-          showToast(`Welcome, ${currentUser.fullName || currentUser.email}!`);
-        }
-      } catch (err) {
-        console.error('Auth state error:', err);
-      }
-    });
-
-    window.approveRegistration = async function(uid) {
-      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'director')) {
-        showToast('Only Admin and Director can approve registrations', 'error');
-        return;
-      }
-
-      if (!confirm('Approve this registration? The user will be able to login.')) return;
-
-      try {
-        const pendingSnap = await getDoc(doc(db, 'pendingRegistrations', uid));
-        if (!pendingSnap.exists()) {
-          showToast('Registration not found', 'error');
-          return;
-        }
-        const pendingData = pendingSnap.data();
-
-        await updateDoc(doc(db, 'users', uid), {
-          approvalStatus: 'approved',
-          approvedAt: serverTimestamp(),
-          approvedBy: currentUser.email
-        });
-
-        await updateDoc(doc(db, 'pendingRegistrations', uid), {
-          status: 'approved',
-          approvedAt: serverTimestamp(),
-          approvedBy: currentUser.email
-        });
-
-        await addAuditLog('APPROVE_REGISTRATION', `${pendingData.fullName} (${pendingData.email})`);
-        showToast(`✅ Registration approved for ${pendingData.fullName}`);
-        renderRegistrations();
-        renderUsers();
-
-      } catch (err) {
-        showToast('Error: ' + err.message, 'error');
-      }
-    };
-
-    window.rejectRegistration = async function(uid) {
-      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'director')) {
-        showToast('Only Admin and Director can reject registrations', 'error');
-        return;
-      }
-
-      const reason = prompt('Please provide a reason for rejection (optional):');
-
-      if (!confirm('Reject this registration?')) return;
-
-      try {
-        const pendingSnap = await getDoc(doc(db, 'pendingRegistrations', uid));
-        if (!pendingSnap.exists()) {
-          showToast('Registration not found', 'error');
-          return;
-        }
-        const pendingData = pendingSnap.data();
-
-        await updateDoc(doc(db, 'users', uid), {
-          approvalStatus: 'rejected',
-          rejectedAt: serverTimestamp(),
-          rejectedBy: currentUser.email,
-          rejectionReason: reason || 'No reason provided'
-        });
-
-        await updateDoc(doc(db, 'pendingRegistrations', uid), {
-          status: 'rejected',
-          rejectedAt: serverTimestamp(),
-          rejectedBy: currentUser.email,
-          rejectionReason: reason || 'No reason provided'
-        });
-
-        await addAuditLog('REJECT_REGISTRATION', `${pendingData.fullName} (${pendingData.email}) - ${reason || 'No reason'}`);
-        showToast(`❌ Registration rejected for ${pendingData.fullName}`);
-        renderRegistrations();
-        renderUsers();
-
-      } catch (err) {
-        showToast('Error: ' + err.message, 'error');
-      }
-    };
-
     // ============================================================
     // PERMISSIONS
     // ============================================================
