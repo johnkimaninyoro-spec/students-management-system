@@ -2542,9 +2542,163 @@
       }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No attendance records</td></tr>';
     }
 
-    function renderClassPerformance() {
-      // Simple placeholder
-      document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Select a class to view performance</td></tr>';
+        function renderClassPerformance() {
+      const classSelect = document.getElementById('performanceClassSelect');
+      const termSelect = document.getElementById('performanceTermSelect');
+      
+      // Populate the class dropdown if it's empty
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = '<option value="">Select a class...</option>';
+        // Add all classes from the CLASSES array
+        CLASSES.forEach(c => {
+          const option = document.createElement('option');
+          option.value = c;
+          option.textContent = c;
+          classSelect.appendChild(option);
+        });
+      }
+      
+      // Populate term dropdown
+      if (termSelect.options.length <= 1) {
+        termSelect.innerHTML = '<option value="">All Terms</option>';
+        ['Term 1', 'Term 2', 'Term 3'].forEach(t => {
+          const option = document.createElement('option');
+          option.value = t;
+          option.textContent = t;
+          termSelect.appendChild(option);
+        });
+      }
+      
+      const className = document.getElementById('performanceClassSelect').value;
+      if (!className) {
+        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Select a class to view performance</td></tr>';
+        // Clear charts
+        destroyChart('perfSubjectChart');
+        destroyChart('perfStudentChart');
+        destroyChart('perfGradeChart');
+        destroyChart('perfPassFailChart');
+        return;
+      }
+
+      // Get students in the selected class
+      const students = studentsCache.filter(s => s.class === className);
+      const studentIds = students.map(s => s.id);
+      let grades = gradesCache.filter(g => studentIds.includes(g.studentId));
+
+      if (!grades.length) {
+        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No grades found for this class</td></tr>';
+        return;
+      }
+
+      // Filter by term if selected
+      const termFilter = document.getElementById('performanceTermSelect').value;
+      if (termFilter) {
+        grades = grades.filter(g => g.term === termFilter);
+      }
+
+      if (!grades.length) {
+        document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No grades found for this term</td></tr>';
+        return;
+      }
+
+      // Calculate student averages
+      const studentAverages = students.map(s => {
+        const sg = grades.filter(g => g.studentId === s.id && hasActualScores(g));
+        if (!sg.length) return { student: s, avg: null, hasScores: false };
+        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        return { student: s, avg, hasScores: true };
+      });
+
+      // Sort by average
+      const sorted = [...studentAverages].sort((a, b) => {
+        if (a.hasScores && !b.hasScores) return -1;
+        if (!a.hasScores && b.hasScores) return 1;
+        return (b.avg || 0) - (a.avg || 0);
+      });
+
+      const rankedStudents = sorted.filter(s => s.hasScores);
+
+      // Render rankings
+      document.getElementById('perfRankingsBody').innerHTML = rankedStudents.map((s, index) => `
+        <tr class="${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}">
+          <td>${index + 1}</td>
+          <td>${s.student.firstName} ${s.student.lastName}</td>
+          <td><strong>${s.avg}%</strong></td>
+          <td>${getGradeBadge(s.avg)}</td>
+          <td>${isPass(s.avg) ? '✅' : '❌'}</td>
+          <td>${isPass(s.avg) ? '0' : '1'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students with scores found</td></tr>';
+
+      // Subject averages chart
+      const subjects = [...new Set(grades.filter(g => hasActualScores(g)).map(g => g.subject))];
+      const subjectAverages = subjects.map(subj => {
+        const sg = grades.filter(g => g.subject === subj && hasActualScores(g));
+        if (!sg.length) return 0;
+        const scores = sg.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+        return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      });
+
+      destroyChart('perfSubjectChart');
+      chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
+        type: 'bar',
+        data: { labels: subjects, datasets: [{ data: subjectAverages, backgroundColor: '#3498db' }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
+      });
+
+      // Top students chart
+      const topStudents = rankedStudents.slice(0, 10);
+      const studentNames = topStudents.map(s => `${s.student.firstName} ${s.student.lastName}`);
+      const studentAvgs = topStudents.map(s => s.avg);
+
+      destroyChart('perfStudentChart');
+      chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
+        type: 'bar',
+        data: { labels: studentNames, datasets: [{ data: studentAvgs, backgroundColor: studentAvgs.map(a => isPass(a) ? '#27ae60' : '#e74c3c') }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 130 } }, plugins: { legend: { display: false } } }
+      });
+
+      // Grade distribution
+      const gradeCounts = {};
+      KENYAN_GRADES.forEach(g => gradeCounts[g.grade] = 0);
+      studentAverages.filter(s => s.hasScores).forEach(s => {
+        const grade = getKenyanGrade(s.avg);
+        if (grade) {
+          gradeCounts[grade.grade] = (gradeCounts[grade.grade] || 0) + 1;
+        }
+      });
+      
+      const gradeLabels = KENYAN_GRADES.map(g => g.grade);
+      const gradeData = KENYAN_GRADES.map(g => gradeCounts[g.grade] || 0);
+      const gradeColors = KENYAN_GRADES.map(g => {
+        const colors = {
+          'A': '#27ae60', 'A-': '#2ecc71', 'B+': '#85c1e9',
+          'B': '#5dade2', 'B-': '#a9cce3', 'C+': '#f5b041',
+          'C': '#f39c12', 'C-': '#f7dc6f', 'D+': '#e67e22',
+          'D': '#d35400', 'D-': '#f5b7b1', 'E': '#e74c3c'
+        };
+        return colors[g.grade] || '#95a5a6';
+      });
+
+      destroyChart('perfGradeChart');
+      chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
+        type: 'bar',
+        data: { labels: gradeLabels, datasets: [{ data: gradeData, backgroundColor: gradeColors }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+      });
+
+      // Pass/Fail ratio
+      const scoredStudents = studentAverages.filter(s => s.hasScores);
+      const passed = scoredStudents.filter(s => isPass(s.avg)).length;
+      const failed = scoredStudents.filter(s => !isPass(s.avg)).length;
+
+      destroyChart('perfPassFailChart');
+      chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
+        type: 'doughnut',
+        data: { labels: ['✅ Passed (C and above)', '❌ Failed (C- and below)'], datasets: [{ data: [passed, failed], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
     }
 
     function renderWarnings() {
