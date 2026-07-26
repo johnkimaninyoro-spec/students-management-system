@@ -4170,30 +4170,14 @@ window.renderClassPerformance = renderClassPerformance;
     }
 
     // [Continue with renderAttendance, renderClassPerformance, renderWarnings, renderSuspensions, renderExpulsions, renderClinic, renderPrefects, renderTeachers, renderTeacherAttendance, renderMaintenance, renderMaintenanceDept, renderAnalytics, renderUsers, renderRegistrations, renderAudit, printTab, shareTab, etc.]
-     // ============================================================
     
     // ============================================================
     // FORCE TEST MODE - Bypass Firebase connection issues
     // ============================================================
     console.log('🚀 Starting application...');
     
-    // Add a skip button to login page
-    function addSkipButton() {
-      const loginBtn = document.getElementById('loginBtn');
-      if (loginBtn) {
-        const skipBtn = document.createElement('button');
-        skipBtn.className = 'login-btn';
-        skipBtn.style.cssText = 'margin-top:10px;background:#27ae60;';
-        skipBtn.textContent = '🚀 Skip Login (Test Mode)';
-        skipBtn.onclick = function() {
-          forceTestLogin();
-        };
-        loginBtn.parentNode.insertBefore(skipBtn, loginBtn.nextSibling);
-      }
-    }
-    
-    // Force test login function
-    window.forceTestLogin = function() {
+    // Force test login function (moved outside)
+window.forceTestLogin = function() {
       console.log('🔓 Forcing test login...');
       window.currentUser = {
         uid: 'test123',
@@ -4309,26 +4293,82 @@ window.renderClassPerformance = renderClassPerformance;
       renderAudit();
 populateClassPerformanceDropdown();
 
-      showToast('📚 Sample data loaded!', 'success');
+          showToast('📚 Sample data loaded!', 'success');
+  }
+  
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  const loginPwd = document.getElementById('loginPassword');
+  if (loginPwd) {
+    loginPwd.addEventListener('keypress', function(e) { 
+      if (e.key === 'Enter') window.handleLogin(); 
+    });
+  }
+  
+  // FORCE POPULATE DROPDOWNS - THIS FIXES THE EMPTY DROPDOWN ISSUE
+  setTimeout(function() {
+    // Populate all class dropdowns
+    if (typeof populateClassPerformanceDropdown === 'function') {
+      populateClassPerformanceDropdown();
+      console.log('✅ Class Performance dropdown populated');
     }
     
-    // Add the skip button to login page
-    addSkipButton();
-    // ============================================================
-    // INITIALIZATION
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      const loginPwd = document.getElementById('loginPassword');
-      if (loginPwd) {
-        loginPwd.addEventListener('keypress', function(e) { if (e.key === 'Enter') window.handleLogin(); });
-      }
-      console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 28.0.0 - Complete Version with All Tabs');
-      console.log('🔑 Test Login: test@test.com / test123');
-      console.log('✅ All dashboard tabs restored!');
-    });
+    // Also populate student class filter
+    const studentClassFilter = document.getElementById('studentClassFilter');
+    if (studentClassFilter && studentClassFilter.options.length <= 1) {
+      studentClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Student class filter populated');
+    }
+    
+    // Populate attendance class filter
+    const attendanceClassFilter = document.getElementById('attendanceClassFilter');
+    if (attendanceClassFilter && attendanceClassFilter.options.length <= 1) {
+      attendanceClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Attendance class filter populated');
+    }
+    
+    // Populate grade class filter
+    const gradeClassFilter = document.getElementById('gradeClassFilter');
+    if (gradeClassFilter && gradeClassFilter.options.length <= 1) {
+      gradeClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Grade class filter populated');
+    }
+    
+    // Populate maintenance class filter
+    const maintenanceClassFilter = document.getElementById('maintenanceClassFilter');
+    if (maintenanceClassFilter && maintenanceClassFilter.options.length <= 1) {
+      maintenanceClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Maintenance class filter populated');
+    }
+    
+    // Populate analytics class select
+    const analyticsClassSelect = document.getElementById('analyticsClassSelect');
+    if (analyticsClassSelect && analyticsClassSelect.options.length <= 1) {
+      analyticsClassSelect.innerHTML = '<option value="">Select a class...</option>' + 
+        CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+      console.log('✅ Analytics class select populated');
+    }
+    
+    // Populate analytics student select
+    const analyticsStudentSelect = document.getElementById('analyticsStudentSelect');
+    if (analyticsStudentSelect && analyticsStudentSelect.options.length <= 1) {
+      // Will be populated by renderAnalytics when students are loaded
+      console.log('✅ Analytics student select will be populated when students load');
+    }
+    
+    console.log('✅ All dropdowns populated!');
+  }, 500);
+  
+  console.log('🚀 Mara Christian High School Management System');
+  console.log('📚 Version 28.0.0 - Complete Version with All Tabs');
+  console.log('🔑 Test Login: test@test.com / test123');
+  console.log('✅ All dashboard tabs restored!');
+});
 
-    console.log('✅ System initialized successfully!');
+console.log('✅ System initialized successfully!');
   </script>
 </body>
 </html>
