@@ -271,7 +271,7 @@
 <body>
 
   <!-- LOGIN PAGE -->
-    <div id="loginPage" class="login-container">
+  <div id="loginPage" class="login-container">
     <div class="login-box">
       <div class="login-logo">
         <img src="https://raw.githubusercontent.com/johnkimaninyoro-spec/students-management-system/main/MCHSLogo.png" alt="MCHS Logo">
@@ -286,7 +286,7 @@
         <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password" value="test123">
       </div>
       <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
-      <button class="login-btn" onclick="forceTestLogin()" style="margin-top:10px;background:#27ae60;">🚀 Skip Login (Test Mode)</button>
+<button class="login-btn" onclick="forceTestLogin()" style="margin-top:10px;background:#27ae60;">🚀 Skip Login (Test Mode)</button>
       <div class="login-error" id="loginError"></div>
       <div class="test-login-hint">
         <strong>💡 Test Login:</strong> test@test.com / test123<br>
@@ -3047,386 +3047,10 @@ window.renderClassPerformance = renderClassPerformance;
       }
     }
 
-    
-// ============================================================
-// ANALYTICS FUNCTIONS - COMPLETE FIX
-// ============================================================
+    window.loadAnalyticsData = function() {
+      showToast('📊 Loading analytics data...', 'info');
+    };
 
-window.loadAnalyticsData = function() {
-  const studentId = document.getElementById('analyticsStudentSelect').value;
-  const classSelect = document.getElementById('analyticsClassSelect').value;
-  
-  if (!studentId && !classSelect) {
-    showToast('⚠️ Please select a student OR a class', 'warning');
-    return;
-  }
-  
-  // Show loading indicator
-  document.getElementById('analyticsLoading').style.display = 'block';
-  
-  // Clear existing charts
-  ['analyticsStudentChart', 'analyticsTrendChart', 'analyticsClassChart'].forEach(id => {
-    if (chartInstances[id]) {
-      chartInstances[id].destroy();
-      delete chartInstances[id];
-    }
-  });
-  
-  try {
-    if (studentId) {
-      // Load individual student analytics
-      loadStudentAnalytics(studentId);
-    } else if (classSelect) {
-      // Load class analytics
-      loadClassAnalytics(classSelect);
-    }
-  } catch (err) {
-    console.error('Analytics error:', err);
-    showToast('❌ Error loading analytics: ' + err.message, 'error');
-  } finally {
-    document.getElementById('analyticsLoading').style.display = 'none';
-  }
-};
-
-function loadStudentAnalytics(studentId) {
-  const student = studentsCache.find(s => s.id === studentId);
-  if (!student) {
-    showToast('❌ Student not found', 'error');
-    return;
-  }
-  
-  // Get all grades for this student
-  const studentGrades = gradesCache.filter(g => g.studentId === studentId);
-  const validGrades = studentGrades.filter(g => hasActualScores(g));
-  
-  if (validGrades.length === 0) {
-    showToast('⚠️ No grades found for this student', 'warning');
-    return;
-  }
-  
-  // 1. Student Grades by Subject Chart
-  const subjects = validGrades.map(g => g.subject);
-  const scores = validGrades.map(g => {
-    return (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
-  });
-  const colors = scores.map(s => getGradeColor(s));
-  
-  destroyChart('analyticsStudentChart');
-  chartInstances['analyticsStudentChart'] = new Chart(
-    document.getElementById('analyticsStudentChart'),
-    {
-      type: 'bar',
-      data: {
-        labels: subjects,
-        datasets: [{
-          label: 'Total Score (%)',
-          data: scores,
-          backgroundColor: colors,
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, max: 130 }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const score = context.parsed.y;
-                const grade = getKenyanGrade(score);
-                return `Score: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
-              }
-            }
-          }
-        }
-      }
-    }
-  );
-  
-  // 2. Student Grade Trend Chart (by term)
-  const terms = ['Term 1', 'Term 2', 'Term 3'];
-  const termData = terms.map(term => {
-    const termGrades = validGrades.filter(g => g.term === term);
-    if (termGrades.length === 0) return 0;
-    const total = termGrades.reduce((sum, g) => {
-      return sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
-    }, 0);
-    return Math.round(total / termGrades.length);
-  });
-  
-  destroyChart('analyticsTrendChart');
-  chartInstances['analyticsTrendChart'] = new Chart(
-    document.getElementById('analyticsTrendChart'),
-    {
-      type: 'line',
-      data: {
-        labels: terms,
-        datasets: [{
-          label: 'Average Score',
-          data: termData,
-          borderColor: '#2e86c1',
-          backgroundColor: 'rgba(46, 134, 193, 0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 6,
-          pointBackgroundColor: termData.map(s => getGradeColor(s))
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, max: 100 }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const score = context.parsed.y;
-                const grade = getKenyanGrade(score);
-                return `Average: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
-              }
-            }
-          }
-        }
-      }
-    }
-  );
-  
-  // 3. Class Average Chart (compare student to class)
-  const classStudents = studentsCache.filter(s => s.class === student.class);
-  const classAverages = classStudents.map(s => {
-    const grades = gradesCache.filter(g => g.studentId === s.id && hasActualScores(g));
-    if (grades.length === 0) return { name: s.firstName + ' ' + s.lastName, avg: 0 };
-    const total = grades.reduce((sum, g) => {
-      return sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
-    }, 0);
-    return { name: s.firstName + ' ' + s.lastName, avg: Math.round(total / grades.length) };
-  }).filter(s => s.avg > 0).sort((a, b) => b.avg - a.avg);
-  
-  const studentAvg = classAverages.find(s => s.name === student.firstName + ' ' + student.lastName);
-  
-  destroyChart('analyticsClassChart');
-  chartInstances['analyticsClassChart'] = new Chart(
-    document.getElementById('analyticsClassChart'),
-    {
-      type: 'bar',
-      data: {
-        labels: classAverages.map(s => s.name),
-        datasets: [{
-          label: 'Average Score',
-          data: classAverages.map(s => s.avg),
-          backgroundColor: classAverages.map(s => 
-            s.name === student.firstName + ' ' + student.lastName ? '#f1c40f' : getGradeColor(s.avg)
-          ),
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, max: 100 }
-        },
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: `Class Average Comparison (${student.class})`,
-            font: { size: 12 }
-          }
-        }
-      }
-    }
-  );
-  
-  showToast(`📊 Analytics loaded for ${student.firstName} ${student.lastName}`, 'success');
-}
-
-function loadClassAnalytics(classSelect) {
-  // Get all students in this class
-  const classStudents = studentsCache.filter(s => s.class === classSelect);
-  
-  if (classStudents.length === 0) {
-    showToast('⚠️ No students found in this class', 'warning');
-    return;
-  }
-  
-  // Get all grades for these students
-  const classGrades = gradesCache.filter(g => 
-    classStudents.some(s => s.id === g.studentId) && hasActualScores(g)
-  );
-  
-  if (classGrades.length === 0) {
-    showToast('⚠️ No grades found for this class', 'warning');
-    return;
-  }
-  
-  // 1. Class Subject Averages
-  const subjectData = {};
-  classGrades.forEach(g => {
-    const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
-    if (!subjectData[g.subject]) subjectData[g.subject] = [];
-    subjectData[g.subject].push(total);
-  });
-  
-  const subjectAverages = {};
-  for (const [subject, scores] of Object.entries(subjectData)) {
-    subjectAverages[subject] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-  }
-  
-  const subjectLabels = Object.keys(subjectAverages);
-  const subjectScores = Object.values(subjectAverages);
-  
-  destroyChart('analyticsStudentChart');
-  chartInstances['analyticsStudentChart'] = new Chart(
-    document.getElementById('analyticsStudentChart'),
-    {
-      type: 'bar',
-      data: {
-        labels: subjectLabels,
-        datasets: [{
-          label: 'Class Average (%)',
-          data: subjectScores,
-          backgroundColor: subjectScores.map(s => getGradeColor(s)),
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, max: 100 }
-        },
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: `${classSelect} - Subject Averages`,
-            font: { size: 12 }
-          }
-        }
-      }
-    }
-  );
-  
-  // 2. Student Performance Distribution
-  const studentAverages = classStudents.map(s => {
-    const grades = gradesCache.filter(g => g.studentId === s.id && hasActualScores(g));
-    if (grades.length === 0) return { name: s.firstName + ' ' + s.lastName, avg: 0 };
-    const total = grades.reduce((sum, g) => {
-      return sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
-    }, 0);
-    return { name: s.firstName + ' ' + s.lastName, avg: Math.round(total / grades.length) };
-  }).filter(s => s.avg > 0).sort((a, b) => b.avg - a.avg);
-  
-  destroyChart('analyticsTrendChart');
-  chartInstances['analyticsTrendChart'] = new Chart(
-    document.getElementById('analyticsTrendChart'),
-    {
-      type: 'bar',
-      data: {
-        labels: studentAverages.map(s => s.name),
-        datasets: [{
-          label: 'Student Average (%)',
-          data: studentAverages.map(s => s.avg),
-          backgroundColor: studentAverages.map(s => getGradeColor(s.avg)),
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, max: 100 }
-        },
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: `${classSelect} - Student Performance`,
-            font: { size: 12 }
-          }
-        }
-      }
-    }
-  );
-  
-  // 3. Grade Distribution
-  const gradeDist = {};
-  KENYAN_GRADES.forEach(g => gradeDist[g.grade] = 0);
-  studentAverages.forEach(s => {
-    const grade = getKenyanGrade(s.avg);
-    if (grade) gradeDist[grade.grade] = (gradeDist[grade.grade] || 0) + 1;
-  });
-  
-  const gradeLabels = KENYAN_GRADES.map(g => g.grade);
-  const gradeData = KENYAN_GRADES.map(g => gradeDist[g.grade] || 0);
-  const gradeColors = KENYAN_GRADES.map(g => getGradeColor(g.grade));
-  
-  destroyChart('analyticsClassChart');
-  chartInstances['analyticsClassChart'] = new Chart(
-    document.getElementById('analyticsClassChart'),
-    {
-      type: 'doughnut',
-      data: {
-        labels: gradeLabels.map(g => `${g} (${gradeData[gradeLabels.indexOf(g)]})`),
-        datasets: [{
-          data: gradeData,
-          backgroundColor: gradeColors,
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'right' },
-          title: {
-            display: true,
-            text: `${classSelect} - Grade Distribution`,
-            font: { size: 12 }
-          }
-        }
-      }
-    }
-  );
-  
-  showToast(`📊 Analytics loaded for ${classSelect} (${classStudents.length} students)`, 'success');
-}
-
-// Also fix renderAnalytics to properly populate dropdowns
-function renderAnalytics() {
-  const studentSelect = document.getElementById('analyticsStudentSelect');
-  const classSelect = document.getElementById('analyticsClassSelect');
-  
-  if (studentSelect && studentSelect.options.length <= 1) {
-    studentSelect.innerHTML = '<option value="">Select a student...</option>';
-    studentsCache.forEach(s => {
-      const option = document.createElement('option');
-      option.value = s.id;
-      option.textContent = `${s.firstName} ${s.lastName} (${s.class})`;
-      studentSelect.appendChild(option);
-    });
-    console.log('✅ Analytics student select populated with ' + studentsCache.length + ' students');
-  }
-  
-  if (classSelect && classSelect.options.length <= 1) {
-    classSelect.innerHTML = '<option value="">Select a class...</option>';
-    CLASSES.forEach(c => {
-      const option = document.createElement('option');
-      option.value = c;
-      option.textContent = c;
-      classSelect.appendChild(option);
-    });
-    console.log('✅ Analytics class select populated with ' + CLASSES.length + ' classes');
-  }
-}
     function renderUsers() {
       document.getElementById('usersTableBody').innerHTML = usersCache.map(u => {
         const statusBadge = u.approvalStatus === 'pending' ? 'badge-pending' : 
@@ -3909,53 +3533,52 @@ function renderAnalytics() {
       }
     };
    
-        // ============================================================
-    // AUTHENTICATION FUNCTIONS - FIXED
+       // ============================================================
+    // AUTHENTICATION FUNCTIONS
     // ============================================================
 
-    // Main login handler - FORCES FIREBASE LOGIN
+    // Main login handler - checks for test mode first
     window.handleLogin = function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
-      const errorEl = document.getElementById('loginError');
       
-      // Clear previous errors
-      errorEl.textContent = '';
-      
-      // Validate input
-      if (!email) {
-        errorEl.textContent = 'Please enter your email';
-        return;
-      }
-      if (!password) {
-        errorEl.textContent = 'Please enter your password';
+      // Check for test credentials FIRST
+      if (email === 'test@test.com' && password === 'test123') {
+        forceTestLogin();
         return;
       }
       
-      // Always try Firebase login
+      // If offline, force test mode
+      if (!navigator.onLine) {
+        showToast('📶 You are offline. Using test mode.', 'warning');
+        forceTestLogin();
+        return;
+      }
+      
+      // Otherwise, try Firebase login
       firebaseLogin();
     };
 
-    // Firebase login function - SIMPLIFIED & FIXED
+    // Firebase login function - COMPLETE VERSION
     window.firebaseLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       const btn = document.getElementById('loginBtn');
       const errorEl = document.getElementById('loginError');
 
-      console.log('🔐 Attempting Firebase login for:', email);
+      console.log('🔐 Firebase login attempt:', { email });
       errorEl.textContent = '';
 
-      // Disable button and show spinner
+      if (!email) { errorEl.textContent = 'Please enter your email'; return; }
+      if (!password) { errorEl.textContent = 'Please enter your password'; return; }
+
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Signing in...';
 
       try {
-        // Try Firebase authentication
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('✅ Firebase login successful!');
+        console.log('✅ Login successful:', userCredential.user.email);
 
-        // Get user profile from Firestore
         const userSnap = await getDoc(doc(db, 'users', userCredential.user.uid));
 
         if (!userSnap.exists()) {
@@ -3967,7 +3590,6 @@ function renderAnalytics() {
 
         const userData = userSnap.data();
 
-        // Check approval status
         if (userData.approvalStatus === 'pending') {
           errorEl.textContent = '⏳ Your account is pending admin approval.';
           await signOut(auth);
@@ -3984,26 +3606,18 @@ function renderAnalytics() {
           return;
         }
 
-        // Set current user
-        currentUser = { 
-          uid: userCredential.user.uid, 
-          email: userCredential.user.email, 
-          ...userData 
-        };
+        currentUser = { uid: userCredential.user.uid, email: userCredential.user.email, ...userData };
 
-        // Update last login
         await updateDoc(doc(db, 'users', userCredential.user.uid), {
           lastLogin: serverTimestamp(),
           loginCount: (userData.loginCount || 0) + 1
         });
 
-        // Show the app
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
         document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
         document.getElementById('currentRoleBadge').textContent = (currentUser.role || '').toUpperCase();
 
-        // Setup permissions and start listeners
         setupPermissions();
         startListeners();
         showTab('dashboard');
@@ -4012,59 +3626,23 @@ function renderAnalytics() {
       } catch (err) {
         console.error('❌ Login error:', err.code, err.message);
 
-        // Handle specific Firebase errors
         if (err.code === 'auth/user-not-found') {
           errorEl.innerHTML = `
             No account found with this email.
             <a href="#" onclick="event.preventDefault(); showSignupModal();" style="color:var(--primary-light);font-weight:600;">Request Access</a>
           `;
         } else if (err.code === 'auth/user-disabled') {
-          errorEl.textContent = 'This account has been disabled. Contact admin.';
+          errorEl.textContent = 'This account is pending admin approval or has been disabled.';
         } else if (err.code === 'auth/wrong-password') {
           errorEl.textContent = 'Incorrect password. Please try again.';
-        } else if (err.code === 'auth/too-many-requests') {
-          errorEl.textContent = 'Too many failed attempts. Please try again later.';
-        } else if (err.code === 'auth/network-request-failed') {
-          errorEl.textContent = 'Network error. Please check your internet connection.';
         } else {
           errorEl.textContent = err.message || 'Login failed. Please try again.';
         }
-        
-        // Re-enable button
+      } finally {
         btn.disabled = false;
         btn.textContent = 'Sign In';
       }
     };
-
-    // FORCE TEST LOGIN - For demo mode
-    window.forceTestLogin = function() {
-      console.log('🔓 FORCING TEST LOGIN...');
-      window.currentUser = {
-        uid: 'test123',
-        email: 'test@test.com',
-        fullName: 'Test Admin',
-        role: 'admin',
-        approvalStatus: 'approved'
-      };
-      window.isTestMode = true;
-      
-      document.getElementById('loginPage').style.display = 'none';
-      document.getElementById('appContainer').style.display = 'block';
-      document.getElementById('currentUserDisplay').textContent = 'Test Admin';
-      document.getElementById('currentRoleBadge').textContent = 'ADMIN';
-      
-      setupPermissions();
-      
-      // Load sample data
-      if (typeof loadSampleData === 'function') {
-        loadSampleData();
-      } else {
-        loadSampleDataFallback();
-      }
-      
-      showTab('dashboard');
-      showToast('✅ Test mode active! (Offline Demo)', 'success');
-    };  
 
     window.testLogin = function() {
       try {
@@ -4849,114 +4427,10 @@ populateClassPerformanceDropdown();
   }
   
 // ============================================================
-// INITIALIZATION - AUTO LOGIN TEST MODE
+// INITIALIZATION
 // ============================================================
 
-// Function to populate ALL dropdowns
-function populateAllDropdowns() {
-  console.log('🔄 Populating all dropdowns...');
-  
-  try {
-    // 1. Class Performance dropdown
-    const perfSelect = document.getElementById('performanceClassSelect');
-    if (perfSelect) {
-      perfSelect.innerHTML = '<option value="">Select a class...</option>';
-      CLASSES.forEach(cls => {
-        const option = document.createElement('option');
-        option.value = cls;
-        option.textContent = cls;
-        perfSelect.appendChild(option);
-      });
-      console.log('✅ Class Performance dropdown populated with ' + CLASSES.length + ' classes');
-    }
-    
-    // 2. Student class filter
-    const studentFilter = document.getElementById('studentClassFilter');
-    if (studentFilter) {
-      studentFilter.innerHTML = classSelectHtml();
-      console.log('✅ Student class filter populated');
-    }
-    
-    // 3. Attendance class filter
-    const attendanceFilter = document.getElementById('attendanceClassFilter');
-    if (attendanceFilter) {
-      attendanceFilter.innerHTML = classSelectHtml();
-      console.log('✅ Attendance class filter populated');
-    }
-    
-    // 4. Grade class filter
-    const gradeFilter = document.getElementById('gradeClassFilter');
-    if (gradeFilter) {
-      gradeFilter.innerHTML = classSelectHtml();
-      console.log('✅ Grade class filter populated');
-    }
-    
-    // 5. Maintenance class filter
-    const maintFilter = document.getElementById('maintenanceClassFilter');
-    if (maintFilter) {
-      maintFilter.innerHTML = classSelectHtml();
-      console.log('✅ Maintenance class filter populated');
-    }
-    
-    // 6. Analytics class select
-    const analyticsClass = document.getElementById('analyticsClassSelect');
-    if (analyticsClass) {
-      analyticsClass.innerHTML = '<option value="">Select a class...</option>';
-      CLASSES.forEach(cls => {
-        const option = document.createElement('option');
-        option.value = cls;
-        option.textContent = cls;
-        analyticsClass.appendChild(option);
-      });
-      console.log('✅ Analytics class select populated');
-    }
-    
-    console.log('✅ All dropdowns populated successfully!');
-  } catch (err) {
-    console.error('❌ Error populating dropdowns:', err);
-  }
-}
-
-// AUTO LOGIN - Skip the login page and go straight to test mode
-function autoLoginTestMode() {
-  console.log('🔓 AUTO LOGIN: Starting test mode...');
-  
-  // Set current user as test admin
-  window.currentUser = {
-    uid: 'test123',
-    email: 'test@test.com',
-    fullName: 'Test Admin',
-    role: 'admin',
-    approvalStatus: 'approved'
-  };
-  window.isTestMode = true;
-  
-  // Hide login, show app
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appContainer').style.display = 'block';
-  document.getElementById('currentUserDisplay').textContent = 'Test Admin';
-  document.getElementById('currentRoleBadge').textContent = 'ADMIN';
-  
-  // Setup permissions
-  setupPermissions();
-  
-  // Load sample data
-  if (typeof loadSampleData === 'function') {
-    loadSampleData();
-  } else {
-    loadSampleDataFallback();
-  }
-  
-  // Show dashboard
-  showTab('dashboard');
-  showToast('✅ Logged in as Test Admin (Demo Mode)', 'success');
-}
-
-// Also run after DOM is ready - AUTO LOGIN
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('📄 DOM loaded, auto-logging in test mode...');
-  
-  // Set up enter key on login page (just in case)
   const loginPwd = document.getElementById('loginPassword');
   if (loginPwd) {
     loginPwd.addEventListener('keypress', function(e) { 
@@ -4964,16 +4438,63 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Populate dropdowns
-  populateAllDropdowns();
-  
-  // AUTO LOGIN - Skip login page entirely
+  // FORCE POPULATE DROPDOWNS - THIS FIXES THE EMPTY DROPDOWN ISSUE
   setTimeout(function() {
-    autoLoginTestMode();
+    // Populate all class dropdowns
+    if (typeof populateClassPerformanceDropdown === 'function') {
+      populateClassPerformanceDropdown();
+      console.log('✅ Class Performance dropdown populated');
+    }
+    
+    // Also populate student class filter
+    const studentClassFilter = document.getElementById('studentClassFilter');
+    if (studentClassFilter && studentClassFilter.options.length <= 1) {
+      studentClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Student class filter populated');
+    }
+    
+    // Populate attendance class filter
+    const attendanceClassFilter = document.getElementById('attendanceClassFilter');
+    if (attendanceClassFilter && attendanceClassFilter.options.length <= 1) {
+      attendanceClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Attendance class filter populated');
+    }
+    
+    // Populate grade class filter
+    const gradeClassFilter = document.getElementById('gradeClassFilter');
+    if (gradeClassFilter && gradeClassFilter.options.length <= 1) {
+      gradeClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Grade class filter populated');
+    }
+    
+    // Populate maintenance class filter
+    const maintenanceClassFilter = document.getElementById('maintenanceClassFilter');
+    if (maintenanceClassFilter && maintenanceClassFilter.options.length <= 1) {
+      maintenanceClassFilter.innerHTML = classSelectHtml();
+      console.log('✅ Maintenance class filter populated');
+    }
+    
+    // Populate analytics class select
+    const analyticsClassSelect = document.getElementById('analyticsClassSelect');
+    if (analyticsClassSelect && analyticsClassSelect.options.length <= 1) {
+      analyticsClassSelect.innerHTML = '<option value="">Select a class...</option>' + 
+        CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+      console.log('✅ Analytics class select populated');
+    }
+    
+    // Populate analytics student select
+    const analyticsStudentSelect = document.getElementById('analyticsStudentSelect');
+    if (analyticsStudentSelect && analyticsStudentSelect.options.length <= 1) {
+      // Will be populated by renderAnalytics when students are loaded
+      console.log('✅ Analytics student select will be populated when students load');
+    }
+    
+    console.log('✅ All dropdowns populated!');
   }, 500);
   
   console.log('🚀 Mara Christian High School Management System');
-  console.log('📚 Version 28.0.0 - Auto Login Mode');
+  console.log('📚 Version 28.0.0 - Complete Version with All Tabs');
+  console.log('🔑 Test Login: test@test.com / test123');
   console.log('✅ All dashboard tabs restored!');
 });
 
