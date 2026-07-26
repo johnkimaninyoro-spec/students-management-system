@@ -277,7 +277,7 @@
         <img src="https://raw.githubusercontent.com/johnkimaninyoro-spec/students-management-system/main/MCHSLogo.png" alt="MCHS Logo">
         <span class="motto-text">Educating For Eternity</span>
       </div>
-      <div class="form-group">
+            <div class="form-group">
         <label>📧 Email Address</label>
         <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off" value="test@test.com">
       </div>
@@ -285,7 +285,8 @@
         <label>🔒 Password</label>
         <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="new-password" value="test123">
       </div>
-      <!-- Test mode disabled - Use Firebase login only -->
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
+      <button class="login-btn" onclick="forceTestLogin()" style="margin-top:10px;background:#27ae60;">🚀 Skip Login (Test Mode)</button>
       <div class="login-error" id="loginError"></div>
       <div class="test-login-hint">
         <strong>💡 Test Login:</strong> test@test.com / test123<br>
