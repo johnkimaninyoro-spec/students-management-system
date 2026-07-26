@@ -3909,52 +3909,53 @@ function renderAnalytics() {
       }
     };
    
-       // ============================================================
-    // AUTHENTICATION FUNCTIONS
+        // ============================================================
+    // AUTHENTICATION FUNCTIONS - FIXED
     // ============================================================
 
-    // Main login handler - FIXED
-window.handleLogin = function() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  
-  // Check if fields are empty
-  if (!email) {
-    document.getElementById('loginError').textContent = 'Please enter your email';
-    return;
-  }
-  if (!password) {
-    document.getElementById('loginError').textContent = 'Please enter your password';
-    return;
-  }
-  
-  // Clear any previous errors
-  document.getElementById('loginError').textContent = '';
-  
-  // ALWAYS try Firebase login first
-  firebaseLogin();
-};
+    // Main login handler - FORCES FIREBASE LOGIN
+    window.handleLogin = function() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errorEl = document.getElementById('loginError');
+      
+      // Clear previous errors
+      errorEl.textContent = '';
+      
+      // Validate input
+      if (!email) {
+        errorEl.textContent = 'Please enter your email';
+        return;
+      }
+      if (!password) {
+        errorEl.textContent = 'Please enter your password';
+        return;
+      }
+      
+      // Always try Firebase login
+      firebaseLogin();
+    };
 
-    // Firebase login function - COMPLETE VERSION
+    // Firebase login function - SIMPLIFIED & FIXED
     window.firebaseLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       const btn = document.getElementById('loginBtn');
       const errorEl = document.getElementById('loginError');
 
-      console.log('🔐 Firebase login attempt:', { email });
+      console.log('🔐 Attempting Firebase login for:', email);
       errorEl.textContent = '';
 
-      if (!email) { errorEl.textContent = 'Please enter your email'; return; }
-      if (!password) { errorEl.textContent = 'Please enter your password'; return; }
-
+      // Disable button and show spinner
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Signing in...';
 
       try {
+        // Try Firebase authentication
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('✅ Login successful:', userCredential.user.email);
+        console.log('✅ Firebase login successful!');
 
+        // Get user profile from Firestore
         const userSnap = await getDoc(doc(db, 'users', userCredential.user.uid));
 
         if (!userSnap.exists()) {
@@ -3966,6 +3967,7 @@ window.handleLogin = function() {
 
         const userData = userSnap.data();
 
+        // Check approval status
         if (userData.approvalStatus === 'pending') {
           errorEl.textContent = '⏳ Your account is pending admin approval.';
           await signOut(auth);
@@ -3982,18 +3984,26 @@ window.handleLogin = function() {
           return;
         }
 
-        currentUser = { uid: userCredential.user.uid, email: userCredential.user.email, ...userData };
+        // Set current user
+        currentUser = { 
+          uid: userCredential.user.uid, 
+          email: userCredential.user.email, 
+          ...userData 
+        };
 
+        // Update last login
         await updateDoc(doc(db, 'users', userCredential.user.uid), {
           lastLogin: serverTimestamp(),
           loginCount: (userData.loginCount || 0) + 1
         });
 
+        // Show the app
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
         document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
         document.getElementById('currentRoleBadge').textContent = (currentUser.role || '').toUpperCase();
 
+        // Setup permissions and start listeners
         setupPermissions();
         startListeners();
         showTab('dashboard');
@@ -4002,23 +4012,59 @@ window.handleLogin = function() {
       } catch (err) {
         console.error('❌ Login error:', err.code, err.message);
 
+        // Handle specific Firebase errors
         if (err.code === 'auth/user-not-found') {
           errorEl.innerHTML = `
             No account found with this email.
             <a href="#" onclick="event.preventDefault(); showSignupModal();" style="color:var(--primary-light);font-weight:600;">Request Access</a>
           `;
         } else if (err.code === 'auth/user-disabled') {
-          errorEl.textContent = 'This account is pending admin approval or has been disabled.';
+          errorEl.textContent = 'This account has been disabled. Contact admin.';
         } else if (err.code === 'auth/wrong-password') {
           errorEl.textContent = 'Incorrect password. Please try again.';
+        } else if (err.code === 'auth/too-many-requests') {
+          errorEl.textContent = 'Too many failed attempts. Please try again later.';
+        } else if (err.code === 'auth/network-request-failed') {
+          errorEl.textContent = 'Network error. Please check your internet connection.';
         } else {
           errorEl.textContent = err.message || 'Login failed. Please try again.';
         }
-      } finally {
+        
+        // Re-enable button
         btn.disabled = false;
         btn.textContent = 'Sign In';
       }
     };
+
+    // FORCE TEST LOGIN - For demo mode
+    window.forceTestLogin = function() {
+      console.log('🔓 FORCING TEST LOGIN...');
+      window.currentUser = {
+        uid: 'test123',
+        email: 'test@test.com',
+        fullName: 'Test Admin',
+        role: 'admin',
+        approvalStatus: 'approved'
+      };
+      window.isTestMode = true;
+      
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      document.getElementById('currentUserDisplay').textContent = 'Test Admin';
+      document.getElementById('currentRoleBadge').textContent = 'ADMIN';
+      
+      setupPermissions();
+      
+      // Load sample data
+      if (typeof loadSampleData === 'function') {
+        loadSampleData();
+      } else {
+        loadSampleDataFallback();
+      }
+      
+      showTab('dashboard');
+      showToast('✅ Test mode active! (Offline Demo)', 'success');
+    };  
 
     window.testLogin = function() {
       try {
