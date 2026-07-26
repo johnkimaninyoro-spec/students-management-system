@@ -4312,6 +4312,85 @@ populateClassPerformanceDropdown();
     });
 
     console.log('✅ System initialized successfully!');
+// ============================================================
+// FORCE POPULATE ALL DROPDOWNS
+// ============================================================
+
+function populateAllDropdowns() {
+    console.log('🔄 Populating all dropdowns...');
+    
+    try {
+        // 1. Class Performance dropdown
+        const perfSelect = document.getElementById('performanceClassSelect');
+        if (perfSelect) {
+            perfSelect.innerHTML = '<option value="">Select a class...</option>';
+            CLASSES.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls;
+                option.textContent = cls;
+                perfSelect.appendChild(option);
+            });
+            console.log('✅ Class Performance dropdown: ' + perfSelect.options.length + ' options');
+        }
+        
+        // 2. Student class filter
+        const studentFilter = document.getElementById('studentClassFilter');
+        if (studentFilter) {
+            studentFilter.innerHTML = classSelectHtml();
+            console.log('✅ Student class filter: ' + studentFilter.options.length + ' options');
+        }
+        
+        // 3. Attendance class filter
+        const attendanceFilter = document.getElementById('attendanceClassFilter');
+        if (attendanceFilter) {
+            attendanceFilter.innerHTML = classSelectHtml();
+            console.log('✅ Attendance class filter: ' + attendanceFilter.options.length + ' options');
+        }
+        
+        // 4. Grade class filter
+        const gradeFilter = document.getElementById('gradeClassFilter');
+        if (gradeFilter) {
+            gradeFilter.innerHTML = classSelectHtml();
+            console.log('✅ Grade class filter: ' + gradeFilter.options.length + ' options');
+        }
+        
+        // 5. Maintenance class filter
+        const maintFilter = document.getElementById('maintenanceClassFilter');
+        if (maintFilter) {
+            maintFilter.innerHTML = classSelectHtml();
+            console.log('✅ Maintenance class filter: ' + maintFilter.options.length + ' options');
+        }
+        
+        // 6. Analytics class select
+        const analyticsClass = document.getElementById('analyticsClassSelect');
+        if (analyticsClass) {
+            analyticsClass.innerHTML = '<option value="">Select a class...</option>';
+            CLASSES.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls;
+                option.textContent = cls;
+                analyticsClass.appendChild(option);
+            });
+            console.log('✅ Analytics class select: ' + analyticsClass.options.length + ' options');
+        }
+        
+        console.log('✅ All dropdowns populated successfully!');
+    } catch (err) {
+        console.error('❌ Error populating dropdowns:', err);
+    }
+}
+
+// Run after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM loaded, populating dropdowns...');
+    populateAllDropdowns();
+});
+
+// Also run after sample data loads (in case of test mode)
+setTimeout(function() {
+    populateAllDropdowns();
+    console.log('🔄 Dropdowns re-populated after delay');
+}, 1000);
   </script>
 </body>
 </html>
