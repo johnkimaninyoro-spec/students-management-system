@@ -3913,27 +3913,27 @@ function renderAnalytics() {
     // AUTHENTICATION FUNCTIONS
     // ============================================================
 
-    // Main login handler - checks for test mode first
-    window.handleLogin = function() {
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      
-      // Check for test credentials FIRST
-      if (email === 'test@test.com' && password === 'test123') {
-        forceTestLogin();
-        return;
-      }
-      
-      // If offline, force test mode
-      if (!navigator.onLine) {
-        showToast('📶 You are offline. Using test mode.', 'warning');
-        forceTestLogin();
-        return;
-      }
-      
-      // Otherwise, try Firebase login
-      firebaseLogin();
-    };
+    // Main login handler - FIXED
+window.handleLogin = function() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  // Check if fields are empty
+  if (!email) {
+    document.getElementById('loginError').textContent = 'Please enter your email';
+    return;
+  }
+  if (!password) {
+    document.getElementById('loginError').textContent = 'Please enter your password';
+    return;
+  }
+  
+  // Clear any previous errors
+  document.getElementById('loginError').textContent = '';
+  
+  // ALWAYS try Firebase login first
+  firebaseLogin();
+};
 
     // Firebase login function - COMPLETE VERSION
     window.firebaseLogin = async function() {
