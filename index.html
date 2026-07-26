@@ -3219,68 +3219,198 @@ window.renderClassPerformance = renderClassPerformance;
     }
 
     window.printTab = function(tab) {
-      const title = getTabTitle(tab);
-      const data = getTableData(tab);
+  const title = getTabTitle(tab);
+  const data = getTableData(tab);
+  
+  if (data.rows.length === 0) {
+    showToast('No data to print for ' + title, 'warning');
+    return;
+  }
+
+  // Get the current class filter value for grades tab
+  let className = '';
+  if (tab === 'grades') {
+    const classFilter = document.getElementById('gradeClassFilter');
+    if (classFilter && classFilter.value) {
+      className = classFilter.value;
+    }
+  } else if (tab === 'classPerformance') {
+    const classSelect = document.getElementById('performanceClassSelect');
+    if (classSelect && classSelect.value) {
+      className = classSelect.value;
+    }
+  }
+
+  const printWindow = window.open('', '_blank');
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  
+  let tableRows = data.rows.map(row => {
+    let cells = '';
+    const columns = data.columns;
+    for (const col of columns) {
+      // Try to get value from various possible field names
+      let val = '-';
+      const colLower = col.toLowerCase().replace(/[^a-z0-9]/g, '');
       
-      if (data.rows.length === 0) {
-        showToast('No data to print for ' + title, 'warning');
-        return;
+      // Handle different field name variations
+      if (row[col]) val = row[col];
+      else if (row[colLower]) val = row[colLower];
+      else if (col === 'Student' && row.firstName) {
+        val = (row.firstName || '') + ' ' + (row.lastName || '');
+      } else if (col === 'Class' && row.class) {
+        val = row.class;
+      } else if (col === 'Name' && row.firstName) {
+        val = (row.firstName || '') + ' ' + (row.lastName || '');
+      } else if (col === 'Email' && row.email) {
+        val = row.email;
+      } else if (col === 'Status' && row.status) {
+        val = row.status;
+      } else if (col === 'Role' && row.role) {
+        val = row.role;
+      } else if (col === 'Subject' && row.subject) {
+        val = row.subject;
+      } else if (col === 'Term' && row.term) {
+        val = row.term;
+      } else if (col === 'Exam Type' && row.examType) {
+        val = row.examType;
+      } else if (col === 'Test 1' && row.test1 !== undefined) {
+        val = row.test1 ?? '-';
+      } else if (col === 'Test 2' && row.test2 !== undefined) {
+        val = row.test2 ?? '-';
+      } else if (col === 'Test 3' && row.test3 !== undefined) {
+        val = row.test3 ?? '-';
+      } else if (col === 'Final' && row.exam !== undefined) {
+        val = row.exam ?? '-';
+      } else if (col === 'Total' && row.total !== undefined) {
+        val = row.total;
+      } else if (col === 'Grade' && row.grade) {
+        val = row.grade;
+      } else if (col === 'Date' && row.date) {
+        val = formatDate(row.date);
+      } else if (col === 'Reason' && row.reason) {
+        val = row.reason;
+      } else if (col === 'Duration' && row.duration) {
+        val = row.duration;
+      } else if (col === 'Approved By' && row.approvedBy) {
+        val = row.approvedBy;
+      } else if (col === 'Issued By' && row.issuedBy) {
+        val = row.issuedBy;
+      } else if (col === 'Doctor' && row.doctor) {
+        val = row.doctor;
+      } else if (col === 'Condition' && row.condition) {
+        val = row.condition;
+      } else if (col === 'Diagnosis' && row.diagnosis) {
+        val = row.diagnosis;
+      } else if (col === 'Medication' && row.medication) {
+        val = row.medication;
+      } else if (col === 'Department' && row.department) {
+        val = row.department;
+      } else if (col === 'Specialization' && row.specialization) {
+        val = row.specialization;
+      } else if (col === 'Issue Type' && row.issueType) {
+        val = row.issueType;
+      } else if (col === 'Description' && row.description) {
+        val = row.description;
+      } else if (col === 'Sponsor Type' && row.sponsorshipType) {
+        val = row.sponsorshipType;
+      } else if (col === 'Sponsor Name' && row.sponsorName) {
+        val = row.sponsorName;
+      } else if (col === 'Contact' && row.sponsorContact) {
+        val = row.sponsorContact;
+      } else if (col === 'Notes' && row.sponsorNotes) {
+        val = row.sponsorNotes;
       }
-
-      const printWindow = window.open('', '_blank');
-      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
       
-      let tableRows = data.rows.map(row => {
-        let cells = '';
-        const columns = data.columns;
-        for (const col of columns) {
-          const val = row[col.toLowerCase().replace(/ /g, '')] || row[col] || '-';
-          cells += `<td>${val}</td>`;
+      // If still empty, try to find by key matching
+      if (val === '-') {
+        const keys = Object.keys(row);
+        for (const key of keys) {
+          if (key.toLowerCase().includes(col.toLowerCase().replace(/[^a-z]/g, ''))) {
+            val = row[key] || '-';
+            break;
+          }
         }
-        return `<tr>${cells}</tr>`;
-      }).join('');
+      }
+      
+      cells += `<td>${val}</td>`;
+    }
+    return `<tr>${cells}</tr>`;
+  }).join('');
 
-      const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join('');
+  const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join('');
 
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>${title} - Mara Christian High School</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
-            .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #1a5276; padding-bottom: 15px; }
-            .header h1 { color: #1a5276; font-size: 24px; margin: 0; }
-            .header .sub { color: #666; font-size: 14px; }
-            .header .date { color: #999; font-size: 12px; margin-top: 5px; }
-            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-            th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; font-weight: 600; }
-            td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
-            tr:nth-child(even) { background: #f8f9fa; }
-            .footer { text-align: center; font-size: 11px; color: #999; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Mara Christian High School</h1>
-            <div class="sub">${title}</div>
-            <div class="date">Generated on: ${today}</div>
-          </div>
-          <table>
-            <thead><tr>${tableHeaders}</tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          <div class="footer">
-            <p>Mara Christian High School - Educating For Eternity</p>
-            <p>This is a system-generated report. Total records: ${data.rows.length}</p>
-          </div>
-          <script>
-            window.onload = function() { window.print(); }
-          <\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-    };
+  // Build the subtitle with class info if available
+  let subtitle = title;
+  if (className) {
+    subtitle += ` - ${className}`;
+  }
+
+  printWindow.document.write(`
+    <html>
+    <head>
+      <title>${subtitle} - Mara Christian High School</title>
+      <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #1a5276; padding-bottom: 15px; }
+        .header h1 { color: #1a5276; font-size: 24px; margin: 0; }
+        .header .sub { color: #666; font-size: 14px; margin-top: 5px; }
+        .header .class-info { color: #2e86c1; font-size: 16px; font-weight: bold; margin-top: 3px; }
+        .header .date { color: #999; font-size: 12px; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; font-weight: 600; }
+        td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        .footer { text-align: center; font-size: 11px; color: #999; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
+        .print-stats { text-align: center; font-size: 11px; color: #666; margin-top: 10px; }
+        .badge { padding: 1px 8px; border-radius: 12px; font-size: 9px; font-weight: 600; display: inline-block; }
+        .badge-grade-a { background: #27ae60; color: white; }
+        .badge-grade-a- { background: #2ecc71; color: white; }
+        .badge-grade-b-plus { background: #85c1e9; color: #1a5276; }
+        .badge-grade-b { background: #5dade2; color: white; }
+        .badge-grade-b- { background: #a9cce3; color: #1a5276; }
+        .badge-grade-c-plus { background: #f5b041; color: white; }
+        .badge-grade-c { background: #f39c12; color: white; }
+        .badge-grade-c- { background: #f7dc6f; color: #7d6608; }
+        .badge-grade-d-plus { background: #e67e22; color: white; }
+        .badge-grade-d { background: #d35400; color: white; }
+        .badge-grade-d- { background: #f5b7b1; color: #922b21; }
+        .badge-grade-e { background: #e74c3c; color: white; }
+        .badge-na { background: #f0f0f0; color: #999; }
+        .badge-success { background: #d5f5e3; color: #27ae60; }
+        .badge-danger { background: #fadbd8; color: #e74c3c; }
+        .badge-warning { background: #fdebd0; color: #f39c12; }
+        .badge-info { background: #d6eaf8; color: #2e86c1; }
+        .badge-primary { background: #d6eaf8; color: #1a5276; }
+        .badge-gold { background: #f9e79f; color: #8e6b00; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>Mara Christian High School</h1>
+        <div class="sub">${subtitle}</div>
+        ${className ? `<div class="class-info">📚 ${className}</div>` : ''}
+        <div class="date">Generated on: ${today} at ${time}</div>
+      </div>
+      <table>
+        <thead><tr>${tableHeaders}</tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div class="print-stats">
+        <p>Total Records: ${data.rows.length}</p>
+      </div>
+      <div class="footer">
+        <p>Mara Christian High School - Educating For Eternity</p>
+        <p>This is a system-generated report.</p>
+      </div>
+      <script>
+        window.onload = function() { window.print(); }
+      <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
 
     window.shareTab = function(tab) {
       printTab(tab);
@@ -4300,7 +4430,81 @@ populateClassPerformanceDropdown();
 // INITIALIZATION
 // ============================================================
 
+// FIXED: Function to populate ALL dropdowns
+function populateAllDropdowns() {
+  console.log('🔄 Populating all dropdowns...');
+  
+  try {
+    // 1. Class Performance dropdown
+    const perfSelect = document.getElementById('performanceClassSelect');
+    if (perfSelect) {
+      perfSelect.innerHTML = '<option value="">Select a class...</option>';
+      CLASSES.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        perfSelect.appendChild(option);
+      });
+      console.log('✅ Class Performance dropdown populated with ' + CLASSES.length + ' classes');
+    } else {
+      console.warn('⚠️ performanceClassSelect not found');
+    }
+    
+    // 2. Student class filter
+    const studentFilter = document.getElementById('studentClassFilter');
+    if (studentFilter) {
+      studentFilter.innerHTML = classSelectHtml();
+      console.log('✅ Student class filter populated');
+    }
+    
+    // 3. Attendance class filter
+    const attendanceFilter = document.getElementById('attendanceClassFilter');
+    if (attendanceFilter) {
+      attendanceFilter.innerHTML = classSelectHtml();
+      console.log('✅ Attendance class filter populated');
+    }
+    
+    // 4. Grade class filter
+    const gradeFilter = document.getElementById('gradeClassFilter');
+    if (gradeFilter) {
+      gradeFilter.innerHTML = classSelectHtml();
+      console.log('✅ Grade class filter populated');
+    }
+    
+    // 5. Maintenance class filter
+    const maintFilter = document.getElementById('maintenanceClassFilter');
+    if (maintFilter) {
+      maintFilter.innerHTML = classSelectHtml();
+      console.log('✅ Maintenance class filter populated');
+    }
+    
+    // 6. Analytics class select
+    const analyticsClass = document.getElementById('analyticsClassSelect');
+    if (analyticsClass) {
+      analyticsClass.innerHTML = '<option value="">Select a class...</option>';
+      CLASSES.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        analyticsClass.appendChild(option);
+      });
+      console.log('✅ Analytics class select populated');
+    }
+    
+    console.log('✅ All dropdowns populated successfully!');
+  } catch (err) {
+    console.error('❌ Error populating dropdowns:', err);
+  }
+}
+
+// Run immediately when script loads
+console.log('🚀 Initializing dropdowns...');
+populateAllDropdowns();
+
+// Also run after DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('📄 DOM loaded, re-populating dropdowns...');
+  
   const loginPwd = document.getElementById('loginPassword');
   if (loginPwd) {
     loginPwd.addEventListener('keypress', function(e) { 
@@ -4308,59 +4512,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // FORCE POPULATE DROPDOWNS - THIS FIXES THE EMPTY DROPDOWN ISSUE
+  // Populate again with a delay to ensure all elements exist
   setTimeout(function() {
-    // Populate all class dropdowns
-    if (typeof populateClassPerformanceDropdown === 'function') {
-      populateClassPerformanceDropdown();
-      console.log('✅ Class Performance dropdown populated');
-    }
-    
-    // Also populate student class filter
-    const studentClassFilter = document.getElementById('studentClassFilter');
-    if (studentClassFilter && studentClassFilter.options.length <= 1) {
-      studentClassFilter.innerHTML = classSelectHtml();
-      console.log('✅ Student class filter populated');
-    }
-    
-    // Populate attendance class filter
-    const attendanceClassFilter = document.getElementById('attendanceClassFilter');
-    if (attendanceClassFilter && attendanceClassFilter.options.length <= 1) {
-      attendanceClassFilter.innerHTML = classSelectHtml();
-      console.log('✅ Attendance class filter populated');
-    }
-    
-    // Populate grade class filter
-    const gradeClassFilter = document.getElementById('gradeClassFilter');
-    if (gradeClassFilter && gradeClassFilter.options.length <= 1) {
-      gradeClassFilter.innerHTML = classSelectHtml();
-      console.log('✅ Grade class filter populated');
-    }
-    
-    // Populate maintenance class filter
-    const maintenanceClassFilter = document.getElementById('maintenanceClassFilter');
-    if (maintenanceClassFilter && maintenanceClassFilter.options.length <= 1) {
-      maintenanceClassFilter.innerHTML = classSelectHtml();
-      console.log('✅ Maintenance class filter populated');
-    }
-    
-    // Populate analytics class select
-    const analyticsClassSelect = document.getElementById('analyticsClassSelect');
-    if (analyticsClassSelect && analyticsClassSelect.options.length <= 1) {
-      analyticsClassSelect.innerHTML = '<option value="">Select a class...</option>' + 
-        CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
-      console.log('✅ Analytics class select populated');
-    }
-    
-    // Populate analytics student select
-    const analyticsStudentSelect = document.getElementById('analyticsStudentSelect');
-    if (analyticsStudentSelect && analyticsStudentSelect.options.length <= 1) {
-      // Will be populated by renderAnalytics when students are loaded
-      console.log('✅ Analytics student select will be populated when students load');
-    }
-    
-    console.log('✅ All dropdowns populated!');
-  }, 500);
+    populateAllDropdowns();
+    console.log('✅ Dropdowns re-populated after DOM load');
+  }, 300);
   
   console.log('🚀 Mara Christian High School Management System');
   console.log('📚 Version 28.0.0 - Complete Version with All Tabs');
