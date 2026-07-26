@@ -1473,7 +1473,7 @@
       }, 300);
     };
 
-    window.printStudentProfile = function(studentId) {
+        window.printStudentProfile = function(studentId) {
       const student = studentsCache.find(s => s.id === studentId);
       if (!student) {
         showToast('Student not found', 'error');
@@ -1481,6 +1481,12 @@
       }
 
       const studentGrades = gradesCache.filter(g => g.studentId === studentId);
+      const studentAttendance = attendanceCache.filter(a => a.studentId === studentId);
+      const studentWarnings = warningsCache.filter(w => w.studentId === studentId);
+      const studentSuspensions = suspensionsCache.filter(s => s.studentId === studentId);
+      const studentExpulsions = expulsionsCache.filter(e => e.studentId === studentId);
+      const studentClinic = clinicCache.filter(c => c.studentId === studentId);
+
       const validGrades = studentGrades.filter(g => hasActualScores(g));
       let totalScore = 0;
       for (let g = 0; g < validGrades.length; g++) {
@@ -1494,8 +1500,8 @@
         ? `<img src="${student.photoUrl}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #1a5276;">` 
         : `<div style="width:100px;height:100px;border-radius:50%;background:#1a5276;color:white;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;margin:0 auto;">${student.firstName?.charAt(0) || 'S'}</div>`;
 
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
+      let htmlContent = `
+        <!DOCTYPE html>
         <html>
         <head>
           <title>Student Report - ${student.firstName} ${student.lastName}</title>
@@ -1686,12 +1692,29 @@
           </div>
 
           <script>
-            window.onload = function() { window.print(); }
+            window.onload = function() { window.print(); };
           <\/script>
         </body>
         </html>
-      `);
+      `;
+
+      // Try to open a new window for printing
+      const printWindow = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+      
+      if (!printWindow) {
+        // If popup is blocked, use fallback method
+        showToast('Opening print window... Using fallback method.', 'info');
+        const printContents = htmlContent;
+        const originalContents = document.body.innerHTML;
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+        return;
+      }
+      
+      printWindow.document.write(htmlContent);
       printWindow.document.close();
+      printWindow.focus();
     };
 
     // ============================================================
@@ -2536,58 +2559,222 @@
       }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No attendance records</td></tr>';
     }
 
-    function renderClassPerformance() {
-      // Simple placeholder
-      document.getElementById('perfRankingsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Select a class to view performance</td></tr>';
+   // ============================================================
+// CLASS PERFORMANCE FUNCTIONS
+// ============================================================
+
+function populateClassPerformanceDropdown() {
+  const select = document.getElementById('performanceClassSelect');
+  if (!select) return;
+  
+  // Clear existing options (keep the first "Select a class..." option)
+  select.innerHTML = '<option value="">Select a class...</option>';
+  
+  // Add all classes
+  CLASSES.forEach(cls => {
+    const option = document.createElement('option');
+    option.value = cls;
+    option.textContent = cls;
+    select.appendChild(option);
+  });
+}
+// MAKE IT GLOBAL
+window.populateClassPerformanceDropdown = populateClassPerformanceDropdown;
+function renderClassPerformance() {
+  const classSelect = document.getElementById('performanceClassSelect');
+  const termSelect = document.getElementById('performanceTermSelect');
+  
+  const selectedClass = classSelect ? classSelect.value : '';
+  const selectedTerm = termSelect ? termSelect.value : '';
+  
+  if (!selectedClass) {
+    document.getElementById('perfRankingsBody').innerHTML = 
+      '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Please select a class to view performance</td></tr>';
+    // Clear charts
+    ['perfSubjectChart', 'perfStudentChart', 'perfGradeChart', 'perfPassFailChart'].forEach(id => {
+      if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+    });
+    return;
+  }
+  
+  // Get students in this class
+  const classStudents = studentsCache.filter(s => s.class === selectedClass);
+  
+  if (classStudents.length === 0) {
+    document.getElementById('perfRankingsBody').innerHTML = 
+      '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students found in this class</td></tr>';
+    return;
+  }
+  
+  // Get grades for these students
+  let studentGrades = gradesCache.filter(g => 
+    classStudents.some(s => s.id === g.studentId)
+  );
+  
+  if (selectedTerm) {
+    studentGrades = studentGrades.filter(g => g.term === selectedTerm);
+  }
+  
+  // --- Calculate Subject Averages ---
+  const subjectScores = {};
+  studentGrades.forEach(g => {
+    if (hasActualScores(g)) {
+      const total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+      if (!subjectScores[g.subject]) subjectScores[g.subject] = [];
+      subjectScores[g.subject].push(total);
     }
-
-    function renderWarnings() {
-      const canEditWarnings = canEdit('warnings');
-      const canDeleteWarnings = canDeleteSpecific('warnings');
-
-      document.getElementById('warningsTableBody').innerHTML = warningsCache.map(w => {
-        const student = studentsCache.find(s => s.id === w.studentId);
-        const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
-        const studentClass = student?.class || '-';
-        return `
-          <tr>
-            <td>${formatDate(w.date)}</td>
-            <td>${studentName}</td>
-            <td>${studentClass}</td>
-            <td>${w.reason}</td>
-            <td>${w.issuedBy || '-'}</td>
-            <td>${w.hasDocument ? '📎 Yes' : '-'}</td>
-            <td>
-              ${canEditWarnings ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
-              ${canDeleteWarnings ? `<button class="btn btn-danger btn-sm" onclick="deleteWarning('${w.id}')">Del</button>` : ''}
-            </td>
-          </tr>
-        `;
-      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No warnings found</td></tr>';
+  });
+  
+  const subjectAverages = {};
+  for (const [subject, scores] of Object.entries(subjectScores)) {
+    subjectAverages[subject] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  }
+  
+  // --- Calculate Student Averages ---
+  const studentAverages = classStudents.map(student => {
+    const grades = studentGrades.filter(g => g.studentId === student.id);
+    let totalScore = 0;
+    let count = 0;
+    
+    grades.forEach(g => {
+      if (hasActualScores(g)) {
+        totalScore += (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+        count++;
+      }
+    });
+    
+    const avg = count > 0 ? Math.round(totalScore / count) : 0;
+    const passed = isPass(avg);
+    
+    return {
+      student: student,
+      average: avg,
+      passed: passed,
+      subjects: count
+    };
+  });
+  
+  // Sort by average (highest first)
+  studentAverages.sort((a, b) => b.average - a.average);
+  
+  // --- Render Rankings Table ---
+  document.getElementById('perfRankingsBody').innerHTML = studentAverages.map((item, index) => {
+    const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+    return `
+      <tr class="${rankClass}">
+        <td><strong>#${index + 1}</strong></td>
+        <td>${item.student.firstName} ${item.student.lastName}</td>
+        <td><strong>${item.average}%</strong></td>
+        <td>${getGradeBadge(item.average)}</td>
+        <td>${item.passed ? '✅' : '❌'}</td>
+        <td>${item.subjects}</td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No data available</td></tr>';
+  
+  // --- Render Subject Averages Chart ---
+  destroyChart('perfSubjectChart');
+  const subjectLabels = Object.keys(subjectAverages);
+  const subjectData = Object.values(subjectAverages);
+  const subjectColors = subjectData.map(s => getGradeColor(s));
+  
+  if (subjectLabels.length > 0) {
+    chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
+      type: 'bar',
+      data: {
+        labels: subjectLabels,
+        datasets: [{
+          data: subjectData,
+          backgroundColor: subjectColors,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, max: 100 } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+  
+  // --- Render Student Performance Comparison Chart ---
+  destroyChart('perfStudentChart');
+  const topStudents = studentAverages.slice(0, 10);
+  if (topStudents.length > 0) {
+    chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
+      type: 'bar',
+      data: {
+        labels: topStudents.map(s => s.student.firstName + ' ' + s.student.lastName),
+        datasets: [{
+          data: topStudents.map(s => s.average),
+          backgroundColor: topStudents.map(s => getGradeColor(s.average)),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, max: 100 } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+  
+  // --- Render Grade Distribution Chart ---
+  destroyChart('perfGradeChart');
+  const gradeDist = {};
+  KENYAN_GRADES.forEach(g => gradeDist[g.grade] = 0);
+  studentAverages.forEach(item => {
+    const grade = getKenyanGrade(item.average);
+    if (grade) gradeDist[grade.grade] = (gradeDist[grade.grade] || 0) + 1;
+  });
+  
+  const gradeLabels2 = KENYAN_GRADES.map(g => g.grade);
+  const gradeData2 = KENYAN_GRADES.map(g => gradeDist[g.grade] || 0);
+  const gradeColors2 = KENYAN_GRADES.map(g => getGradeColor(g.grade));
+  
+  chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
+    type: 'bar',
+    data: {
+      labels: gradeLabels2,
+      datasets: [{
+        data: gradeData2,
+        backgroundColor: gradeColors2,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { display: false } }
     }
-
-    function renderSuspensions() {
-      const canEditSuspensions = canEdit('suspensions');
-      const canDeleteSuspensions = canDeleteSpecific('suspensions');
-
-      document.getElementById('suspensionsTableBody').innerHTML = suspensionsCache.map(s => {
-        const student = studentsCache.find(st => st.id === s.studentId);
-        return `
-          <tr>
-            <td>${formatDate(s.date)}</td>
-            <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
-            <td>${student?.class || '-'}</td>
-            <td>${s.reason}</td>
-            <td>${s.duration}</td>
-            <td><span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></td>
-            <td>
-              ${canEditSuspensions ? `<button class="btn btn-primary btn-sm" onclick="showAddSuspensionModal('${s.id}')">Edit</button>` : ''}
-              ${canDeleteSuspensions ? `<button class="btn btn-danger btn-sm" onclick="deleteSuspension('${s.id}')">Del</button>` : ''}
-            </td>
-          </tr>
-        `;
-      }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No suspensions found</td></tr>';
+  });
+  
+  // --- Render Pass/Fail Ratio Chart ---
+  destroyChart('perfPassFailChart');
+  const passed = studentAverages.filter(s => s.passed).length;
+  const failed = studentAverages.filter(s => !s.passed).length;
+  
+  chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
+    type: 'doughnut',
+    data: {
+      labels: [`✅ Passed (${passed})`, `❌ Failed (${failed})`],
+      datasets: [{
+        data: [passed, failed],
+        backgroundColor: ['#27ae60', '#e74c3c']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } }
     }
+  });
+}
+// MAKE IT GLOBAL - ONLY ONCE
+window.renderClassPerformance = renderClassPerformance;
 
     function renderExpulsions() {
       const canEditExpulsions = canEdit('expulsions');
@@ -3625,28 +3812,32 @@
     window.closeModal = function() { document.getElementById('modalOverlay').classList.remove('show'); };
 
     function refreshCurrentView() {
-      switch (activeTab) {
-        case 'dashboard': renderDashboard(); break;
-        case 'students': renderStudents(); break;
-        case 'sponsorship': renderSponsorship(); break;
-        case 'grades': renderGrades(); break;
-        case 'attendance': renderAttendance(); break;
-        case 'classPerformance': renderClassPerformance(); break;
-        case 'warnings': renderWarnings(); break;
-        case 'suspensions': renderSuspensions(); break;
-        case 'expulsions': renderExpulsions(); break;
-        case 'clinic': renderClinic(); break;
-        case 'prefects': renderPrefects(); break;
-        case 'teachers': renderTeachers(); break;
-        case 'teacherAttendance': renderTeacherAttendance(); break;
-        case 'maintenance': renderMaintenance(); break;
-        case 'maintenanceDept': renderMaintenanceDept(); break;
-        case 'analytics': renderAnalytics(); break;
-        case 'users': renderUsers(); break;
-        case 'registrations': renderRegistrations(); break;
-        case 'audit': renderAudit(); break;
-      }
-    }
+  switch (activeTab) {
+    case 'dashboard': renderDashboard(); break;
+    case 'students': renderStudents(); break;
+    case 'sponsorship': renderSponsorship(); break;
+    case 'grades': renderGrades(); break;
+    case 'attendance': renderAttendance(); break;
+    case 'classPerformance': 
+      populateClassPerformanceDropdown(); 
+      renderClassPerformance(); 
+      break;
+    case 'warnings': renderWarnings(); break;
+    case 'suspensions': renderSuspensions(); break;
+    case 'expulsions': renderExpulsions(); break;
+    case 'clinic': renderClinic(); break;
+    case 'prefects': renderPrefects(); break;
+    case 'teachers': renderTeachers(); break;
+    case 'teacherAttendance': renderTeacherAttendance(); break;
+    case 'maintenance': renderMaintenance(); break;
+    case 'maintenanceDept': renderMaintenanceDept(); break;
+    case 'analytics': renderAnalytics(); break;
+    case 'users': renderUsers(); break;
+    case 'registrations': renderRegistrations(); break;
+    case 'audit': renderAudit(); break;
+    default: break;
+  }
+}
 
     // ============================================================
     // DASHBOARD
@@ -3863,76 +4054,77 @@
     // LOAD SAMPLE DATA (for test mode)
     // ============================================================
     window.loadSampleData = function() {
-      const sampleStudents = [
-        { id: 's1', admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics', parent: 'Mr. John Doe Sr.', parentPhone: '+254 700 111111' },
-        { id: 's2', admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', sponsorshipType: 'Organization', sponsorName: 'Smith Foundation', sponsorContact: 'info@smithfoundation.org', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline', parent: 'Mrs. Mary Smith', parentPhone: '+254 700 222222' },
-        { id: 's3', admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'No', parent: 'Mr. Peter Johnson', parentPhone: '+254 700 333333' },
-        { id: 's4', admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', sponsorName: 'World Vision Kenya', sponsorContact: '+254 700 123456', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Susan Williams', parentPhone: '+254 700 444444' },
-        { id: 's5', admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', isPrefect: 'No', parent: 'Mr. James Brown', parentPhone: '+254 700 555555' },
-        { id: 's6', admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Form 3 East', gender: 'Female', status: 'Day Scholar', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation', parent: 'Mrs. Ann Jones', parentPhone: '+254 700 666666' },
-        { id: 's7', admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 West', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'No', parent: 'Mr. John Maina', parentPhone: '+254 700 777777' },
-        { id: 's8', admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 4 East', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', sponsorName: 'Compassion International', sponsorContact: '+254 733 456789', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual', parent: 'Mrs. Grace Wanjiru', parentPhone: '+254 700 888888' }
-      ];
-      sampleStudents.forEach(s => studentsCache.push(s));
+  const sampleStudents = [
+    { id: 's1', admNo: '2024-001', firstName: 'John', lastName: 'Doe', class: 'Grade 7 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Academics', parent: 'Mr. John Doe Sr.', parentPhone: '+254 700 111111' },
+    { id: 's2', admNo: '2024-002', firstName: 'Jane', lastName: 'Smith', class: 'Grade 7 West', gender: 'Female', status: 'Day Scholar', sponsorshipType: 'Organization', sponsorName: 'Smith Foundation', sponsorContact: 'info@smithfoundation.org', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Discipline', parent: 'Mrs. Mary Smith', parentPhone: '+254 700 222222' },
+    { id: 's3', admNo: '2024-003', firstName: 'Michael', lastName: 'Johnson', class: 'Grade 8 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'No', parent: 'Mr. Peter Johnson', parentPhone: '+254 700 333333' },
+    { id: 's4', admNo: '2024-004', firstName: 'Sarah', lastName: 'Williams', class: 'Grade 8 West', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Upstairs)', sponsorshipType: 'NGO', sponsorName: 'World Vision Kenya', sponsorContact: '+254 700 123456', isPrefect: 'Yes', prefectRole: 'Class Prefect', prefectDepartment: 'Class Prefect', parent: 'Mrs. Susan Williams', parentPhone: '+254 700 444444' },
+    { id: 's5', admNo: '2024-005', firstName: 'David', lastName: 'Brown', class: 'Grade 9 East', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Upstairs)', sponsorshipType: 'Government', sponsorName: 'MOE - Bursary Program', sponsorContact: 'bursary@education.go.ke', isPrefect: 'No', parent: 'Mr. James Brown', parentPhone: '+254 700 555555' },
+    { id: 's6', admNo: '2024-006', firstName: 'Emily', lastName: 'Jones', class: 'Form 3 East', gender: 'Female', status: 'Day Scholar', sponsorshipType: 'Self Sponsored', isPrefect: 'Yes', prefectRole: 'Head Prefect', prefectDepartment: 'Health & Sanitation', parent: 'Mrs. Ann Jones', parentPhone: '+254 700 666666' },
+    { id: 's7', admNo: '2024-007', firstName: 'Peter', lastName: 'Maina', class: 'Form 3 West', gender: 'Male', status: 'Boarder', dorm: 'Boys Dorm (Downstairs)', sponsorshipType: 'Self Sponsored', isPrefect: 'No', parent: 'Mr. John Maina', parentPhone: '+254 700 777777' },
+    { id: 's8', admNo: '2024-008', firstName: 'Mary', lastName: 'Wanjiru', class: 'Form 4 East', gender: 'Female', status: 'Boarder', dorm: 'Girls Dorm (Downstairs)', sponsorshipType: 'NGO', sponsorName: 'Compassion International', sponsorContact: '+254 733 456789', isPrefect: 'Yes', prefectRole: 'Deputy Head Prefect', prefectDepartment: 'Chapel/Spiritual', parent: 'Mrs. Grace Wanjiru', parentPhone: '+254 700 888888' }
+  ];
+  sampleStudents.forEach(s => studentsCache.push(s));
 
-      const sampleGrades = [
-        { id: 'g1', studentId: 's1', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 15, test2: 18, test3: 20, exam: 45 },
-        { id: 'g2', studentId: 's1', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 50 },
-        { id: 'g3', studentId: 's2', subject: 'Mathematics', term: 'Term 1', examType: 'End Term', test1: 12, test2: 14, test3: 10, exam: 30 },
-        { id: 'g4', studentId: 's3', subject: 'Mathematics', term: 'Term 1', examType: 'Midterm', test1: 22, test2: 20, test3: 24, exam: 55 },
-        { id: 'g5', studentId: 's3', subject: 'English', term: 'Term 1', examType: 'End Term', test1: 18, test2: 20, test3: 16, exam: 45 },
-        { id: 'g6', studentId: 's5', subject: 'Biology', term: 'Term 1', examType: 'Opener', test1: 18, test2: 20, test3: 16, exam: 44 },
-        { id: 'g7', studentId: 's6', subject: 'Computer Studies', term: 'Term 1', examType: 'Opener', test1: 24, test2: 26, test3: 22, exam: 58 },
-        { id: 'g8', studentId: 's8', subject: 'Creative Arts & Sports', term: 'Term 1', examType: 'Opener', test1: 26, test2: 28, test3: 24, exam: 60 }
-      ];
-      sampleGrades.forEach(g => gradesCache.push(g));
+  const sampleGrades = [
+    { id: 'g1', studentId: 's1', subject: 'Mathematics', term: 'Term 1', examType: 'Opener', test1: 15, test2: 18, test3: 20, exam: 45 },
+    { id: 'g2', studentId: 's1', subject: 'English', term: 'Term 1', examType: 'Midterm', test1: 20, test2: 22, test3: 18, exam: 50 },
+    { id: 'g3', studentId: 's2', subject: 'Mathematics', term: 'Term 1', examType: 'End Term', test1: 12, test2: 14, test3: 10, exam: 30 },
+    { id: 'g4', studentId: 's3', subject: 'Mathematics', term: 'Term 1', examType: 'Midterm', test1: 22, test2: 20, test3: 24, exam: 55 },
+    { id: 'g5', studentId: 's3', subject: 'English', term: 'Term 1', examType: 'End Term', test1: 18, test2: 20, test3: 16, exam: 45 },
+    { id: 'g6', studentId: 's5', subject: 'Biology', term: 'Term 1', examType: 'Opener', test1: 18, test2: 20, test3: 16, exam: 44 },
+    { id: 'g7', studentId: 's6', subject: 'Computer Studies', term: 'Term 1', examType: 'Opener', test1: 24, test2: 26, test3: 22, exam: 58 },
+    { id: 'g8', studentId: 's8', subject: 'Creative Arts & Sports', term: 'Term 1', examType: 'Opener', test1: 26, test2: 28, test3: 24, exam: 60 }
+  ];
+  sampleGrades.forEach(g => gradesCache.push(g));
 
-      const today = new Date().toISOString().split('T')[0];
-      sampleStudents.forEach(s => {
-        attendanceCache.push({ id: 'a_' + s.id, studentId: s.id, date: today, status: Math.random() > 0.2 ? 'Present' : 'Absent', markedBy: 'Test Admin' });
-      });
+  const today = new Date().toISOString().split('T')[0];
+  sampleStudents.forEach(s => {
+    attendanceCache.push({ id: 'a_' + s.id, studentId: s.id, date: today, status: Math.random() > 0.2 ? 'Present' : 'Absent', markedBy: 'Test Admin' });
+  });
 
-      const sampleTeachers = [
-        { id: 't1', name: 'John Maina', empId: 'TCH-001', type: 'teaching', specialization: 'Mathematics Teacher', status: 'Active' },
-        { id: 't2', name: 'Jane Akinyi', empId: 'TCH-002', type: 'teaching', specialization: 'English Teacher', status: 'Active' },
-        { id: 't3', name: 'Peter Ochieng', empId: 'MNT-001', type: 'maintenance', specialization: 'Electrician', status: 'Active' },
-        { id: 't4', name: 'Dr. Mercy Ochieng', empId: 'CLN-001', type: 'clinician', specialization: 'Doctor', status: 'Active' }
-      ];
-      sampleTeachers.forEach(t => teachersCache.push(t));
+  const sampleTeachers = [
+    { id: 't1', name: 'John Maina', empId: 'TCH-001', type: 'teaching', specialization: 'Mathematics Teacher', status: 'Active' },
+    { id: 't2', name: 'Jane Akinyi', empId: 'TCH-002', type: 'teaching', specialization: 'English Teacher', status: 'Active' },
+    { id: 't3', name: 'Peter Ochieng', empId: 'MNT-001', type: 'maintenance', specialization: 'Electrician', status: 'Active' },
+    { id: 't4', name: 'Dr. Mercy Ochieng', empId: 'CLN-001', type: 'clinician', specialization: 'Doctor', status: 'Active' }
+  ];
+  sampleTeachers.forEach(t => teachersCache.push(t));
 
-      const sampleMaintenance = [
-        { id: 'm1', class: 'Grade 7 East', issueType: 'Electrical', description: 'Wall sockets not working', reportedBy: 'Mr. Peter', assignedTo: 't3', status: 'Pending', date: today },
-        { id: 'm2', class: 'Grade 8 West', issueType: 'Plumbing', description: 'Water tap leaking', reportedBy: 'Mrs. Jane', assignedTo: 't3', status: 'In Progress', date: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0] }
-      ];
-      sampleMaintenance.forEach(m => maintenanceCache.push(m));
+  const sampleMaintenance = [
+    { id: 'm1', class: 'Grade 7 East', issueType: 'Electrical', description: 'Wall sockets not working', reportedBy: 'Mr. Peter', assignedTo: 't3', status: 'Pending', date: today },
+    { id: 'm2', class: 'Grade 8 West', issueType: 'Plumbing', description: 'Water tap leaking', reportedBy: 'Mrs. Jane', assignedTo: 't3', status: 'In Progress', date: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0] }
+  ];
+  sampleMaintenance.forEach(m => maintenanceCache.push(m));
 
-      const sampleUsers = [
-        { id: 'u1', email: 'admin@mchsschool.com', fullName: 'System Admin', role: 'admin', approvalStatus: 'approved', lastLogin: new Date() }
-      ];
-      sampleUsers.forEach(u => usersCache.push(u));
+  const sampleUsers = [
+    { id: 'u1', email: 'admin@mchsschool.com', fullName: 'System Admin', role: 'admin', approvalStatus: 'approved', lastLogin: new Date() }
+  ];
+  sampleUsers.forEach(u => usersCache.push(u));
 
-      renderDashboard();
-      renderStudents();
-      renderSponsorship();
-      renderGrades();
-      renderAttendance();
-      renderClassPerformance();
-      renderWarnings();
-      renderSuspensions();
-      renderExpulsions();
-      renderClinic();
-      renderPrefects();
-      renderTeachers();
-      renderTeacherAttendance();
-      renderMaintenance();
-      renderMaintenanceDept();
-      renderAnalytics();
-      renderUsers();
-      renderRegistrations();
-      renderAudit();
+  renderDashboard();
+  renderStudents();
+  renderSponsorship();
+  renderGrades();
+  renderAttendance();
+  renderClassPerformance();
+  renderWarnings();
+  renderSuspensions();
+  renderExpulsions();
+  renderClinic();
+  renderPrefects();
+  renderTeachers();
+  renderTeacherAttendance();
+  renderMaintenance();
+  renderMaintenanceDept();
+  renderAnalytics();
+  renderUsers();
+  renderRegistrations();
+  renderAudit();
+  populateClassPerformanceDropdown();  // ← This line is now in the right place
 
-      showToast('📚 Sample data loaded successfully!', 'success');
-    };
+  showToast('📚 Sample data loaded successfully!', 'success');
+};
 
     // ============================================================
     // RENDER FUNCTIONS (Placeholders that will work with real data)
@@ -4115,6 +4307,7 @@
       renderUsers();
       renderRegistrations();
       renderAudit();
+populateClassPerformanceDropdown();
 
       showToast('📚 Sample data loaded!', 'success');
     }
