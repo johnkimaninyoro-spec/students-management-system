@@ -4849,10 +4849,10 @@ populateClassPerformanceDropdown();
   }
   
 // ============================================================
-// INITIALIZATION
+// INITIALIZATION - AUTO LOGIN TEST MODE
 // ============================================================
 
-// FIXED: Function to populate ALL dropdowns
+// Function to populate ALL dropdowns
 function populateAllDropdowns() {
   console.log('🔄 Populating all dropdowns...');
   
@@ -4868,8 +4868,6 @@ function populateAllDropdowns() {
         perfSelect.appendChild(option);
       });
       console.log('✅ Class Performance dropdown populated with ' + CLASSES.length + ' classes');
-    } else {
-      console.warn('⚠️ performanceClassSelect not found');
     }
     
     // 2. Student class filter
@@ -4919,14 +4917,46 @@ function populateAllDropdowns() {
   }
 }
 
-// Run immediately when script loads
-console.log('🚀 Initializing dropdowns...');
-populateAllDropdowns();
-
-// Also run after DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('📄 DOM loaded, re-populating dropdowns...');
+// AUTO LOGIN - Skip the login page and go straight to test mode
+function autoLoginTestMode() {
+  console.log('🔓 AUTO LOGIN: Starting test mode...');
   
+  // Set current user as test admin
+  window.currentUser = {
+    uid: 'test123',
+    email: 'test@test.com',
+    fullName: 'Test Admin',
+    role: 'admin',
+    approvalStatus: 'approved'
+  };
+  window.isTestMode = true;
+  
+  // Hide login, show app
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appContainer').style.display = 'block';
+  document.getElementById('currentUserDisplay').textContent = 'Test Admin';
+  document.getElementById('currentRoleBadge').textContent = 'ADMIN';
+  
+  // Setup permissions
+  setupPermissions();
+  
+  // Load sample data
+  if (typeof loadSampleData === 'function') {
+    loadSampleData();
+  } else {
+    loadSampleDataFallback();
+  }
+  
+  // Show dashboard
+  showTab('dashboard');
+  showToast('✅ Logged in as Test Admin (Demo Mode)', 'success');
+}
+
+// Also run after DOM is ready - AUTO LOGIN
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📄 DOM loaded, auto-logging in test mode...');
+  
+  // Set up enter key on login page (just in case)
   const loginPwd = document.getElementById('loginPassword');
   if (loginPwd) {
     loginPwd.addEventListener('keypress', function(e) { 
@@ -4934,15 +4964,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Populate again with a delay to ensure all elements exist
+  // Populate dropdowns
+  populateAllDropdowns();
+  
+  // AUTO LOGIN - Skip login page entirely
   setTimeout(function() {
-    populateAllDropdowns();
-    console.log('✅ Dropdowns re-populated after DOM load');
-  }, 300);
+    autoLoginTestMode();
+  }, 500);
   
   console.log('🚀 Mara Christian High School Management System');
-  console.log('📚 Version 28.0.0 - Complete Version with All Tabs');
-  console.log('🔑 Test Login: test@test.com / test123');
+  console.log('📚 Version 28.0.0 - Auto Login Mode');
   console.log('✅ All dashboard tabs restored!');
 });
 
