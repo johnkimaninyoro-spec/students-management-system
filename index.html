@@ -3468,20 +3468,139 @@ window.renderClassPerformance = renderClassPerformance;
     <head>
       <title>${subtitle} - Mara Christian High School</title>
       <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #1a5276; padding-bottom: 15px; }
-        .header h1 { color: #1a5276; font-size: 24px; margin: 0; }
-        .header .sub { color: #666; font-size: 14px; margin-top: 5px; }
-        .header .class-info { color: #2e86c1; font-size: 16px; font-weight: bold; margin-top: 3px; }
-        .header .class-mean { color: #27ae60; font-size: 15px; font-weight: bold; margin-top: 3px; }
-        .header .date { color: #999; font-size: 12px; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; font-weight: 600; }
-        td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
-        tr:nth-child(even) { background: #f8f9fa; }
-        .footer { text-align: center; font-size: 11px; color: #999; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
-        .print-stats { text-align: center; font-size: 11px; color: #666; margin-top: 10px; }
-        .badge { padding: 1px 8px; border-radius: 12px; font-size: 9px; font-weight: 600; display: inline-block; }
+        /* Reset and base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: 'Segoe UI', Arial, sans-serif; 
+          padding: 20px; 
+          position: relative;
+          min-height: 100vh;
+          background: white;
+        }
+        
+        /* SCHOOL LOGO AT TOP */
+        .school-header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 15px;
+          margin-bottom: 15px;
+          border-bottom: 3px solid #1a5276;
+          padding-bottom: 15px;
+        }
+        .school-header img {
+          height: 60px;
+          width: auto;
+        }
+        .school-header .header-text {
+          text-align: center;
+        }
+        .school-header .header-text h1 {
+          color: #1a5276;
+          font-size: 24px;
+          margin: 0;
+        }
+        .school-header .header-text .motto {
+          color: #666;
+          font-size: 12px;
+          letter-spacing: 2px;
+        }
+        
+        /* TABLE CONTAINER WITH WATERMARK BEHIND IT */
+        .table-container {
+          position: relative;
+          margin-top: 10px;
+          padding: 20px;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          background: white;
+          overflow: hidden;
+        }
+        
+        /* WATERMARK - Large logo behind the table */
+        .table-container::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(1.5);
+          width: 400px;
+          height: 400px;
+          background-image: url('https://raw.githubusercontent.com/johnkimaninyoro-spec/students-management-system/main/MCHSLogo.png');
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          opacity: 0.06;
+          z-index: 0;
+          pointer-events: none;
+        }
+        
+        .table-container table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 11px;
+          position: relative;
+          z-index: 1;
+          background: transparent;
+        }
+        
+        th { 
+          background: #1a5276; 
+          color: white; 
+          padding: 6px 8px; 
+          text-align: left; 
+          font-weight: 600; 
+        }
+        td { 
+          padding: 4px 8px; 
+          border-bottom: 1px solid #ddd; 
+          background: rgba(255,255,255,0.85);
+        }
+        tr:nth-child(even) td { 
+          background: rgba(248, 249, 250, 0.85); 
+        }
+        
+        .sub-header {
+          text-align: center;
+          margin-bottom: 10px;
+        }
+        .sub-header .class-info { 
+          color: #2e86c1; 
+          font-size: 16px; 
+          font-weight: bold; 
+        }
+        .sub-header .class-mean { 
+          color: #27ae60; 
+          font-size: 15px; 
+          font-weight: bold; 
+        }
+        .sub-header .date { 
+          color: #999; 
+          font-size: 12px; 
+        }
+        
+        .footer { 
+          text-align: center; 
+          font-size: 11px; 
+          color: #999; 
+          margin-top: 20px; 
+          padding-top: 10px; 
+          border-top: 1px solid #ddd; 
+        }
+        .print-stats { 
+          text-align: center; 
+          font-size: 11px; 
+          color: #666; 
+          margin-top: 10px; 
+        }
+        
+        .badge { 
+          padding: 1px 8px; 
+          border-radius: 12px; 
+          font-size: 9px; 
+          font-weight: 600; 
+          display: inline-block; 
+        }
         .badge-grade-a { background: #27ae60; color: white; }
         .badge-grade-a- { background: #2ecc71; color: white; }
         .badge-grade-b-plus { background: #85c1e9; color: #1a5276; }
@@ -3501,23 +3620,48 @@ window.renderClassPerformance = renderClassPerformance;
         .badge-info { background: #d6eaf8; color: #2e86c1; }
         .badge-primary { background: #d6eaf8; color: #1a5276; }
         .badge-gold { background: #f9e79f; color: #8e6b00; }
+        
+        @media print {
+          .table-container::before {
+            opacity: 0.08;
+            transform: translate(-50%, -50%) scale(1.8);
+          }
+          .no-print { display: none; }
+          th { background: #1a5276 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          td { background: rgba(255,255,255,0.9) !important; }
+          tr:nth-child(even) td { background: rgba(248, 249, 250, 0.9) !important; }
+        }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>Mara Christian High School</h1>
-        <div class="sub">${subtitle}</div>
+      <!-- SCHOOL LOGO AT TOP -->
+      <div class="school-header">
+        <img src="https://raw.githubusercontent.com/johnkimaninyoro-spec/students-management-system/main/MCHSLogo.png" alt="MCHS Logo">
+        <div class="header-text">
+          <h1>Mara Christian High School</h1>
+          <div class="motto">Educating For Eternity</div>
+        </div>
+      </div>
+      
+      <div class="sub-header">
+        <div class="class-info">${subtitle}</div>
         ${className ? `<div class="class-info">📚 ${className}</div>` : ''}
         ${classMeanDisplay ? `<div class="class-mean">${classMeanDisplay}</div>` : ''}
         <div class="date">Generated on: ${today} at ${time}</div>
       </div>
-      <table>
-        <thead><tr>${tableHeaders}</tr></thead>
-        <tbody>${tableRows}</tbody>
-      </table>
+      
+      <!-- TABLE WITH WATERMARK BEHIND IT -->
+      <div class="table-container">
+        <table>
+          <thead><tr>${tableHeaders}</tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+      
       <div class="print-stats">
         <p>Total Records: ${filteredRows.length}</p>
-        ${className ? `<p>📊 Class Mean Score: ${classMeanDisplay || 'Calculating...'}</p>` : ''}
+        ${className && classMeanDisplay ? `<p>${classMeanDisplay}</p>` : ''}
       </div>
       <div class="footer">
         <p>Mara Christian High School - Educating For Eternity</p>
