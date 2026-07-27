@@ -4524,15 +4524,26 @@ function populateAllDropdowns() {
             gradeFilter.innerHTML = classSelectHtml();
             console.log('✅ Grade class filter: ' + gradeFilter.options.length + ' options');
         }
-        
-        // 5. Maintenance class filter
+        // 5. NEW: Grade Subject Filter
+const gradeSubjectFilter = document.getElementById('gradeSubjectFilter');
+if (gradeSubjectFilter) {
+    gradeSubjectFilter.innerHTML = '<option value="">All Subjects</option>';
+    SUBJECTS.forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject;
+        option.textContent = subject;
+        gradeSubjectFilter.appendChild(option);
+    });
+    console.log('✅ Grade subject filter: ' + gradeSubjectFilter.options.length + ' options');
+}
+        // 6. Maintenance class filter
         const maintFilter = document.getElementById('maintenanceClassFilter');
         if (maintFilter) {
             maintFilter.innerHTML = classSelectHtml();
             console.log('✅ Maintenance class filter: ' + maintFilter.options.length + ' options');
         }
         
-        // 6. Analytics class select
+        // 7. Analytics class select
         const analyticsClass = document.getElementById('analyticsClassSelect');
         if (analyticsClass) {
             analyticsClass.innerHTML = '<option value="">Select a class...</option>';
