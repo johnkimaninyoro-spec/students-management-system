@@ -3232,6 +3232,13 @@ window.renderClassPerformance = renderClassPerformance;
 
     window.printTab = function(tab) {
   const title = getTabTitle(tab);
+  
+  // Special handling for Analytics tab - print charts
+  if (tab === 'analytics') {
+    printAnalytics();
+    return;
+  }
+  
   const data = getTableData(tab);
   
   if (data.rows.length === 0) {
@@ -3720,6 +3727,186 @@ window.renderClassPerformance = renderClassPerformance;
   `);
   printWindow.document.close();
 };
+
+// ============================================================
+// PRINT ANALYTICS - New function for printing charts
+// ============================================================
+function printAnalytics() {
+  const printWindow = window.open('', '_blank');
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  
+  // Get the selected student or class
+  const studentSelect = document.getElementById('analyticsStudentSelect');
+  const classSelect = document.getElementById('analyticsClassSelect');
+  const selectedStudent = studentSelect ? studentSelect.value : '';
+  const selectedClass = classSelect ? classSelect.value : '';
+  
+  let title = 'Analytics Report';
+  if (selectedStudent) {
+    const student = studentsCache.find(s => s.id === selectedStudent);
+    if (student) {
+      title += ` - ${student.firstName} ${student.lastName}`;
+    }
+  } else if (selectedClass) {
+    title += ` - ${selectedClass}`;
+  }
+  
+  // Get chart data from canvas
+  const chart1Canvas = document.getElementById('analyticsStudentChart');
+  const chart2Canvas = document.getElementById('analyticsTrendChart');
+  const chart3Canvas = document.getElementById('analyticsClassChart');
+  
+  // Convert charts to images
+  const chart1Data = chart1Canvas ? chart1Canvas.toDataURL('image/png') : '';
+  const chart2Data = chart2Canvas ? chart2Canvas.toDataURL('image/png') : '';
+  const chart3Data = chart3Canvas ? chart3Canvas.toDataURL('image/png') : '';
+  
+  printWindow.document.write(`
+    <html>
+    <head>
+      <title>${title} - Mara Christian High School</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: 'Segoe UI', Arial, sans-serif; 
+          padding: 30px; 
+          background: white;
+        }
+        
+        .school-header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 15px;
+          margin-bottom: 20px;
+          border-bottom: 3px solid #1a5276;
+          padding-bottom: 15px;
+        }
+        .school-header img {
+          height: 60px;
+          width: auto;
+        }
+        .school-header .header-text {
+          text-align: center;
+        }
+        .school-header .header-text h1 {
+          color: #1a5276;
+          font-size: 24px;
+          margin: 0;
+        }
+        .school-header .header-text .motto {
+          color: #666;
+          font-size: 12px;
+          letter-spacing: 2px;
+        }
+        .school-header .header-text .sub {
+          color: #2e86c1;
+          font-size: 16px;
+          font-weight: bold;
+          margin-top: 5px;
+        }
+        
+        .date-info {
+          text-align: center;
+          color: #999;
+          font-size: 12px;
+          margin-bottom: 20px;
+        }
+        
+        .chart-container {
+          margin: 20px 0;
+          padding: 15px;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          background: white;
+          page-break-inside: avoid;
+        }
+        .chart-container h3 {
+          color: #1a5276;
+          font-size: 14px;
+          margin-bottom: 10px;
+          text-align: center;
+        }
+        .chart-container img {
+          width: 100%;
+          max-width: 800px;
+          display: block;
+          margin: 0 auto;
+        }
+        
+        .no-data {
+          text-align: center;
+          color: #999;
+          font-size: 14px;
+          padding: 40px;
+        }
+        
+        .footer {
+          text-align: center;
+          font-size: 11px;
+          color: #999;
+          margin-top: 30px;
+          padding-top: 10px;
+          border-top: 1px solid #ddd;
+        }
+        
+        @media print {
+          .no-print { display: none; }
+          .chart-container { page-break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="school-header">
+        <img src="https://raw.githubusercontent.com/johnkimaninyoro-spec/students-management-system/main/MCHSLogo.png" alt="MCHS Logo">
+        <div class="header-text">
+          <h1>Mara Christian High School</h1>
+          <div class="motto">Educating For Eternity</div>
+          <div class="sub">${title}</div>
+        </div>
+      </div>
+      
+      <div class="date-info">Generated on: ${today} at ${time}</div>
+      
+      ${chart1Data ? `
+        <div class="chart-container">
+          <h3>📊 Student Grades by Subject</h3>
+          <img src="${chart1Data}" alt="Student Grades Chart">
+        </div>
+      ` : `
+        <div class="no-data">No chart data available. Please load analytics data first.</div>
+      `}
+      
+      ${chart2Data ? `
+        <div class="chart-container">
+          <h3>📈 Student Grade Trend</h3>
+          <img src="${chart2Data}" alt="Grade Trend Chart">
+        </div>
+      ` : ''}
+      
+      ${chart3Data ? `
+        <div class="chart-container">
+          <h3>📊 Class Average by Subject</h3>
+          <img src="${chart3Data}" alt="Class Average Chart">
+        </div>
+      ` : ''}
+      
+      <div class="footer">
+        <p>Mara Christian High School - Educating For Eternity</p>
+        <p>This is a system-generated analytics report.</p>
+      </div>
+      
+      <script>
+        window.onload = function() { 
+          setTimeout(function() { window.print(); }, 500);
+        }
+      <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
 
     window.shareTab = function(tab) {
       printTab(tab);
