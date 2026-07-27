@@ -3241,24 +3241,79 @@ window.renderClassPerformance = renderClassPerformance;
 
   // Get the current class filter value for grades tab
   let className = '';
+  let filteredRows = data.rows;
+  
   if (tab === 'grades') {
     const classFilter = document.getElementById('gradeClassFilter');
     if (classFilter && classFilter.value) {
       className = classFilter.value;
     }
-  } else if (tab === 'classPerformance') {
-    const classSelect = document.getElementById('performanceClassSelect');
-    if (classSelect && classSelect.value) {
-      className = classSelect.value;
+    
+    // Calculate per-student totals and class mean
+    const studentTotals = {};
+    const studentCounts = {};
+    
+    data.rows.forEach(row => {
+      const studentId = row.studentId;
+      if (!studentId) return;
+      
+      const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+      
+      if (!studentTotals[studentId]) {
+        studentTotals[studentId] = 0;
+        studentCounts[studentId] = 0;
+      }
+      studentTotals[studentId] += total;
+      studentCounts[studentId]++;
+    });
+    
+    // Calculate mean scores
+    const studentMeans = {};
+    let classTotal = 0;
+    let classCount = 0;
+    
+    for (const studentId in studentTotals) {
+      const mean = Math.round(studentTotals[studentId] / studentCounts[studentId]);
+      studentMeans[studentId] = mean;
+      classTotal += mean;
+      classCount++;
     }
+    
+    const classMean = classCount > 0 ? Math.round(classTotal / classCount) : 0;
+    
+    // Store means on each row for display
+    filteredRows = data.rows.map(row => {
+      const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+      const mean = row.studentId && studentMeans[row.studentId] ? studentMeans[row.studentId] : 0;
+      return {
+        ...row,
+        totalScore: total,
+        meanScore: mean,
+        grade: getKenyanGrade(mean)?.grade || 'N/A'
+      };
+    });
   }
 
   const printWindow = window.open('', '_blank');
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   
-  // FIXED: Properly map data to display student names
-  let tableRows = data.rows.map(row => {
+  // Calculate class mean for header
+  let classMeanDisplay = '';
+  if (tab === 'grades' && className) {
+    const allScores = [];
+    filteredRows.forEach(row => {
+      if (row.meanScore && row.meanScore > 0) {
+        allScores.push(row.meanScore);
+      }
+    });
+    if (allScores.length > 0) {
+      const avg = Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length);
+      classMeanDisplay = `📊 Class Mean Score: ${avg}%`;
+    }
+  }
+  
+  let tableRows = filteredRows.map(row => {
     let cells = '';
     const columns = data.columns;
     for (const col of columns) {
@@ -3300,6 +3355,16 @@ window.renderClassPerformance = renderClassPerformance;
           val = '-';
         }
       }
+      // Handle Total column - show total score
+      else if (col === 'Total' || col === 'total') {
+        val = row.totalScore || (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+      }
+      // Handle Grade column - show grade based on mean
+      else if (col === 'Grade' || col === 'grade') {
+        const total = row.totalScore || (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+        const grade = getKenyanGrade(total);
+        val = grade ? grade.grade : 'N/A';
+      }
       // Handle other columns
       else if (col === 'Subject' && row.subject) {
         val = row.subject;
@@ -3315,10 +3380,6 @@ window.renderClassPerformance = renderClassPerformance;
         val = row.test3 ?? '-';
       } else if (col === 'Final' && row.exam !== undefined) {
         val = row.exam ?? '-';
-      } else if (col === 'Total' && row.total !== undefined) {
-        val = row.total;
-      } else if (col === 'Grade' && row.grade) {
-        val = row.grade;
       } else if (col === 'Date' && row.date) {
         val = formatDate(row.date);
       } else if (col === 'Status' && row.status) {
@@ -3412,6 +3473,7 @@ window.renderClassPerformance = renderClassPerformance;
         .header h1 { color: #1a5276; font-size: 24px; margin: 0; }
         .header .sub { color: #666; font-size: 14px; margin-top: 5px; }
         .header .class-info { color: #2e86c1; font-size: 16px; font-weight: bold; margin-top: 3px; }
+        .header .class-mean { color: #27ae60; font-size: 15px; font-weight: bold; margin-top: 3px; }
         .header .date { color: #999; font-size: 12px; margin-top: 5px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
         th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; font-weight: 600; }
@@ -3446,6 +3508,7 @@ window.renderClassPerformance = renderClassPerformance;
         <h1>Mara Christian High School</h1>
         <div class="sub">${subtitle}</div>
         ${className ? `<div class="class-info">📚 ${className}</div>` : ''}
+        ${classMeanDisplay ? `<div class="class-mean">${classMeanDisplay}</div>` : ''}
         <div class="date">Generated on: ${today} at ${time}</div>
       </div>
       <table>
@@ -3453,7 +3516,8 @@ window.renderClassPerformance = renderClassPerformance;
         <tbody>${tableRows}</tbody>
       </table>
       <div class="print-stats">
-        <p>Total Records: ${data.rows.length}</p>
+        <p>Total Records: ${filteredRows.length}</p>
+        ${className ? `<p>📊 Class Mean Score: ${classMeanDisplay || 'Calculating...'}</p>` : ''}
       </div>
       <div class="footer">
         <p>Mara Christian High School - Educating For Eternity</p>
