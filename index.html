@@ -3252,10 +3252,17 @@ window.renderClassPerformance = renderClassPerformance;
     // Calculate per-student totals and class mean
     const studentTotals = {};
     const studentCounts = {};
+    const studentNames = {};
     
     data.rows.forEach(row => {
       const studentId = row.studentId;
       if (!studentId) return;
+      
+      // Get student name
+      const student = studentsCache.find(s => s.id === studentId);
+      if (student) {
+        studentNames[studentId] = (student.firstName || '') + ' ' + (student.lastName || '');
+      }
       
       const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
       
@@ -3267,31 +3274,52 @@ window.renderClassPerformance = renderClassPerformance;
       studentCounts[studentId]++;
     });
     
-    // Calculate mean scores
-    const studentMeans = {};
+    // Calculate mean scores and create student summary
+    const studentSummaries = [];
     let classTotal = 0;
     let classCount = 0;
     
     for (const studentId in studentTotals) {
       const mean = Math.round(studentTotals[studentId] / studentCounts[studentId]);
-      studentMeans[studentId] = mean;
+      studentSummaries.push({
+        studentId: studentId,
+        name: studentNames[studentId] || studentId,
+        meanScore: mean,
+        totalScore: studentTotals[studentId],
+        subjectCount: studentCounts[studentId]
+      });
       classTotal += mean;
       classCount++;
     }
     
+    // SORT STUDENTS BY MEAN SCORE (highest first)
+    studentSummaries.sort((a, b) => b.meanScore - a.meanScore);
+    
     const classMean = classCount > 0 ? Math.round(classTotal / classCount) : 0;
     
-    // Store means on each row for display
-    filteredRows = data.rows.map(row => {
-      const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
-      const mean = row.studentId && studentMeans[row.studentId] ? studentMeans[row.studentId] : 0;
-      return {
-        ...row,
-        totalScore: total,
-        meanScore: mean,
-        grade: getKenyanGrade(mean)?.grade || 'N/A'
-      };
+    // Store means on each row for display and sort rows by student ranking
+    const studentRank = {};
+    studentSummaries.forEach((s, index) => {
+      studentRank[s.studentId] = index + 1;
     });
+    
+    // Sort the actual rows by student rank (mean score)
+    filteredRows = data.rows
+      .map(row => {
+        const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+        const mean = row.studentId && studentTotals[row.studentId] ? 
+          Math.round(studentTotals[row.studentId] / studentCounts[row.studentId]) : 0;
+        const student = studentsCache.find(s => s.id === row.studentId);
+        return {
+          ...row,
+          totalScore: total,
+          meanScore: mean,
+          grade: getKenyanGrade(mean)?.grade || 'N/A',
+          studentName: student ? (student.firstName || '') + ' ' + (student.lastName || '') : 'Unknown',
+          rank: studentRank[row.studentId] || 999
+        };
+      })
+      .sort((a, b) => a.rank - b.rank); // Sort by rank (1 = highest score)
   }
 
   const printWindow = window.open('', '_blank');
@@ -3319,7 +3347,7 @@ window.renderClassPerformance = renderClassPerformance;
     for (const col of columns) {
       let val = '-';
       
-      // Handle Student column - get actual name from studentId
+      // Handle Student column - show name
       if (col === 'Student' || col === 'student') {
         if (row.studentId) {
           const student = studentsCache.find(s => s.id === row.studentId);
@@ -3333,6 +3361,11 @@ window.renderClassPerformance = renderClassPerformance;
         } else {
           val = '-';
         }
+        // Add rank indicator for top performers
+        if (row.rank && row.rank <= 3) {
+          const medal = row.rank === 1 ? '🥇 ' : row.rank === 2 ? '🥈 ' : '🥉 ';
+          val = medal + val;
+        }
       }
       // Handle Name column
       else if (col === 'Name' || col === 'name') {
@@ -3342,6 +3375,10 @@ window.renderClassPerformance = renderClassPerformance;
           val = row.name;
         } else {
           val = '-';
+        }
+        if (row.rank && row.rank <= 3) {
+          const medal = row.rank === 1 ? '🥇 ' : row.rank === 2 ? '🥈 ' : '🥉 ';
+          val = medal + val;
         }
       }
       // Handle Class column
@@ -3560,6 +3597,11 @@ window.renderClassPerformance = renderClassPerformance;
           background: rgba(248, 249, 250, 0.85); 
         }
         
+        /* Highlight top 3 students */
+        .rank-1 td { background: rgba(255, 215, 0, 0.15) !important; }
+        .rank-2 td { background: rgba(192, 192, 192, 0.15) !important; }
+        .rank-3 td { background: rgba(205, 127, 50, 0.15) !important; }
+        
         .sub-header {
           text-align: center;
           margin-bottom: 10px;
@@ -3631,6 +3673,9 @@ window.renderClassPerformance = renderClassPerformance;
           .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           td { background: rgba(255,255,255,0.9) !important; }
           tr:nth-child(even) td { background: rgba(248, 249, 250, 0.9) !important; }
+          .rank-1 td { background: rgba(255, 215, 0, 0.2) !important; }
+          .rank-2 td { background: rgba(192, 192, 192, 0.2) !important; }
+          .rank-3 td { background: rgba(205, 127, 50, 0.2) !important; }
         }
       </style>
     </head>
