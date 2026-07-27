@@ -3257,30 +3257,51 @@ window.renderClassPerformance = renderClassPerformance;
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   
+  // FIXED: Properly map data to display student names
   let tableRows = data.rows.map(row => {
     let cells = '';
     const columns = data.columns;
     for (const col of columns) {
-      // Try to get value from various possible field names
       let val = '-';
-      const colLower = col.toLowerCase().replace(/[^a-z0-9]/g, '');
       
-      // Handle different field name variations
-      if (row[col]) val = row[col];
-      else if (row[colLower]) val = row[colLower];
-      else if (col === 'Student' && row.firstName) {
-        val = (row.firstName || '') + ' ' + (row.lastName || '');
-      } else if (col === 'Class' && row.class) {
-        val = row.class;
-      } else if (col === 'Name' && row.firstName) {
-        val = (row.firstName || '') + ' ' + (row.lastName || '');
-      } else if (col === 'Email' && row.email) {
-        val = row.email;
-      } else if (col === 'Status' && row.status) {
-        val = row.status;
-      } else if (col === 'Role' && row.role) {
-        val = row.role;
-      } else if (col === 'Subject' && row.subject) {
+      // Handle Student column - get actual name from studentId
+      if (col === 'Student' || col === 'student') {
+        if (row.studentId) {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          if (student) {
+            val = (student.firstName || '') + ' ' + (student.lastName || '');
+          } else {
+            val = row.studentId || '-';
+          }
+        } else if (row.firstName) {
+          val = (row.firstName || '') + ' ' + (row.lastName || '');
+        } else {
+          val = '-';
+        }
+      }
+      // Handle Name column
+      else if (col === 'Name' || col === 'name') {
+        if (row.firstName) {
+          val = (row.firstName || '') + ' ' + (row.lastName || '');
+        } else if (row.name) {
+          val = row.name;
+        } else {
+          val = '-';
+        }
+      }
+      // Handle Class column
+      else if (col === 'Class' || col === 'class') {
+        if (row.class) {
+          val = row.class;
+        } else if (row.studentId) {
+          const student = studentsCache.find(s => s.id === row.studentId);
+          val = student?.class || '-';
+        } else {
+          val = '-';
+        }
+      }
+      // Handle other columns
+      else if (col === 'Subject' && row.subject) {
         val = row.subject;
       } else if (col === 'Term' && row.term) {
         val = row.term;
@@ -3300,6 +3321,8 @@ window.renderClassPerformance = renderClassPerformance;
         val = row.grade;
       } else if (col === 'Date' && row.date) {
         val = formatDate(row.date);
+      } else if (col === 'Status' && row.status) {
+        val = row.status;
       } else if (col === 'Reason' && row.reason) {
         val = row.reason;
       } else if (col === 'Duration' && row.duration) {
@@ -3318,31 +3341,52 @@ window.renderClassPerformance = renderClassPerformance;
         val = row.medication;
       } else if (col === 'Department' && row.department) {
         val = row.department;
-      } else if (col === 'Specialization' && row.specialization) {
-        val = row.specialization;
-      } else if (col === 'Issue Type' && row.issueType) {
-        val = row.issueType;
-      } else if (col === 'Description' && row.description) {
-        val = row.description;
+      } else if (col === 'Role' && row.role) {
+        val = row.role;
       } else if (col === 'Sponsor Type' && row.sponsorshipType) {
         val = row.sponsorshipType;
       } else if (col === 'Sponsor Name' && row.sponsorName) {
         val = row.sponsorName;
       } else if (col === 'Contact' && row.sponsorContact) {
         val = row.sponsorContact;
-      } else if (col === 'Notes' && row.sponsorNotes) {
-        val = row.sponsorNotes;
-      }
-      
-      // If still empty, try to find by key matching
-      if (val === '-') {
-        const keys = Object.keys(row);
-        for (const key of keys) {
-          if (key.toLowerCase().includes(col.toLowerCase().replace(/[^a-z]/g, ''))) {
-            val = row[key] || '-';
-            break;
+      } else if (col === 'Email' && row.email) {
+        val = row.email;
+      } else if (col === 'Specialization' && row.specialization) {
+        val = row.specialization;
+      } else if (col === 'Issue Type' && row.issueType) {
+        val = row.issueType;
+      } else if (col === 'Description' && row.description) {
+        val = row.description;
+      } else if (col === 'Prefect' && row.isPrefect) {
+        val = row.isPrefect === 'Yes' ? '⭐ Yes' : 'No';
+      } else if (col === 'Dorm' && row.dorm) {
+        val = row.dorm;
+      } else if (col === 'Adm No.' && row.admNo) {
+        val = row.admNo;
+      } else if (col === 'Gender' && row.gender) {
+        val = row.gender;
+      } else {
+        // Try to get value from row directly
+        const colKey = col.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (row[colKey] !== undefined && row[colKey] !== null) {
+          val = row[colKey];
+        } else if (row[col] !== undefined && row[col] !== null) {
+          val = row[col];
+        } else {
+          // Try to find matching key
+          const keys = Object.keys(row);
+          for (const key of keys) {
+            if (key.toLowerCase().replace(/[^a-z0-9]/g, '') === colKey) {
+              val = row[key] || '-';
+              break;
+            }
           }
         }
+      }
+      
+      // If val is an object or array, convert to string
+      if (typeof val === 'object' && val !== null) {
+        val = JSON.stringify(val);
       }
       
       cells += `<td>${val}</td>`;
