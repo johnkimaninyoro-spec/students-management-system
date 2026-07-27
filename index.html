@@ -3197,26 +3197,38 @@ window.renderClassPerformance = renderClassPerformance;
     }
 
     function getTableData(tab) {
-      const data = {
-        'students': { rows: studentsCache, columns: ['Adm No.', 'Name', 'Class', 'Gender', 'Status', 'Dorm', 'Sponsorship', 'Prefect'] },
-        'sponsorship': { rows: studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored'), columns: ['Student', 'Class', 'Sponsor Type', 'Sponsor Name', 'Contact'] },
-        'grades': { rows: gradesCache, columns: ['Student', 'Class', 'Subject', 'Term', 'Exam Type', 'Test 1', 'Test 2', 'Test 3', 'Final', 'Total', 'Grade'] },
-        'attendance': { rows: attendanceCache, columns: ['Date', 'Student', 'Class', 'Status', 'Reason'] },
-        'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Reason', 'Issued By'] },
-        'suspensions': { rows: suspensionsCache, columns: ['Date', 'Student', 'Reason', 'Duration', 'Status'] },
-        'expulsions': { rows: expulsionsCache, columns: ['Date', 'Student', 'Reason', 'Approved By'] },
-        'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor', 'Condition', 'Diagnosis', 'Medication'] },
-        'prefects': { rows: studentsCache.filter(s => s.isPrefect === 'Yes'), columns: ['Student', 'Class', 'Role', 'Department'] },
-        'teachers': { rows: teachersCache, columns: ['Name', 'Employee ID', 'Type', 'Specialization', 'Status'] },
-        'teacherAttendance': { rows: teacherAttCache, columns: ['Date', 'Teacher', 'Status', 'Reason'] },
-        'maintenance': { rows: maintenanceCache, columns: ['Date', 'Class', 'Issue Type', 'Description', 'Status'] },
-        'maintenanceDept': { rows: maintenanceCache, columns: ['Date', 'Class', 'Issue Type', 'Status'] },
-        'users': { rows: usersCache, columns: ['Email', 'Name', 'Role', 'Status'] },
-        'registrations': { rows: pendingRegistrationsCache, columns: ['Date', 'Email', 'Name', 'Role', 'Status'] },
-        'audit': { rows: auditCache.slice(0, 100), columns: ['User', 'Action', 'Details', 'Time'] }
-      };
-      return data[tab] || { rows: [], columns: [] };
+  // For grades tab, filter by class if selected
+  let gradesRows = gradesCache;
+  if (tab === 'grades') {
+    const classFilter = document.getElementById('gradeClassFilter');
+    if (classFilter && classFilter.value) {
+      gradesRows = gradesCache.filter(g => {
+        const student = studentsCache.find(s => s.id === g.studentId);
+        return student && student.class === classFilter.value;
+      });
     }
+  }
+
+  const data = {
+    'students': { rows: studentsCache, columns: ['Adm No.', 'Name', 'Class', 'Gender', 'Status', 'Dorm', 'Sponsorship', 'Prefect'] },
+    'sponsorship': { rows: studentsCache.filter(s => s.sponsorshipType && s.sponsorshipType !== 'Self Sponsored'), columns: ['Student', 'Class', 'Sponsor Type', 'Sponsor Name', 'Contact'] },
+    'grades': { rows: gradesRows, columns: ['Student', 'Class', 'Subject', 'Term', 'Exam Type', 'Test 1', 'Test 2', 'Test 3', 'Final', 'Total', 'Grade'] },
+    'attendance': { rows: attendanceCache, columns: ['Date', 'Student', 'Class', 'Status', 'Reason'] },
+    'warnings': { rows: warningsCache, columns: ['Date', 'Student', 'Reason', 'Issued By'] },
+    'suspensions': { rows: suspensionsCache, columns: ['Date', 'Student', 'Reason', 'Duration', 'Status'] },
+    'expulsions': { rows: expulsionsCache, columns: ['Date', 'Student', 'Reason', 'Approved By'] },
+    'clinic': { rows: clinicCache, columns: ['Date', 'Student', 'Doctor', 'Condition', 'Diagnosis', 'Medication'] },
+    'prefects': { rows: studentsCache.filter(s => s.isPrefect === 'Yes'), columns: ['Student', 'Class', 'Role', 'Department'] },
+    'teachers': { rows: teachersCache, columns: ['Name', 'Employee ID', 'Type', 'Specialization', 'Status'] },
+    'teacherAttendance': { rows: teacherAttCache, columns: ['Date', 'Teacher', 'Status', 'Reason'] },
+    'maintenance': { rows: maintenanceCache, columns: ['Date', 'Class', 'Issue Type', 'Description', 'Status'] },
+    'maintenanceDept': { rows: maintenanceCache, columns: ['Date', 'Class', 'Issue Type', 'Status'] },
+    'users': { rows: usersCache, columns: ['Email', 'Name', 'Role', 'Status'] },
+    'registrations': { rows: pendingRegistrationsCache, columns: ['Date', 'Email', 'Name', 'Role', 'Status'] },
+    'audit': { rows: auditCache.slice(0, 100), columns: ['User', 'Action', 'Details', 'Time'] }
+  };
+  return data[tab] || { rows: [], columns: [] };
+}
 
     window.printTab = function(tab) {
   const title = getTabTitle(tab);
@@ -4274,30 +4286,59 @@ window.renderClassPerformance = renderClassPerformance;
     }
 
     function renderGrades() {
-      document.getElementById('gradesTableBody').innerHTML = gradesCache.map(g => {
-        const student = studentsCache.find(s => s.id === g.studentId);
-        const hasScores = hasActualScores(g);
-        const total = hasScores ? (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0) : null;
-        const examTypeClass = g.examType === 'Opener' ? 'opener' : g.examType === 'Midterm' ? 'midterm' : 'endterm';
-        return `<tr>
-          <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
-          <td>${student?.class || '-'}</td>
-          <td>${g.subject}</td>
-          <td>${g.term}</td>
-          <td><span class="exam-type-badge ${examTypeClass}">${g.examType || 'Opener'}</span></td>
-          <td>${g.test1 ?? '-'}</td>
-          <td>${g.test2 ?? '-'}</td>
-          <td>${g.test3 ?? '-'}</td>
-          <td>${g.exam ?? '-'}</td>
-          <td><strong>${hasScores ? total : '-'}</strong></td>
-          <td>${getGradeBadge(total)}</td>
-          <td>
-            <button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>
-          </td>
-        </tr>`;
-      }).join('') || '<tr><td colspan="12" style="text-align:center;color:#999;padding:20px;">No grades found</td></tr>';
-    }
+  // Get filter values
+  const classFilter = document.getElementById('gradeClassFilter').value;
+  const subjectFilter = document.getElementById('gradeSubjectFilter').value;
+  const termFilter = document.getElementById('gradeTermFilter').value;
+  const examTypeFilter = document.getElementById('gradeExamTypeFilter').value;
+
+  // Filter grades
+  let filteredGrades = gradesCache;
+
+  if (classFilter) {
+    // Only keep grades where the student's class matches the filter
+    filteredGrades = filteredGrades.filter(g => {
+      const student = studentsCache.find(s => s.id === g.studentId);
+      return student && student.class === classFilter;
+    });
+  }
+
+  if (subjectFilter) {
+    filteredGrades = filteredGrades.filter(g => g.subject === subjectFilter);
+  }
+
+  if (termFilter) {
+    filteredGrades = filteredGrades.filter(g => g.term === termFilter);
+  }
+
+  if (examTypeFilter) {
+    filteredGrades = filteredGrades.filter(g => g.examType === examTypeFilter);
+  }
+
+  document.getElementById('gradesTableBody').innerHTML = filteredGrades.map(g => {
+    const student = studentsCache.find(s => s.id === g.studentId);
+    const hasScores = hasActualScores(g);
+    const total = hasScores ? (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0) : null;
+    const examTypeClass = g.examType === 'Opener' ? 'opener' : g.examType === 'Midterm' ? 'midterm' : 'endterm';
+    return `<tr>
+      <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
+      <td>${student?.class || '-'}</td>
+      <td>${g.subject}</td>
+      <td>${g.term}</td>
+      <td><span class="exam-type-badge ${examTypeClass}">${g.examType || 'Opener'}</span></td>
+      <td>${g.test1 ?? '-'}</td>
+      <td>${g.test2 ?? '-'}</td>
+      <td>${g.test3 ?? '-'}</td>
+      <td>${g.exam ?? '-'}</td>
+      <td><strong>${hasScores ? total : '-'}</strong></td>
+      <td>${getGradeBadge(total)}</td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="12" style="text-align:center;color:#999;padding:20px;">No grades found for the selected filters</td></tr>';
+}
 
     // [Continue with renderAttendance, renderClassPerformance, renderWarnings, renderSuspensions, renderExpulsions, renderClinic, renderPrefects, renderTeachers, renderTeacherAttendance, renderMaintenance, renderMaintenanceDept, renderAnalytics, renderUsers, renderRegistrations, renderAudit, printTab, shareTab, etc.]
     
