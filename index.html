@@ -1056,13 +1056,13 @@
 
     // HELPER FUNCTIONS
     function getKenyanGrade(score) {
-      if (score === undefined || score === null || isNaN(score)) return null;
-      const percentage = Math.round(score);
-      for (const grade of KENYAN_GRADES) {
-        if (percentage >= grade.min && percentage <= grade.max) return grade;
-      }
-      return KENYAN_GRADES[KENYAN_GRADES.length - 1];
-    }
+  if (score === undefined || score === null || isNaN(score)) return null;
+  const percentage = Math.round(score);
+  for (const grade of KENYAN_GRADES) {
+    if (percentage >= grade.min && percentage <= grade.max) return grade;
+  }
+  return null;  // ← Return null instead of "E" for invalid scores
+}
 
     function hasActualScores(grade) {
       if (!grade) return false;
