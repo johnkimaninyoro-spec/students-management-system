@@ -1090,28 +1090,29 @@
   return (isValidNumber(grade.test1) || isValidNumber(grade.test2) || isValidNumber(grade.test3) || isValidNumber(grade.exam));
 }
 
-    function getGradeBadge(score) {
-  // Return N/A for any invalid or empty score
-  if (score === undefined || score === null || score === '' || isNaN(score)) {
-    return '<span class="badge badge-na">N/A</span>';
-  }
-function getGradeBadgeForDisplay(score) {
-  // Return N/A for any invalid or empty score
-  if (score === undefined || score === null || score === '' || isNaN(score)) {
-    return '<span class="badge badge-na">N/A</span>';
-  }
-  const grade = getKenyanGrade(score);
-  if (!grade) {
-    return '<span class="badge badge-na">N/A</span>';
-  }
-  return `<span class="badge ${grade.class}">${grade.grade}</span>`;
-}
-  const grade = getKenyanGrade(score);
-  if (!grade) {
-    return '<span class="badge badge-na">N/A</span>';
-  }
-  return `<span class="badge ${grade.class}">${grade.grade}</span>`;
-}
+        function getGradeBadge(score) {
+      // Return N/A for any invalid or empty score
+      if (score === undefined || score === null || score === '' || isNaN(score)) {
+        return '<span class="badge badge-na">N/A</span>';
+      }
+      const grade = getKenyanGrade(score);
+      if (!grade) {
+        return '<span class="badge badge-na">N/A</span>';
+      }
+      return `<span class="badge ${grade.class}">${grade.grade}</span>`;
+    }
+
+    function getGradeBadgeForDisplay(score) {
+      // Return N/A for any invalid or empty score
+      if (score === undefined || score === null || score === '' || isNaN(score)) {
+        return '<span class="badge badge-na">N/A</span>';
+      }
+      const grade = getKenyanGrade(score);
+      if (!grade) {
+        return '<span class="badge badge-na">N/A</span>';
+      }
+      return `<span class="badge ${grade.class}">${grade.grade}</span>`;
+    }
 
     function isPass(score) {
       if (score === undefined || score === null || isNaN(score)) return false;
