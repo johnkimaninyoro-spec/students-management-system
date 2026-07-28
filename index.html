@@ -5053,7 +5053,12 @@ function printAnalytics() {
       `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found</td></tr>';
     }
 
-        function renderGrades() {
+           function renderGrades() {
+  console.log('📊 renderGrades() called');
+  console.log('📊 gradesCache length:', gradesCache.length);
+  console.log('📊 studentsCache length:', studentsCache.length);
+  console.log('📊 gradesCache sample:', gradesCache.slice(0, 3));
+  
   // POPULATE CLASS DROPDOWN - ADD THIS
   const classSelect = document.getElementById('gradeClassFilter');
   if (classSelect.options.length <= 1) {
@@ -5088,7 +5093,7 @@ function printAnalytics() {
   const classFilter = document.getElementById('gradeClassFilter').value;
   const subjectFilter = document.getElementById('gradeSubjectFilter').value;
   const termFilter = document.getElementById('gradeTermFilter').value;
-  const examTypeFilter = document.getElementById('gradeExamTypeFilter').value;
+  const examTypeFilter = document.getElementById('gradeExamTypeFilter').value; 
 
   // Filter grades
   let filteredGrades = gradesCache;
@@ -5147,9 +5152,11 @@ function printAnalytics() {
         <button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>
       </td>
     </tr>`;
+  
   }).join('') || '<tr><td colspan="12" style="text-align:center;color:#999;padding:20px;">No grades found for the selected filters</td></tr>';
+  
+  console.log('✅ renderGrades() finished, rows in table:', document.getElementById('gradesTableBody').innerHTML.length);
 }
-
     // [Continue with renderAttendance, renderClassPerformance, renderWarnings, renderSuspensions, renderExpulsions, renderClinic, renderPrefects, renderTeachers, renderTeacherAttendance, renderMaintenance, renderMaintenanceDept, renderAnalytics, renderUsers, renderRegistrations, renderAudit, printTab, shareTab, etc.]
     
     // ============================================================
