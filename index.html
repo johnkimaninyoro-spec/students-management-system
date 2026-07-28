@@ -1056,30 +1056,61 @@
 
     // HELPER FUNCTIONS
     function getKenyanGrade(score) {
-  if (score === undefined || score === null || isNaN(score)) return null;
-  const percentage = Math.round(score);
-  for (const grade of KENYAN_GRADES) {
-    if (percentage >= grade.min && percentage <= grade.max) return grade;
+  // Return null for any invalid or empty score
+  if (score === undefined || score === null || score === '' || isNaN(score)) {
+    return null;
   }
-  return null;  // ← Return null instead of "E" for invalid scores
+  const percentage = Math.round(score);
+  // Only assign grades to actual scores
+  for (const grade of KENYAN_GRADES) {
+    if (percentage >= grade.min && percentage <= grade.max) {
+      return grade;
+    }
+  }
+  // Return null for any score that doesn't fit (shouldn't happen with valid scores)
+  return null;
 }
 
     function hasActualScores(grade) {
-      if (!grade) return false;
-      return (grade.test1 !== undefined && grade.test1 !== null && grade.test1 !== '') ||
-             (grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '') ||
-             (grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '') ||
-             (grade.exam !== undefined && grade.exam !== null && grade.exam !== '');
-    }
+  if (!grade) return false;
+  
+  // Check if any score exists and is not null, undefined, or empty string
+  const hasTest1 = grade.test1 !== undefined && grade.test1 !== null && grade.test1 !== '' && grade.test1 !== 0;
+  const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '' && grade.test2 !== 0;
+  const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '' && grade.test3 !== 0;
+  const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '' && grade.exam !== 0;
+  
+  // Also check if values are valid numbers (not NaN)
+  const isValidNumber = (val) => {
+    if (val === undefined || val === null || val === '') return false;
+    return !isNaN(parseFloat(val));
+  };
+  
+  return (isValidNumber(grade.test1) || isValidNumber(grade.test2) || isValidNumber(grade.test3) || isValidNumber(grade.exam));
+}
 
     function getGradeBadge(score) {
-      if (score === undefined || score === null || isNaN(score)) {
-        return '<span class="badge badge-na">N/A</span>';
-      }
-      const grade = getKenyanGrade(score);
-      if (!grade) return '<span class="badge badge-na">N/A</span>';
-      return `<span class="badge ${grade.class}">${grade.grade}</span>`;
-    }
+  // Return N/A for any invalid or empty score
+  if (score === undefined || score === null || score === '' || isNaN(score)) {
+    return '<span class="badge badge-na">N/A</span>';
+  }
+function getGradeBadgeForDisplay(score) {
+  // Return N/A for any invalid or empty score
+  if (score === undefined || score === null || score === '' || isNaN(score)) {
+    return '<span class="badge badge-na">N/A</span>';
+  }
+  const grade = getKenyanGrade(score);
+  if (!grade) {
+    return '<span class="badge badge-na">N/A</span>';
+  }
+  return `<span class="badge ${grade.class}">${grade.grade}</span>`;
+}
+  const grade = getKenyanGrade(score);
+  if (!grade) {
+    return '<span class="badge badge-na">N/A</span>';
+  }
+  return `<span class="badge ${grade.class}">${grade.grade}</span>`;
+}
 
     function isPass(score) {
       if (score === undefined || score === null || isNaN(score)) return false;
@@ -1198,6 +1229,89 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
+// ============================================================
+// PHOTO UPLOAD TO FIREBASE STORAGE
+// ============================================================
+
+window.uploadStudentPhotoToFirebase = async function(file, studentId) {
+  try {
+    console.log('📤 Starting upload for student:', studentId);
+    
+    // Show upload progress
+    const progressDiv = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    
+    if (progressDiv) {
+      progressDiv.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = 'Uploading photo... 0%';
+    }
+
+    // Create a unique filename
+    const timestamp = Date.now();
+    const fileName = `${timestamp}_${file.name}`;
+    const storageRef = ref(storage, `studentPhotos/${studentId}/${fileName}`);
+
+    console.log('📁 Storage path:', `studentPhotos/${studentId}/${fileName}`);
+
+    // Upload the file
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    // Track upload progress
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          // Progress
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          if (progressFill) progressFill.style.width = `${progress}%`;
+          if (progressText) progressText.textContent = `Uploading... ${Math.round(progress)}%`;
+          console.log(`📤 Upload progress: ${Math.round(progress)}%`);
+        },
+        (error) => {
+          // Error
+          console.error('❌ Upload error:', error);
+          if (progressDiv) progressDiv.style.display = 'none';
+          showToast('❌ Upload failed: ' + error.message, 'error');
+          reject(error);
+        },
+        async () => {
+          // Success - get download URL
+          try {
+            console.log('✅ Upload complete! Getting download URL...');
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log('📸 Download URL:', downloadURL);
+            
+            // Update the student record in Firestore
+            await updateDoc(doc(db, 'students', studentId), {
+              photoUrl: downloadURL
+            });
+            console.log('💾 Firestore updated with photo URL');
+            
+            // Update local cache
+            const student = studentsCache.find(s => s.id === studentId);
+            if (student) {
+              student.photoUrl = downloadURL;
+            }
+            
+            if (progressDiv) progressDiv.style.display = 'none';
+            
+            showToast('✅ Photo uploaded successfully!', 'success');
+            resolve(downloadURL);
+          } catch (err) {
+            console.error('❌ Error getting download URL:', err);
+            reject(err);
+          }
+        }
+      );
+    });
+  } catch (error) {
+    console.error('❌ Upload error:', error);
+    showToast('❌ Error uploading photo: ' + error.message, 'error');
+    throw error;
+  }
+};
     // ============================================================
     // STUDENT PROFILE
     // ============================================================
@@ -1772,57 +1886,77 @@
       openModal(editId ? 'Edit Student' : 'Add New Student', html);
     };
 
-    window.handleStudentPhotoUpload = function(event, studentId = null) {
-      const file = event.target.files[0];
-      if (!file) return;
+    window.handleStudentPhotoUpload = async function(event, studentId = null) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-      if (!file.type.startsWith('image/')) {
-        showToast('Please select an image file (JPG, JPEG, PNG, etc.)', 'error');
-        event.target.value = '';
-        return;
-      }
+  console.log('📸 Photo selected:', file.name, 'Size:', file.size);
 
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Image size should be less than 5MB', 'error');
-        event.target.value = '';
-        return;
-      }
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select an image file (JPG, JPEG, PNG, etc.)', 'error');
+    event.target.value = '';
+    return;
+  }
 
-      const progressDiv = document.getElementById('uploadProgress');
-      const progressFill = document.getElementById('progressFill');
-      const progressText = document.getElementById('progressText');
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image size should be less than 5MB', 'error');
+    event.target.value = '';
+    return;
+  }
+
+  // If we have a student ID (edit mode), upload to Firebase
+  if (studentId && studentId !== '') {
+    try {
+      console.log('📤 Uploading to Firebase for student:', studentId);
+      const downloadURL = await window.uploadStudentPhotoToFirebase(file, studentId);
       
-      if (progressDiv) {
-        progressDiv.style.display = 'block';
-        progressFill.style.width = '0%';
-        progressText.textContent = 'Uploading photo... 0%';
+      // Update preview
+      const previewImg = document.getElementById('s_photoPreview');
+      if (previewImg) {
+        previewImg.src = downloadURL;
+        previewImg.style.display = 'block';
       }
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const previewImg = document.getElementById('s_photoPreview');
-        if (previewImg) {
-          previewImg.src = e.target.result;
-          previewImg.style.display = 'block';
-        }
-        const placeholder = document.getElementById('s_photoPlaceholder');
-        if (placeholder) {
-          placeholder.style.display = 'none';
-        }
-        
-        if (progressDiv) {
-          progressDiv.style.display = 'none';
-        }
-        
-        const hiddenInput = document.getElementById('s_photoData');
-        if (hiddenInput) {
-          hiddenInput.value = e.target.result;
-        }
-        
-        showToast('📸 Photo uploaded successfully!', 'success');
-      };
-      reader.readAsDataURL(file);
+      const placeholder = document.getElementById('s_photoPlaceholder');
+      if (placeholder) placeholder.style.display = 'none';
+      
+      // Update hidden input with the Firebase URL
+      const hiddenInput = document.getElementById('s_photoData');
+      if (hiddenInput) hiddenInput.value = downloadURL;
+      
+      // Update the photo URL in the student data
+      const student = studentsCache.find(s => s.id === studentId);
+      if (student) {
+        student.photoUrl = downloadURL;
+      }
+      
+      // Refresh the student list
+      renderStudents();
+      
+    } catch (error) {
+      console.error('Upload failed:', error);
+      showToast('Failed to upload photo. Please try again.', 'error');
+    }
+  } else {
+    // For new students (no ID yet), store temporarily as base64
+    console.log('📸 New student - storing as base64 temporarily');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const previewImg = document.getElementById('s_photoPreview');
+      if (previewImg) {
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'block';
+      }
+      const placeholder = document.getElementById('s_photoPlaceholder');
+      if (placeholder) placeholder.style.display = 'none';
+      
+      const hiddenInput = document.getElementById('s_photoData');
+      if (hiddenInput) hiddenInput.value = e.target.result;
+      
+      showToast('📸 Photo ready! Will be saved when student is added.', 'success');
     };
+    reader.readAsDataURL(file);
+  }
+};
 
     window.removeStudentPhoto = function() {
       const hiddenInput = document.getElementById('s_photoData');
@@ -1843,54 +1977,88 @@
     };
 
     window.saveStudent = async function(editId) {
-      const admNo = document.getElementById('s_admNo').value.trim();
-      const firstName = document.getElementById('s_firstName').value.trim();
-      const lastName = document.getElementById('s_lastName').value.trim();
-      if (!admNo || !firstName || !lastName) { showToast('Please fill all required fields', 'error'); return; }
+  const admNo = document.getElementById('s_admNo').value.trim();
+  const firstName = document.getElementById('s_firstName').value.trim();
+  const lastName = document.getElementById('s_lastName').value.trim();
+  if (!admNo || !firstName || !lastName) { 
+    showToast('Please fill all required fields', 'error'); 
+    return; 
+  }
 
-      const isPrefect = document.getElementById('s_isPrefect').value;
-      const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
-      const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
+  const isPrefect = document.getElementById('s_isPrefect').value;
+  const prefectRole = isPrefect === 'Yes' ? document.getElementById('s_prefectRole').value : '';
+  const prefectDepartment = isPrefect === 'Yes' ? document.getElementById('s_prefectDept').value : '';
 
-      const photoUrl = document.getElementById('s_photoData').value || '';
+  const photoData = document.getElementById('s_photoData').value || '';
 
-      const data = {
-        admNo, firstName, lastName,
-        class: document.getElementById('s_class').value,
-        gender: document.getElementById('s_gender').value,
-        dob: document.getElementById('s_dob').value,
-        status: document.getElementById('s_status').value,
-        location: document.getElementById('s_location').value,
-        dorm: document.getElementById('s_dorm').value || '',
-        photoUrl: photoUrl,
-        isPrefect: isPrefect,
-        prefectRole: prefectRole,
-        prefectDepartment: prefectDepartment,
-        sponsorshipType: document.getElementById('s_sponsorshipType').value,
-        sponsorName: document.getElementById('s_sponsorName').value,
-        sponsorContact: document.getElementById('s_sponsorContact').value,
-        sponsorNotes: document.getElementById('s_sponsorNotes').value,
-        parent: document.getElementById('s_parent').value,
-        parentPhone: document.getElementById('s_parentPhone').value,
-        parentEmail: document.getElementById('s_parentEmail').value,
-        health: document.getElementById('s_health').value,
-        notes: document.getElementById('s_notes').value
-      };
+  const data = {
+    admNo, firstName, lastName,
+    class: document.getElementById('s_class').value,
+    gender: document.getElementById('s_gender').value,
+    dob: document.getElementById('s_dob').value,
+    status: document.getElementById('s_status').value,
+    location: document.getElementById('s_location').value,
+    dorm: document.getElementById('s_dorm').value || '',
+    isPrefect: isPrefect,
+    prefectRole: prefectRole,
+    prefectDepartment: prefectDepartment,
+    sponsorshipType: document.getElementById('s_sponsorshipType').value,
+    sponsorName: document.getElementById('s_sponsorName').value,
+    sponsorContact: document.getElementById('s_sponsorContact').value,
+    sponsorNotes: document.getElementById('s_sponsorNotes').value,
+    parent: document.getElementById('s_parent').value,
+    parentPhone: document.getElementById('s_parentPhone').value,
+    parentEmail: document.getElementById('s_parentEmail').value,
+    health: document.getElementById('s_health').value,
+    notes: document.getElementById('s_notes').value,
+    photoUrl: photoData // Will be updated if it's a base64 image
+  };
 
-      try {
-        if (editId) {
-          await updateDoc(doc(db, 'students', editId), data);
-          showToast('✅ Student updated successfully!');
-        } else {
-          data.createdAt = serverTimestamp();
-          const docRef = await addDoc(collection(db, 'students'), data);
-          showToast('✅ Student added successfully!');
-        }
-        closeModal();
-      } catch (err) {
-        showToast('❌ Error: ' + err.message, 'error');
+  try {
+    if (editId) {
+      // If photoData is a base64 string (new upload), upload to Firebase
+      if (photoData && photoData.startsWith('data:image')) {
+        console.log('📤 Uploading base64 photo to Firebase...');
+        // Convert base64 to file
+        const response = await fetch(photoData);
+        const blob = await response.blob();
+        const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+        const downloadURL = await window.uploadStudentPhotoToFirebase(file, editId);
+        data.photoUrl = downloadURL;
+        console.log('✅ Photo uploaded to Firebase:', downloadURL);
+      } else if (photoData && photoData.startsWith('http')) {
+        // Use existing URL (already in Firebase)
+        data.photoUrl = photoData;
       }
-    };
+      
+      await updateDoc(doc(db, 'students', editId), data);
+      showToast('✅ Student updated successfully!');
+    } else {
+      // Create student first, then upload photo
+      data.createdAt = serverTimestamp();
+      const docRef = await addDoc(collection(db, 'students'), data);
+      const studentId = docRef.id;
+      
+      // If there's a photo, upload it
+      if (photoData && photoData.startsWith('data:image')) {
+        console.log('📤 Uploading photo for new student...');
+        const response = await fetch(photoData);
+        const blob = await response.blob();
+        const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+        const downloadURL = await window.uploadStudentPhotoToFirebase(file, studentId);
+        await updateDoc(doc(db, 'students', studentId), { photoUrl: downloadURL });
+        console.log('✅ Photo uploaded to Firebase:', downloadURL);
+      }
+      
+      showToast('✅ Student added successfully!');
+    }
+    closeModal();
+    renderStudents();
+  } catch (err) {
+    console.error('❌ Error saving student:', err);
+    showToast('❌ Error: ' + err.message, 'error');
+  }
+};
 
     window.deleteStudent = async function(id) {
       if (!canDeleteSpecific('students')) {
@@ -1928,32 +2096,39 @@
     };
 
     window.saveGrade = async function(editId) {
-      const studentId = document.getElementById('g_student').value;
-      const subject = document.getElementById('g_subject').value;
-      const term = document.getElementById('g_term').value;
-      const examType = document.getElementById('g_examType').value;
-      const test1 = parseInt(document.getElementById('g_test1').value) || null;
-      const test2 = parseInt(document.getElementById('g_test2').value) || null;
-      const test3 = parseInt(document.getElementById('g_test3').value) || null;
-      const exam = parseInt(document.getElementById('g_exam').value) || null;
+  const studentId = document.getElementById('g_student').value;
+  const subject = document.getElementById('g_subject').value;
+  const term = document.getElementById('g_term').value;
+  const examType = document.getElementById('g_examType').value;
+  
+  // Parse values - treat empty as null (not 0)
+  const test1 = document.getElementById('g_test1').value.trim() === '' ? null : parseFloat(document.getElementById('g_test1').value);
+  const test2 = document.getElementById('g_test2').value.trim() === '' ? null : parseFloat(document.getElementById('g_test2').value);
+  const test3 = document.getElementById('g_test3').value.trim() === '' ? null : parseFloat(document.getElementById('g_test3').value);
+  const exam = document.getElementById('g_exam').value.trim() === '' ? null : parseFloat(document.getElementById('g_exam').value);
 
-      if (!studentId || !subject || !term || !examType) { showToast('Please fill all required fields', 'error'); return; }
+  if (!studentId || !subject || !term || !examType) { 
+    showToast('Please fill all required fields', 'error'); 
+    return; 
+  }
 
-      const data = { studentId, subject, term, examType, test1, test2, test3, exam };
+  const data = { studentId, subject, term, examType, test1, test2, test3, exam };
 
-      try {
-        if (editId) {
-          await updateDoc(doc(db, 'grades', editId), data);
-          showToast('Grade updated!');
-        } else {
-          data.recordedBy = currentUser?.email || 'unknown';
-          data.createdAt = serverTimestamp();
-          await addDoc(collection(db, 'grades'), data);
-          showToast('Grade added!');
-        }
-        closeModal();
-      } catch (err) { showToast('Error: ' + err.message, 'error'); }
-    };
+  try {
+    if (editId) {
+      await updateDoc(doc(db, 'grades', editId), data);
+      showToast('Grade updated!');
+    } else {
+      data.recordedBy = currentUser?.email || 'unknown';
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db, 'grades'), data);
+      showToast('Grade added!');
+    }
+    closeModal();
+  } catch (err) { 
+    showToast('Error: ' + err.message, 'error'); 
+  }
+};
 
     window.deleteGrade = async function(id) {
       if (!canDeleteSpecific('grades')) {
@@ -2584,25 +2759,27 @@ function renderClassPerformance() {
   const classSelect = document.getElementById('performanceClassSelect');
   const termSelect = document.getElementById('performanceTermSelect');
   
-  const selectedClass = classSelect ? classSelect.value : '';
-  const selectedTerm = termSelect ? termSelect.value : '';
+  // Get selected values - DON'T reset them!
+  let selectedClass = classSelect ? classSelect.value : '';
+  let selectedTerm = termSelect ? termSelect.value : '';
   
+  // If no class selected, show message and exit
   if (!selectedClass) {
     document.getElementById('perfRankingsBody').innerHTML = 
-      '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Please select a class to view performance</td></tr>';
-    // Clear charts
-    ['perfSubjectChart', 'perfStudentChart', 'perfGradeChart', 'perfPassFailChart'].forEach(id => {
-      if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
-    });
+      '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">📚 Please select a class to view performance</td></tr>';
     return;
   }
+  
+  // Save selection so it stays
+  localStorage.setItem('selectedClass', selectedClass);
+  localStorage.setItem('selectedTerm', selectedTerm);
   
   // Get students in this class
   const classStudents = studentsCache.filter(s => s.class === selectedClass);
   
   if (classStudents.length === 0) {
     document.getElementById('perfRankingsBody').innerHTML = 
-      '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No students found in this class</td></tr>';
+      '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">👤 No students found in this class</td></tr>';
     return;
   }
   
@@ -2615,7 +2792,7 @@ function renderClassPerformance() {
     studentGrades = studentGrades.filter(g => g.term === selectedTerm);
   }
   
-  // --- Calculate Subject Averages ---
+  // Calculate subject averages
   const subjectScores = {};
   studentGrades.forEach(g => {
     if (hasActualScores(g)) {
@@ -2627,12 +2804,12 @@ function renderClassPerformance() {
   
   const subjectAverages = {};
   for (const [subject, scores] of Object.entries(subjectScores)) {
-    subjectAverages[subject] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    subjectAverages[subject] = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
   }
   
-  // --- Calculate Student Averages ---
+  // Calculate student averages
   const studentAverages = classStudents.map(student => {
-    const grades = studentGrades.filter(g => g.studentId === student.id);
+    const grades = studentGrades.filter(g => g.studentId === student.id && hasActualScores(g));
     let totalScore = 0;
     let count = 0;
     
@@ -2644,39 +2821,37 @@ function renderClassPerformance() {
     });
     
     const avg = count > 0 ? Math.round(totalScore / count) : 0;
-    const passed = isPass(avg);
-    
-    return {
-      student: student,
-      average: avg,
-      passed: passed,
-      subjects: count
-    };
+    return { student, average: avg, passed: avg >= 50, subjects: count };
   });
   
-  // Sort by average (highest first)
-  studentAverages.sort((a, b) => b.average - a.average);
+  const studentsWithGrades = studentAverages.filter(s => s.subjects > 0);
+  studentsWithGrades.sort((a, b) => b.average - a.average);
   
-  // --- Render Rankings Table ---
-  document.getElementById('perfRankingsBody').innerHTML = studentAverages.map((item, index) => {
-    const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-    return `
-      <tr class="${rankClass}">
-        <td><strong>#${index + 1}</strong></td>
-        <td>${item.student.firstName} ${item.student.lastName}</td>
-        <td><strong>${item.average}%</strong></td>
-        <td>${getGradeBadge(item.average)}</td>
-        <td>${item.passed ? '✅' : '❌'}</td>
-        <td>${item.subjects}</td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No data available</td></tr>';
+  // Render rankings
+  if (studentsWithGrades.length === 0) {
+    document.getElementById('perfRankingsBody').innerHTML = 
+      '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">📝 No grades recorded for this class</td></tr>';
+  } else {
+    document.getElementById('perfRankingsBody').innerHTML = studentsWithGrades.map((item, index) => {
+      const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+      const medal = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
+      return `
+        <tr class="${rankClass}">
+          <td><strong>#${index + 1}</strong></td>
+          <td>${medal}${item.student.firstName} ${item.student.lastName}</td>
+          <td><strong>${item.average}%</strong></td>
+          <td>${getGradeBadgeForDisplay(item.average)}</td>
+          <td>${item.passed ? '✅' : '❌'}</td>
+          <td>${item.subjects}</td>
+        </tr>
+      `;
+    }).join('');
+  }
   
-  // --- Render Subject Averages Chart ---
+  // Render charts
   destroyChart('perfSubjectChart');
   const subjectLabels = Object.keys(subjectAverages);
   const subjectData = Object.values(subjectAverages);
-  const subjectColors = subjectData.map(s => getGradeColor(s));
   
   if (subjectLabels.length > 0) {
     chartInstances['perfSubjectChart'] = new Chart(document.getElementById('perfSubjectChart'), {
@@ -2685,7 +2860,7 @@ function renderClassPerformance() {
         labels: subjectLabels,
         datasets: [{
           data: subjectData,
-          backgroundColor: subjectColors,
+          backgroundColor: subjectData.map(s => getGradeColor(s)),
           borderRadius: 4
         }]
       },
@@ -2698,9 +2873,8 @@ function renderClassPerformance() {
     });
   }
   
-  // --- Render Student Performance Comparison Chart ---
-  destroyChart('perfStudentChart');
-  const topStudents = studentAverages.slice(0, 10);
+      destroyChart('perfStudentChart');
+  const topStudents = studentsWithGrades.slice(0, 10);
   if (topStudents.length > 0) {
     chartInstances['perfStudentChart'] = new Chart(document.getElementById('perfStudentChart'), {
       type: 'bar',
@@ -2725,22 +2899,18 @@ function renderClassPerformance() {
   destroyChart('perfGradeChart');
   const gradeDist = {};
   KENYAN_GRADES.forEach(g => gradeDist[g.grade] = 0);
-  studentAverages.forEach(item => {
+  studentsWithGrades.forEach(item => {
     const grade = getKenyanGrade(item.average);
     if (grade) gradeDist[grade.grade] = (gradeDist[grade.grade] || 0) + 1;
   });
   
-  const gradeLabels2 = KENYAN_GRADES.map(g => g.grade);
-  const gradeData2 = KENYAN_GRADES.map(g => gradeDist[g.grade] || 0);
-  const gradeColors2 = KENYAN_GRADES.map(g => getGradeColor(g.grade));
-  
   chartInstances['perfGradeChart'] = new Chart(document.getElementById('perfGradeChart'), {
     type: 'bar',
     data: {
-      labels: gradeLabels2,
+      labels: KENYAN_GRADES.map(g => g.grade),
       datasets: [{
-        data: gradeData2,
-        backgroundColor: gradeColors2,
+        data: KENYAN_GRADES.map(g => gradeDist[g.grade] || 0),
+        backgroundColor: KENYAN_GRADES.map(g => getGradeColor(g.grade)),
         borderRadius: 4
       }]
     },
@@ -2754,26 +2924,29 @@ function renderClassPerformance() {
   
   // --- Render Pass/Fail Ratio Chart ---
   destroyChart('perfPassFailChart');
-  const passed = studentAverages.filter(s => s.passed).length;
-  const failed = studentAverages.filter(s => !s.passed).length;
+  const passed = studentsWithGrades.filter(s => s.passed).length;
+  const failed = studentsWithGrades.filter(s => !s.passed).length;
   
-  chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
-    type: 'doughnut',
-    data: {
-      labels: [`✅ Passed (${passed})`, `❌ Failed (${failed})`],
-      datasets: [{
-        data: [passed, failed],
-        backgroundColor: ['#27ae60', '#e74c3c']
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } }
-    }
-  });
+  if (studentsWithGrades.length > 0) {
+    chartInstances['perfPassFailChart'] = new Chart(document.getElementById('perfPassFailChart'), {
+      type: 'doughnut',
+      data: {
+        labels: [`✅ Passed (${passed})`, `❌ Failed (${failed})`],
+        datasets: [{
+          data: [passed, failed],
+          backgroundColor: ['#27ae60', '#e74c3c']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
 }
-// MAKE IT GLOBAL - ONLY ONCE
+
+// MAKE IT GLOBAL - ONLY ONCE (KEEP THIS LINE)
 window.renderClassPerformance = renderClassPerformance;
 
     function renderExpulsions() {
@@ -3230,7 +3403,7 @@ window.renderClassPerformance = renderClassPerformance;
   return data[tab] || { rows: [], columns: [] };
 }
 
-    window.printTab = function(tab) {
+ window.printTab = function(tab) {
   const title = getTabTitle(tab);
   
   // Special handling for Analytics tab - print charts
@@ -3271,14 +3444,17 @@ window.renderClassPerformance = renderClassPerformance;
         studentNames[studentId] = (student.firstName || '') + ' ' + (student.lastName || '');
       }
       
-      const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
-      
-      if (!studentTotals[studentId]) {
-        studentTotals[studentId] = 0;
-        studentCounts[studentId] = 0;
+      // Only calculate if student has actual scores
+      if (hasActualScores(row)) {
+        const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+        
+        if (!studentTotals[studentId]) {
+          studentTotals[studentId] = 0;
+          studentCounts[studentId] = 0;
+        }
+        studentTotals[studentId] += total;
+        studentCounts[studentId]++;
       }
-      studentTotals[studentId] += total;
-      studentCounts[studentId]++;
     });
     
     // Calculate mean scores and create student summary
@@ -3313,17 +3489,19 @@ window.renderClassPerformance = renderClassPerformance;
     // Sort the actual rows by student rank (mean score)
     filteredRows = data.rows
       .map(row => {
-        const total = (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
-        const mean = row.studentId && studentTotals[row.studentId] ? 
+        const hasScores = hasActualScores(row);
+        const total = hasScores ? (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0) : 0;
+        const mean = row.studentId && studentTotals[row.studentId] && studentCounts[row.studentId] > 0 ? 
           Math.round(studentTotals[row.studentId] / studentCounts[row.studentId]) : 0;
         const student = studentsCache.find(s => s.id === row.studentId);
         return {
           ...row,
-          totalScore: total,
-          meanScore: mean,
-          grade: getKenyanGrade(mean)?.grade || 'N/A',
+          totalScore: hasScores ? total : null,
+          meanScore: hasScores ? mean : null,
+          grade: hasScores ? (getKenyanGrade(mean)?.grade || 'N/A') : 'N/A',
           studentName: student ? (student.firstName || '') + ' ' + (student.lastName || '') : 'Unknown',
-          rank: studentRank[row.studentId] || 999
+          rank: studentRank[row.studentId] || 999,
+          hasScores: hasScores
         };
       })
       .sort((a, b) => a.rank - b.rank); // Sort by rank (1 = highest score)
@@ -3369,7 +3547,7 @@ window.renderClassPerformance = renderClassPerformance;
           val = '-';
         }
         // Add rank indicator for top performers
-        if (row.rank && row.rank <= 3) {
+        if (row.rank && row.rank <= 3 && row.hasScores) {
           const medal = row.rank === 1 ? '🥇 ' : row.rank === 2 ? '🥈 ' : '🥉 ';
           val = medal + val;
         }
@@ -3383,7 +3561,7 @@ window.renderClassPerformance = renderClassPerformance;
         } else {
           val = '-';
         }
-        if (row.rank && row.rank <= 3) {
+        if (row.rank && row.rank <= 3 && row.hasScores) {
           const medal = row.rank === 1 ? '🥇 ' : row.rank === 2 ? '🥈 ' : '🥉 ';
           val = medal + val;
         }
@@ -3401,13 +3579,17 @@ window.renderClassPerformance = renderClassPerformance;
       }
       // Handle Total column - show total score
       else if (col === 'Total' || col === 'total') {
-        val = row.totalScore || (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+        val = row.hasScores ? (row.totalScore || (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0)) : '-';
       }
       // Handle Grade column - show grade based on mean
       else if (col === 'Grade' || col === 'grade') {
-        const total = row.totalScore || (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
-        const grade = getKenyanGrade(total);
-        val = grade ? grade.grade : 'N/A';
+        if (row.hasScores) {
+          const total = row.totalScore || (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0);
+          const grade = getKenyanGrade(total);
+          val = grade ? grade.grade : 'N/A';
+        } else {
+          val = 'N/A';
+        }
       }
       // Handle other columns
       else if (col === 'Subject' && row.subject) {
@@ -3726,10 +3908,10 @@ window.renderClassPerformance = renderClassPerformance;
     </html>
   `);
   printWindow.document.close();
-};
+};   
 
 // ============================================================
-// PRINT ANALYTICS - New function for printing charts
+// PRINT ANALYTICS - For printing charts
 // ============================================================
 function printAnalytics() {
   const printWindow = window.open('', '_blank');
@@ -3757,10 +3939,48 @@ function printAnalytics() {
   const chart2Canvas = document.getElementById('analyticsTrendChart');
   const chart3Canvas = document.getElementById('analyticsClassChart');
   
+  // Check if charts have data
+  const hasChart1 = chart1Canvas && chart1Canvas.width > 0 && chart1Canvas.height > 0;
+  const hasChart2 = chart2Canvas && chart2Canvas.width > 0 && chart2Canvas.height > 0;
+  const hasChart3 = chart3Canvas && chart3Canvas.width > 0 && chart3Canvas.height > 0;
+  
   // Convert charts to images
-  const chart1Data = chart1Canvas ? chart1Canvas.toDataURL('image/png') : '';
-  const chart2Data = chart2Canvas ? chart2Canvas.toDataURL('image/png') : '';
-  const chart3Data = chart3Canvas ? chart3Canvas.toDataURL('image/png') : '';
+  const chart1Data = hasChart1 ? chart1Canvas.toDataURL('image/png') : '';
+  const chart2Data = hasChart2 ? chart2Canvas.toDataURL('image/png') : '';
+  const chart3Data = hasChart3 ? chart3Canvas.toDataURL('image/png') : '';
+  
+  // If no charts have data, show message
+  if (!hasChart1 && !hasChart2 && !hasChart3) {
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>${title} - Mara Christian High School</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 50px; text-align: center; }
+          .no-data { color: #999; font-size: 18px; }
+          .header { margin-bottom: 30px; }
+          .header h1 { color: #1a5276; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Mara Christian High School</h1>
+          <p>${title}</p>
+          <p style="color:#999;">Generated on: ${today} at ${time}</p>
+        </div>
+        <div class="no-data">
+          <p>📊 No analytics data to display.</p>
+          <p style="font-size:14px;margin-top:10px;">Please load data first by selecting a student or class and clicking "Load Data".</p>
+        </div>
+        <script>
+          window.onload = function() { setTimeout(function() { window.print(); }, 500); }
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    return;
+  }
   
   printWindow.document.write(`
     <html>
@@ -3835,13 +4055,6 @@ function printAnalytics() {
           margin: 0 auto;
         }
         
-        .no-data {
-          text-align: center;
-          color: #999;
-          font-size: 14px;
-          padding: 40px;
-        }
-        
         .footer {
           text-align: center;
           font-size: 11px;
@@ -3852,7 +4065,6 @@ function printAnalytics() {
         }
         
         @media print {
-          .no-print { display: none; }
           .chart-container { page-break-inside: avoid; }
         }
       </style>
@@ -3869,23 +4081,21 @@ function printAnalytics() {
       
       <div class="date-info">Generated on: ${today} at ${time}</div>
       
-      ${chart1Data ? `
+      ${hasChart1 ? `
         <div class="chart-container">
           <h3>📊 Student Grades by Subject</h3>
           <img src="${chart1Data}" alt="Student Grades Chart">
         </div>
-      ` : `
-        <div class="no-data">No chart data available. Please load analytics data first.</div>
-      `}
+      ` : ''}
       
-      ${chart2Data ? `
+      ${hasChart2 ? `
         <div class="chart-container">
           <h3>📈 Student Grade Trend</h3>
           <img src="${chart2Data}" alt="Grade Trend Chart">
         </div>
       ` : ''}
       
-      ${chart3Data ? `
+      ${hasChart3 ? `
         <div class="chart-container">
           <h3>📊 Class Average by Subject</h3>
           <img src="${chart3Data}" alt="Class Average Chart">
@@ -4780,7 +4990,6 @@ function printAnalytics() {
   let filteredGrades = gradesCache;
 
   if (classFilter) {
-    // Only keep grades where the student's class matches the filter
     filteredGrades = filteredGrades.filter(g => {
       const student = studentsCache.find(s => s.id === g.studentId);
       return student && student.class === classFilter;
@@ -4801,9 +5010,22 @@ function printAnalytics() {
 
   document.getElementById('gradesTableBody').innerHTML = filteredGrades.map(g => {
     const student = studentsCache.find(s => s.id === g.studentId);
+    
+    // Check if student has any actual scores
     const hasScores = hasActualScores(g);
-    const total = hasScores ? (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0) : null;
+    
+    // Calculate total ONLY if there are actual scores
+    let total = null;
+    let gradeDisplay = 'N/A';
+    
+    if (hasScores) {
+      total = (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+      const grade = getKenyanGrade(total);
+      gradeDisplay = grade ? grade.grade : 'N/A';
+    }
+    
     const examTypeClass = g.examType === 'Opener' ? 'opener' : g.examType === 'Midterm' ? 'midterm' : 'endterm';
+    
     return `<tr>
       <td>${student ? student.firstName + ' ' + student.lastName : 'Unknown'}</td>
       <td>${student?.class || '-'}</td>
@@ -4815,7 +5037,7 @@ function printAnalytics() {
       <td>${g.test3 ?? '-'}</td>
       <td>${g.exam ?? '-'}</td>
       <td><strong>${hasScores ? total : '-'}</strong></td>
-      <td>${getGradeBadge(total)}</td>
+      <td>${getGradeBadgeForDisplay(hasScores ? total : null)}</td>
       <td>
         <button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>
@@ -4952,111 +5174,28 @@ populateClassPerformanceDropdown();
   }
   
   // ============================================================
-  // INITIALIZATION
- // ============================================================
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const loginPwd = document.getElementById('loginPassword');
-      if (loginPwd) {
-        loginPwd.addEventListener('keypress', function(e) { if (e.key === 'Enter') window.handleLogin(); });
-      }
-      console.log('🚀 Mara Christian High School Management System');
-      console.log('📚 Version 28.0.0 - Complete Version with All Tabs');
-      console.log('🔑 Test Login: test@test.com / test123');
-      console.log('✅ All dashboard tabs restored!');
-    });
-
-    console.log('✅ System initialized successfully!');
-// ============================================================
-// FORCE POPULATE ALL DROPDOWNS
+// INITIALIZATION
 // ============================================================
 
-function populateAllDropdowns() {
-    console.log('🔄 Populating all dropdowns...');
-    
-    try {
-        // 1. Class Performance dropdown
-        const perfSelect = document.getElementById('performanceClassSelect');
-        if (perfSelect) {
-            perfSelect.innerHTML = '<option value="">Select a class...</option>';
-            CLASSES.forEach(cls => {
-                const option = document.createElement('option');
-                option.value = cls;
-                option.textContent = cls;
-                perfSelect.appendChild(option);
-            });
-            console.log('✅ Class Performance dropdown: ' + perfSelect.options.length + ' options');
-        }
-        
-        // 2. Student class filter
-        const studentFilter = document.getElementById('studentClassFilter');
-        if (studentFilter) {
-            studentFilter.innerHTML = classSelectHtml();
-            console.log('✅ Student class filter: ' + studentFilter.options.length + ' options');
-        }
-        
-        // 3. Attendance class filter
-        const attendanceFilter = document.getElementById('attendanceClassFilter');
-        if (attendanceFilter) {
-            attendanceFilter.innerHTML = classSelectHtml();
-            console.log('✅ Attendance class filter: ' + attendanceFilter.options.length + ' options');
-        }
-        
-        // 4. Grade class filter
-        const gradeFilter = document.getElementById('gradeClassFilter');
-        if (gradeFilter) {
-            gradeFilter.innerHTML = classSelectHtml();
-            console.log('✅ Grade class filter: ' + gradeFilter.options.length + ' options');
-        }
-        // 5. NEW: Grade Subject Filter
-const gradeSubjectFilter = document.getElementById('gradeSubjectFilter');
-if (gradeSubjectFilter) {
-    gradeSubjectFilter.innerHTML = '<option value="">All Subjects</option>';
-    SUBJECTS.forEach(subject => {
-        const option = document.createElement('option');
-        option.value = subject;
-        option.textContent = subject;
-        gradeSubjectFilter.appendChild(option);
-    });
-    console.log('✅ Grade subject filter: ' + gradeSubjectFilter.options.length + ' options');
-}
-        // 6. Maintenance class filter
-        const maintFilter = document.getElementById('maintenanceClassFilter');
-        if (maintFilter) {
-            maintFilter.innerHTML = classSelectHtml();
-            console.log('✅ Maintenance class filter: ' + maintFilter.options.length + ' options');
-        }
-        
-        // 7. Analytics class select
-        const analyticsClass = document.getElementById('analyticsClassSelect');
-        if (analyticsClass) {
-            analyticsClass.innerHTML = '<option value="">Select a class...</option>';
-            CLASSES.forEach(cls => {
-                const option = document.createElement('option');
-                option.value = cls;
-                option.textContent = cls;
-                analyticsClass.appendChild(option);
-            });
-            console.log('✅ Analytics class select: ' + analyticsClass.options.length + ' options');
-        }
-        
-        console.log('✅ All dropdowns populated successfully!');
-    } catch (err) {
-        console.error('❌ Error populating dropdowns:', err);
-    }
-}
-
-// Run after DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM loaded, populating dropdowns...');
+    const loginPwd = document.getElementById('loginPassword');
+    if (loginPwd) {
+        loginPwd.addEventListener('keypress', function(e) { 
+            if (e.key === 'Enter') window.handleLogin(); 
+        });
+    }
+    
+    // Populate dropdowns
     populateAllDropdowns();
+    
+    console.log('🚀 Mara Christian High School Management System');
+    console.log('📚 Version 28.0.0 - Complete Version with All Tabs');
+    console.log('🔑 Test Login: test@test.com / test123');
+    console.log('✅ All dashboard tabs restored!');
 });
 
-// Also run after sample data loads (in case of test mode)
-setTimeout(function() {
-    populateAllDropdowns();
-    console.log('🔄 Dropdowns re-populated after delay');
-}, 1000);
+console.log('✅ System initialized successfully!');
+
   </script>
 </body>
 </html>
