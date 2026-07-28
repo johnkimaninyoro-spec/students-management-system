@@ -2702,7 +2702,25 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
     // ============================================================
     // RENDER FUNCTIONS (These complete the missing tabs)
     // ============================================================
-    function renderAttendance() {
+        function renderAttendance() {
+      // POPULATE CLASS DROPDOWN - ADD THIS
+      const classSelect = document.getElementById('attendanceClassFilter');
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = '<option value="">All Classes</option>';
+        const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
+        for (const [group, classes] of Object.entries(groups)) {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = group;
+          classes.forEach(cls => {
+            const option = document.createElement('option');
+            option.value = cls;
+            option.textContent = cls;
+            optgroup.appendChild(option);
+          });
+          classSelect.appendChild(optgroup);
+        }
+      }
+      
       const date = document.getElementById('attendanceDateFilter').value;
       const classFilter = document.getElementById('attendanceClassFilter').value;
 
@@ -2743,16 +2761,24 @@ function populateClassPerformanceDropdown() {
   const select = document.getElementById('performanceClassSelect');
   if (!select) return;
   
-  // Clear existing options (keep the first "Select a class..." option)
-  select.innerHTML = '<option value="">Select a class...</option>';
-  
-  // Add all classes
-  CLASSES.forEach(cls => {
-    const option = document.createElement('option');
-    option.value = cls;
-    option.textContent = cls;
-    select.appendChild(option);
-  });
+  // Only populate if empty
+  if (select.options.length <= 1) {
+    select.innerHTML = '<option value="">Select a class...</option>';
+    
+    // Add all classes with groups
+    const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
+    for (const [group, classes] of Object.entries(groups)) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group;
+      classes.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        optgroup.appendChild(option);
+      });
+      select.appendChild(optgroup);
+    }
+  }
 }
 // MAKE IT GLOBAL
 window.populateClassPerformanceDropdown = populateClassPerformanceDropdown;
@@ -4876,14 +4902,28 @@ function printAnalytics() {
     // ============================================================
     // STUDENTS
     // ============================================================
-    window.renderStudents = function() {
+        window.renderStudents = function() {
       const search = document.getElementById('studentSearch').value.toLowerCase();
       const classFilter = document.getElementById('studentClassFilter').value;
       const statusFilter = document.getElementById('studentStatusFilter').value;
       const genderFilter = document.getElementById('studentGenderFilter').value;
 
       const classSelect = document.getElementById('studentClassFilter');
-      if (classSelect.options.length <= 1) classSelect.innerHTML = classSelectHtml();
+      if (classSelect.options.length <= 1) {
+        classSelect.innerHTML = '<option value="">All Classes</option>';
+        const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
+        for (const [group, classes] of Object.entries(groups)) {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = group;
+          classes.forEach(cls => {
+            const option = document.createElement('option');
+            option.value = cls;
+            option.textContent = cls;
+            optgroup.appendChild(option);
+          });
+          classSelect.appendChild(optgroup);
+        }
+      }
 
       let filtered = studentsCache;
       if (search) filtered = filtered.filter(s => (s.firstName || '').toLowerCase().includes(search) || (s.lastName || '').toLowerCase().includes(search) || (s.admNo || '').toLowerCase().includes(search));
@@ -5013,7 +5053,37 @@ function printAnalytics() {
       `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No sponsored students found</td></tr>';
     }
 
-    function renderGrades() {
+        function renderGrades() {
+  // POPULATE CLASS DROPDOWN - ADD THIS
+  const classSelect = document.getElementById('gradeClassFilter');
+  if (classSelect.options.length <= 1) {
+    classSelect.innerHTML = '<option value="">All Classes</option>';
+    const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
+    for (const [group, classes] of Object.entries(groups)) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group;
+      classes.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        optgroup.appendChild(option);
+      });
+      classSelect.appendChild(optgroup);
+    }
+  }
+  
+  // POPULATE SUBJECT DROPDOWN - ADD THIS
+  const subjectSelect = document.getElementById('gradeSubjectFilter');
+  if (subjectSelect.options.length <= 1) {
+    subjectSelect.innerHTML = '<option value="">All Subjects</option>';
+    SUBJECTS.forEach(subj => {
+      const option = document.createElement('option');
+      option.value = subj;
+      option.textContent = subj;
+      subjectSelect.appendChild(option);
+    });
+  }
+
   // Get filter values
   const classFilter = document.getElementById('gradeClassFilter').value;
   const subjectFilter = document.getElementById('gradeSubjectFilter').value;
