@@ -266,6 +266,44 @@
       .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 5px; }
     }
     @media (max-width: 480px) { .login-box { padding: 30px 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        
+    /* Grade Modal - Student Search Styles */
+    #g_studentSuggestions {
+      display: none;
+      position: absolute;
+      background: white;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      width: 100%;
+      z-index: 1000;
+      margin-top: 2px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    #g_studentSuggestions div {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+
+    #g_studentSuggestions div:hover {
+      background: #f0f8ff;
+    }
+
+    #g_studentSuggestions div:last-child {
+      border-bottom: none;
+    }
+
+    #g_selectedStudentDisplay {
+      padding: 10px 14px;
+      background: #f0f8ff;
+      border-radius: 6px;
+      margin-top: 8px;
+      border-left: 3px solid #2e86c1;
+    }
   </style>
 </head>
 <body>
@@ -2081,24 +2119,90 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
       if (!canAdd('grades')) { showToast('You do not have permission to add grades', 'error'); return; }
       const grade = editId ? gradesCache.find(g => g.id === editId) : null;
       
+      // Get the student name if editing
+      let studentName = '';
+      let studentClass = '';
+      if (grade && grade.studentId) {
+        const student = studentsCache.find(s => s.id === grade.studentId);
+        if (student) {
+          studentName = student.firstName + ' ' + student.lastName;
+          studentClass = student.class;
+        }
+      }
+      
       const html = `
         <div class="form-grid">
-          <div class="form-group"><label>Student *</label><select id="g_student">${studentsCache.map(s => `<option value="${s.id}" ${grade?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select></div>
-          <div class="form-group"><label>Subject *</label><select id="g_subject">${SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
-          <div class="form-group"><label>Term *</label><select id="g_term"><option value="Term 1" ${grade?.term === 'Term 1' ? 'selected' : ''}>Term 1</option><option value="Term 2" ${grade?.term === 'Term 2' ? 'selected' : ''}>Term 2</option><option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option></select></div>
-          <div class="form-group"><label>Exam Type *</label><select id="g_examType">${EXAM_TYPES.map(t => `<option value="${t}" ${grade?.examType === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-          <div class="form-group"><label>Test 1</label><input type="number" id="g_test1" value="${grade?.test1 !== undefined && grade?.test1 !== null ? grade.test1 : ''}" min="0" max="30"></div>
-          <div class="form-group"><label>Test 2</label><input type="number" id="g_test2" value="${grade?.test2 !== undefined && grade?.test2 !== null ? grade.test2 : ''}" min="0" max="30"></div>
-          <div class="form-group"><label>Test 3</label><input type="number" id="g_test3" value="${grade?.test3 !== undefined && grade?.test3 !== null ? grade.test3 : ''}" min="0" max="30"></div>
-          <div class="form-group"><label>Final Exam</label><input type="number" id="g_exam" value="${grade?.exam !== undefined && grade?.exam !== null ? grade.exam : ''}" min="0" max="70"></div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Student Name *</label>
+            <div style="position:relative;">
+              <input type="text" id="g_studentSearch" placeholder="Type student name to search..." 
+                     oninput="filterStudentList(this.value)" 
+                     value="${studentName}"
+                     style="width:100%;padding:8px 12px;border:2px solid #ddd;border-radius:6px;font-size:0.9em;">
+              <div id="g_studentSuggestions" style="display:none;position:absolute;background:white;border:1px solid #ddd;border-radius:6px;max-height:150px;overflow-y:auto;width:100%;z-index:1000;margin-top:2px;box-shadow:0 4px 10px rgba(0,0,0,0.1);"></div>
+            </div>
+            <select id="g_student" style="display:none;">${studentsCache.map(s => `<option value="${s.id}" ${grade?.studentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} (${s.class})</option>`).join('')}</select>
+            <input type="hidden" id="g_studentId" value="${grade?.studentId || ''}">
+            <small style="color:#999;font-size:0.75em;">Start typing to search for a student by name</small>
+          </div>
+          
+          <div class="form-group">
+            <label>Class *</label>
+            <select id="g_class" onchange="filterStudentsByClass(this.value)">
+              <option value="">All Classes</option>
+              ${CLASSES.map(c => `<option value="${c}" ${studentClass === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Subject *</label>
+            <select id="g_subject">${SUBJECTS.map(s => `<option value="${s}" ${grade?.subject === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+          </div>
+          
+          <div class="form-group">
+            <label>Term *</label>
+            <select id="g_term">
+              <option value="Term 1" ${grade?.term === 'Term 1' ? 'selected' : ''}>Term 1</option>
+              <option value="Term 2" ${grade?.term === 'Term 2' ? 'selected' : ''}>Term 2</option>
+              <option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Exam Type *</label>
+            <select id="g_examType">
+              ${EXAM_TYPES.map(t => `<option value="${t}" ${grade?.examType === t ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          
+          <div class="form-group"><label>Test 1 (max 30)</label><input type="number" id="g_test1" value="${grade?.test1 !== undefined && grade?.test1 !== null ? grade.test1 : ''}" min="0" max="30"></div>
+          <div class="form-group"><label>Test 2 (max 30)</label><input type="number" id="g_test2" value="${grade?.test2 !== undefined && grade?.test2 !== null ? grade.test2 : ''}" min="0" max="30"></div>
+          <div class="form-group"><label>Test 3 (max 30)</label><input type="number" id="g_test3" value="${grade?.test3 !== undefined && grade?.test3 !== null ? grade.test3 : ''}" min="0" max="30"></div>
+          <div class="form-group"><label>Final Exam (max 70)</label><input type="number" id="g_exam" value="${grade?.exam !== undefined && grade?.exam !== null ? grade.exam : ''}" min="0" max="70"></div>
         </div>
-        <button class="btn btn-success" onclick="saveGrade('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Grade</button>
+        
+        <div id="g_selectedStudentDisplay" style="padding:8px 12px;background:#f0f8ff;border-radius:6px;margin-top:8px;border-left:3px solid #2e86c1;${grade?.studentId ? '' : 'display:none;'}">
+          ✅ Selected: <strong id="g_selectedStudentName">${studentName}</strong>
+          (Class: <span id="g_selectedStudentClass">${studentClass}</span>)
+        </div>
+        
+        <button class="btn btn-success" onclick="saveGradeWithSearch('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Grade</button>
       `;
       openModal(editId ? 'Edit Grade' : 'Add Grade', html);
     };
 
     window.saveGrade = async function(editId) {
-  const studentId = document.getElementById('g_student').value;
+  // Try to get student ID from hidden input first (search version)
+  let studentId = document.getElementById('g_studentId')?.value;
+  
+  // If not found, try the old select dropdown (fallback)
+  if (!studentId) {
+    const studentSelect = document.getElementById('g_student');
+    if (studentSelect) {
+      studentId = studentSelect.value;
+    }
+  }
+  
   const subject = document.getElementById('g_subject').value;
   const term = document.getElementById('g_term').value;
   const examType = document.getElementById('g_examType').value;
@@ -2109,7 +2213,12 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
   const test3 = document.getElementById('g_test3').value.trim() === '' ? null : parseFloat(document.getElementById('g_test3').value);
   const exam = document.getElementById('g_exam').value.trim() === '' ? null : parseFloat(document.getElementById('g_exam').value);
 
-  if (!studentId || !subject || !term || !examType) { 
+  if (!studentId) { 
+    showToast('Please select a student', 'error'); 
+    return; 
+  }
+  
+  if (!subject || !term || !examType) { 
     showToast('Please fill all required fields', 'error'); 
     return; 
   }
@@ -2119,16 +2228,17 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
   try {
     if (editId) {
       await updateDoc(doc(db, 'grades', editId), data);
-      showToast('Grade updated!');
+      showToast('✅ Grade updated successfully!');
     } else {
       data.recordedBy = currentUser?.email || 'unknown';
       data.createdAt = serverTimestamp();
       await addDoc(collection(db, 'grades'), data);
-      showToast('Grade added!');
+      showToast('✅ Grade added successfully!');
     }
     closeModal();
+    renderGrades();
   } catch (err) { 
-    showToast('Error: ' + err.message, 'error'); 
+    showToast('❌ Error: ' + err.message, 'error'); 
   }
 };
 
@@ -2141,6 +2251,116 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
       try { await deleteDoc(doc(db, 'grades', id)); showToast('Grade deleted'); } catch (err) { showToast('Error: ' + err.message, 'error'); }
     };
 
+// ============================================================
+// GRADE MODAL - STUDENT SEARCH FUNCTIONS (NEW)
+// ============================================================
+
+// 1. Filter students by name search
+window.filterStudentList = function(searchTerm) {
+  const suggestionsDiv = document.getElementById('g_studentSuggestions');
+  if (!suggestionsDiv) return;
+  
+  if (!searchTerm || searchTerm.length < 2) {
+    suggestionsDiv.style.display = 'none';
+    return;
+  }
+  
+  const term = searchTerm.toLowerCase();
+  const filtered = studentsCache.filter(s => {
+    const fullName = (s.firstName || '') + ' ' + (s.lastName || '');
+    return fullName.toLowerCase().includes(term) || 
+           (s.admNo || '').toLowerCase().includes(term);
+  });
+  
+  if (filtered.length === 0) {
+    suggestionsDiv.innerHTML = '<div style="padding:10px;color:#999;text-align:center;">No students found</div>';
+    suggestionsDiv.style.display = 'block';
+    return;
+  }
+  
+  suggestionsDiv.innerHTML = filtered.map(s => `
+    <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #eee;"
+         onmouseover="this.style.background='#f0f8ff'"
+         onmouseout="this.style.background='white'"
+         onclick="selectStudent('${s.id}', '${s.firstName} ${s.lastName}', '${s.class}')">
+      <strong>${s.firstName} ${s.lastName}</strong> 
+      <span style="color:#666;font-size:0.85em;">(${s.class})</span>
+      <span style="color:#999;font-size:0.75em;margin-left:10px;">Adm: ${s.admNo || 'N/A'}</span>
+    </div>
+  `).join('');
+  
+  suggestionsDiv.style.display = 'block';
+};
+
+// 2. Select a student from suggestions
+window.selectStudent = function(studentId, fullName, className) {
+  document.getElementById('g_studentId').value = studentId;
+  document.getElementById('g_studentSearch').value = fullName;
+  document.getElementById('g_studentSuggestions').style.display = 'none';
+  
+  // Show selected student display
+  const display = document.getElementById('g_selectedStudentDisplay');
+  if (display) {
+    document.getElementById('g_selectedStudentName').textContent = fullName;
+    document.getElementById('g_selectedStudentClass').textContent = className;
+    display.style.display = 'block';
+  }
+  
+  // Update class dropdown
+  const classSelect = document.getElementById('g_class');
+  if (classSelect && className) {
+    classSelect.value = className;
+  }
+  
+  showToast('✅ Selected: ' + fullName, 'success');
+};
+
+// 3. Filter students by class
+window.filterStudentsByClass = function(className) {
+  const searchInput = document.getElementById('g_studentSearch');
+  const studentIdInput = document.getElementById('g_studentId');
+  
+  if (className) {
+    const currentStudentId = studentIdInput.value;
+    if (currentStudentId) {
+      const student = studentsCache.find(s => s.id === currentStudentId);
+      if (student && student.class !== className) {
+        studentIdInput.value = '';
+        searchInput.value = '';
+        const display = document.getElementById('g_selectedStudentDisplay');
+        if (display) display.style.display = 'none';
+        showToast('⚠️ Student not in selected class', 'warning');
+      }
+    }
+  }
+  
+  if (searchInput && searchInput.value.length >= 2) {
+    filterStudentList(searchInput.value);
+  }
+};
+
+// 4. Save grade with search validation
+window.saveGradeWithSearch = async function(editId) {
+  const studentId = document.getElementById('g_studentId').value;
+  
+  if (!studentId) {
+    showToast('⚠️ Please select a student from the search results', 'error');
+    return;
+  }
+  
+  await window.saveGrade(editId);
+};
+
+// 5. Close suggestions when clicking outside
+document.addEventListener('click', function(e) {
+  const suggestions = document.getElementById('g_studentSuggestions');
+  const searchInput = document.getElementById('g_studentSearch');
+  if (suggestions && searchInput) {
+    if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+      suggestions.style.display = 'none';
+    }
+  }
+});
     // ============================================================
     // ADD ATTENDANCE MODAL
     // ============================================================
@@ -3731,6 +3951,43 @@ window.renderClassPerformance = renderClassPerformance;
           min-height: 100vh;
           background: white;
         }
+/* Grade Modal - Student Search Styles */
+#g_studentSuggestions {
+  display: none;
+  position: absolute;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  z-index: 1000;
+  margin-top: 2px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+#g_studentSuggestions div {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s;
+}
+
+#g_studentSuggestions div:hover {
+  background: #f0f8ff;
+}
+
+#g_studentSuggestions div:last-child {
+  border-bottom: none;
+}
+
+#g_selectedStudentDisplay {
+  padding: 10px 14px;
+  background: #f0f8ff;
+  border-radius: 6px;
+  margin-top: 8px;
+  border-left: 3px solid #2e86c1;
+}
         
         /* SCHOOL LOGO AT TOP */
         .school-header {
