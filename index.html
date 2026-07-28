@@ -316,15 +316,16 @@
         </a>
       </div>
       <div class="user-section">
-        <div class="sync-status online" id="syncStatus">
-          <span class="sync-dot online" id="syncDot"></span>
-          <span id="syncLabel">Live</span>
-        </div>
-        <span id="currentUserDisplay" style="font-size:0.9em;"></span>
-        <span class="user-badge" id="currentRoleBadge">Admin</span>
-        <button class="btn btn-outline btn-sm" onclick="showChangePassword()">🔑 Change Password</button>
-        <button class="btn btn-danger-sm" onclick="handleLogout()">Logout</button>
-      </div>
+  <div class="sync-status online" id="syncStatus">
+    <span class="sync-dot online" id="syncDot"></span>
+    <span id="syncLabel">Live</span>
+  </div>
+  <span id="currentUserDisplay" style="font-size:0.9em;"></span>
+  <span class="user-badge" id="currentRoleBadge">Admin</span>
+  <button class="btn btn-outline btn-sm" onclick="showChangePassword()">🔑 Change Password</button>
+  <button class="btn btn-primary btn-sm" onclick="refreshData()" style="background:#27ae60;">🔄 Refresh</button>
+  <button class="btn btn-danger-sm" onclick="handleLogout()">Logout</button>
+</div>
     </div>
 
     <div class="main-layout">
@@ -4674,7 +4675,40 @@ function printAnalytics() {
     default: break;
   }
 }
-
+    // ============================================================
+    // REFRESH DATA FUNCTION
+    // ============================================================
+    window.refreshData = function() {
+      showToast('🔄 Refreshing data...', 'info');
+      
+      // Force reload of current tab
+      refreshCurrentView();
+      
+      // Also force reload of all data
+      setTimeout(() => {
+        renderStudents();
+        renderGrades();
+        renderAttendance();
+        renderTeachers();
+        renderWarnings();
+        renderSuspensions();
+        renderExpulsions();
+        renderClinic();
+        renderPrefects();
+        renderTeacherAttendance();
+        renderMaintenance();
+        renderMaintenanceDept();
+        renderAnalytics();
+        renderUsers();
+        renderRegistrations();
+        renderAudit();
+        renderDashboard();
+        renderSponsorship();
+        renderClassPerformance();
+        
+        showToast('✅ Data refreshed successfully!', 'success');
+      }, 300);
+    };
     // ============================================================
     // DASHBOARD
     // ============================================================
