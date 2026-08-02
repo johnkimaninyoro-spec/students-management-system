@@ -438,6 +438,15 @@
               <h2>📊 Dashboard Overview</h2>
               <span style="font-size:0.8em;color:var(--gray);">Click any card to view filtered data</span>
             </div>
+           <div class="form-row" style="margin-bottom:16px;">
+  <div class="form-group">
+    <label>Academic Year</label>
+    <select id="dashboardYearFilter" onchange="renderDashboard()">
+      <option value="">All Years</option>
+      ${ACADEMIC_YEARS.map(y => `<option value="${y}">${y}</option>`).join('')}
+    </select>
+  </div>
+</div>
             <div class="stats-grid" id="dashboardStats"></div>
           </div>
           <div class="card">
@@ -523,6 +532,12 @@
               <div class="form-group"><label>Term</label><select id="gradeTermFilter" onchange="renderGrades()"><option value="">All Terms</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
               <div class="form-group"><label>Exam Type</label><select id="gradeExamTypeFilter" onchange="renderGrades()"><option value="">All</option><option value="Opener">Opener</option><option value="Midterm">Midterm</option><option value="End Term">End Term</option></select></div>
             </div>
+            <div class="form-group"><label>Academic Year</label>
+  <select id="gradeYearFilter" onchange="renderGrades()">
+    <option value="">All Years</option>
+    ${ACADEMIC_YEARS.map(y => `<option value="${y}">${y}</option>`).join('')}
+  </select>
+</div>
             <div class="table-container">
               <table id="gradesTable"><thead><tr><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Exam Type</th><th>Test 1</th><th>Test 2</th><th>Test 3</th><th>Final Exam</th><th>Total</th><th>Grade</th><th>Actions</th></tr></thead>
               <tbody id="gradesTableBody"></tbody></table>
@@ -568,6 +583,12 @@
               <div class="form-group"><label>Select Class</label><select id="performanceClassSelect" onchange="renderClassPerformance()"><option value="">Select a class...</option></select></div>
               <div class="form-group"><label>Select Term</label><select id="performanceTermSelect" onchange="renderClassPerformance()"><option value="">All Terms</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
             </div>
+            <div class="form-group"><label>Select Year</label>
+  <select id="performanceYearSelect" onchange="renderClassPerformance()">
+    <option value="">All Years</option>
+    ${ACADEMIC_YEARS.map(y => `<option value="${y}">${y}</option>`).join('')}
+  </select>
+</div>
           </div>
           <div class="charts-grid">
             <div class="card"><div class="card-header"><h3>📊 Subject Averages</h3></div><div class="chart-container"><canvas id="perfSubjectChart"></canvas></div></div>
@@ -1110,6 +1131,8 @@
     ];
     const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
+const ACADEMIC_YEARS = ['2024', '2025', '2026', '2027', '2028'];
+const CURRENT_YEAR = new Date().getFullYear().toString();
     const REFERRAL_OPTIONS = ['None', 'Dentist', 'Eye Specialist', 'Orthopedic', 'Dermatologist', 'ENT Specialist', 'Psychologist', 'Nutritionist', 'Other'];
     const CONDITIONS = ['New Illness', 'Pre-existing Condition', 'Injury', 'Chronic Condition'];
     const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director', 'hrio', 'nutritionist', 'labtech', 'radiographer', 'maintenance'];
@@ -2195,7 +2218,12 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
               <option value="Term 3" ${grade?.term === 'Term 3' ? 'selected' : ''}>Term 3</option>
             </select>
           </div>
-          
+  <div class="form-group">
+  <label>Academic Year *</label>
+  <select id="g_academicYear">
+    ${ACADEMIC_YEARS.map(y => `<option value="${y}" ${(grade?.academicYear || CURRENT_YEAR) === y ? 'selected' : ''}>${y}</option>`).join('')}
+  </select>
+</div>        
           <div class="form-group">
             <label>Exam Type *</label>
             <select id="g_examType">
@@ -2240,6 +2268,7 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
   const subject = document.getElementById('g_subject').value;
   const term = document.getElementById('g_term').value;
   const examType = document.getElementById('g_examType').value;
+  const academicYear = document.getElementById('g_academicYear').value;
   
   // Parse values - treat empty as null (not 0)
   const test1 = document.getElementById('g_test1').value.trim() === '' ? null : parseFloat(document.getElementById('g_test1').value);
@@ -2257,7 +2286,7 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
     return; 
   }
 
-  const data = { studentId, subject, term, examType, test1, test2, test3, exam };
+  const data = { studentId, subject, term, examType, academicYear, test1, test2, test3, exam };
 
   try {
     if (editId) {
@@ -3044,7 +3073,8 @@ function renderClassPerformance() {
   // Get selected values - DON'T reset them!
   let selectedClass = classSelect ? classSelect.value : '';
   let selectedTerm = termSelect ? termSelect.value : '';
-  
+  const yearSelect = document.getElementById('performanceYearSelect');
+let selectedYear = yearSelect ? yearSelect.value : '';
   // If no class selected, show message and exit
   if (!selectedClass) {
     document.getElementById('perfRankingsBody').innerHTML = 
@@ -3073,6 +3103,9 @@ function renderClassPerformance() {
   if (selectedTerm) {
     studentGrades = studentGrades.filter(g => g.term === selectedTerm);
   }
+if (selectedYear) {
+  studentGrades = studentGrades.filter(g => g.academicYear === selectedYear);
+}
   
   // Calculate subject averages
   const subjectScores = {};
@@ -5378,6 +5411,16 @@ function printAnalytics() {
     // ============================================================
     function renderDashboard() {
       const total = studentsCache.length;
+      const yearFilter = document.getElementById('dashboardYearFilter')?.value || '';
+
+// Function to filter grades by year
+function filterGradesByYear(grades) {
+  if (!yearFilter) return grades;
+  return grades.filter(g => g.academicYear === yearFilter);
+}
+
+// Use filtered grades for calculations
+const filteredGrades = filterGradesByYear(gradesCache);
       const male = studentsCache.filter(s => s.gender === 'Male').length;
       const female = studentsCache.filter(s => s.gender === 'Female').length;
       const boarders = studentsCache.filter(s => s.status === 'Boarder').length;
@@ -5732,7 +5775,7 @@ function printAnalytics() {
   const subjectFilter = document.getElementById('gradeSubjectFilter').value;
   const termFilter = document.getElementById('gradeTermFilter').value;
   const examTypeFilter = document.getElementById('gradeExamTypeFilter').value; 
-
+  const yearFilter = document.getElementById('gradeYearFilter').value;
   // Filter grades
   let filteredGrades = gradesCache;
 
@@ -5755,6 +5798,9 @@ function printAnalytics() {
     filteredGrades = filteredGrades.filter(g => g.examType === examTypeFilter);
   }
 
+  if (yearFilter) {
+  filteredGrades = filteredGrades.filter(g => g.academicYear === yearFilter);
+  }
   document.getElementById('gradesTableBody').innerHTML = filteredGrades.map(g => {
     const student = studentsCache.find(s => s.id === g.studentId);
     
