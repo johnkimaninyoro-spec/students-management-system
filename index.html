@@ -1124,11 +1124,14 @@
   
   const percentage = Math.round(score);
   
-  // IMPORTANT: If score is 0, it's a valid score (the student got 0%)
-  // So we still assign 'E' grade for 0%
-  // But only if the score was actually provided (not null/empty)
+  // If score is 0, return null (treat as N/A, not 'E')
+  // A student who actually scored 0% will have their score recorded as 0
+  // But we want to show N/A for empty fields, not 'E'
+  if (percentage === 0) {
+    return null;
+  }
   
-  // Only assign grades to actual scores (including 0)
+  // Only assign grades to actual scores
   for (const grade of KENYAN_GRADES) {
     if (percentage >= grade.min && percentage <= grade.max) {
       return grade;
@@ -1142,19 +1145,15 @@
     function hasActualScores(grade) {
   if (!grade) return false;
   
-  // Check if any score exists and is not null, undefined, or empty string
-  const hasTest1 = grade.test1 !== undefined && grade.test1 !== null && grade.test1 !== '' && grade.test1 !== 0;
-  const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '' && grade.test2 !== 0;
-  const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '' && grade.test3 !== 0;
-  const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '' && grade.exam !== 0;
+  // A score is valid ONLY if it's a positive number (greater than 0)
+  // 0 means "no score entered" or "scored 0%", but we treat empty as N/A
+  // Only count scores that are > 0
+  const hasTest1 = grade.test1 !== undefined && grade.test1 !== null && grade.test1 !== '' && grade.test1 > 0;
+  const hasTest2 = grade.test2 !== undefined && grade.test2 !== null && grade.test2 !== '' && grade.test2 > 0;
+  const hasTest3 = grade.test3 !== undefined && grade.test3 !== null && grade.test3 !== '' && grade.test3 > 0;
+  const hasExam = grade.exam !== undefined && grade.exam !== null && grade.exam !== '' && grade.exam > 0;
   
-  // Also check if values are valid numbers (not NaN)
-  const isValidNumber = (val) => {
-    if (val === undefined || val === null || val === '') return false;
-    return !isNaN(parseFloat(val));
-  };
-  
-  return (isValidNumber(grade.test1) || isValidNumber(grade.test2) || isValidNumber(grade.test3) || isValidNumber(grade.exam));
+  return (hasTest1 || hasTest2 || hasTest3 || hasExam);
 }
 
         function getGradeBadge(score) {
@@ -2204,10 +2203,16 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
             </select>
           </div>
           
-          <div class="form-group"><label>Test 1 (max 30)</label><input type="number" id="g_test1" value="${grade?.test1 !== undefined && grade?.test1 !== null ? grade.test1 : ''}" min="0" max="30"></div>
+          <div class="form-group"><label>Test 1 (max 30)</label>
+  <input type="number" id="g_test1" value="${grade?.test1 !== undefined && grade?.test1 !== null && grade.test1 !== 0 ? grade.test1 : ''}" min="1" max="30" placeholder="Enter score (1-30)">
+  <small style="color:#999;font-size:0.7em;">Leave empty if not applicable</small>
+</div>
           <div class="form-group"><label>Test 2 (max 30)</label><input type="number" id="g_test2" value="${grade?.test2 !== undefined && grade?.test2 !== null ? grade.test2 : ''}" min="0" max="30"></div>
           <div class="form-group"><label>Test 3 (max 30)</label><input type="number" id="g_test3" value="${grade?.test3 !== undefined && grade?.test3 !== null ? grade.test3 : ''}" min="0" max="30"></div>
-          <div class="form-group"><label>Final Exam (max 70)</label><input type="number" id="g_exam" value="${grade?.exam !== undefined && grade?.exam !== null ? grade.exam : ''}" min="0" max="70"></div>
+          <div class="form-group"><label>Final Exam (max 70)</label>
+  <input type="number" id="g_exam" value="${grade?.exam !== undefined && grade?.exam !== null && grade.exam !== 0 ? grade.exam : ''}" min="1" max="70" placeholder="Enter score (1-70)">
+  <small style="color:#999;font-size:0.7em;">Leave empty if not applicable</small>
+</div>
         </div>
         
         <div id="g_selectedStudentDisplay" style="padding:8px 12px;background:#f0f8ff;border-radius:6px;margin-top:8px;border-left:3px solid #2e86c1;${grade?.studentId ? '' : 'display:none;'}">
