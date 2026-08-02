@@ -9,7 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --primary: #1a5276;
       --primary-light: #2e86c1;
@@ -27,6 +27,28 @@
       --radius: 12px;
       --transition: all 0.3s ease;
     }
+/* ===== FILTER BADGE STYLES ===== */
+.filter-clear-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 10px;
+  cursor: pointer;
+  font-size: 0.75em;
+  margin-left: 5px;
+  transition: all 0.3s ease;
+}
+.filter-clear-btn:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
+.stat-card.active-filter {
+  box-shadow: 0 0 0 3px var(--primary-light);
+  transform: scale(1.02);
+}
+    
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: var(--dark); line-height: 1.6; }
     .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, var(--primary), var(--primary-light), var(--secondary)); padding: 20px; }
     .login-box { background: var(--white); padding: 50px 40px; border-radius: var(--radius); box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 100%; max-width: 420px; animation: slideUp 0.6s ease; }
@@ -3219,6 +3241,28 @@ window.renderClassPerformance = renderClassPerformance;
       }).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No expulsions found</td></tr>';
     }
 
+function renderWarnings() {
+  const canEditWarnings = canEdit('warnings');
+  const canDeleteWarnings = canDeleteSpecific('warnings');
+  
+  document.getElementById('warningsTableBody').innerHTML = warningsCache.map(w => {
+    const student = studentsCache.find(s => s.id === w.studentId);
+    return `
+      <tr>
+        <td>${formatDate(w.date)}</td>
+        <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+        <td>${student?.class || '-'}</td>
+        <td>${w.reason}</td>
+        <td>${w.issuedBy || '-'}</td>
+        <td>${w.hasDocument ? '📄 Yes' : '❌ No'}</td>
+        <td>
+          ${canEditWarnings ? `<button class="btn btn-primary btn-sm" onclick="showAddWarningModal('${w.id}')">Edit</button>` : ''}
+          ${canDeleteWarnings ? `<button class="btn btn-danger btn-sm" onclick="deleteWarning('${w.id}')">Del</button>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No warnings found</td></tr>';
+}
     function renderClinic() {
       const canEditClinic = canEdit('clinic');
       const canDeleteClinic = canDeleteSpecific('clinic');
@@ -3248,6 +3292,28 @@ window.renderClassPerformance = renderClassPerformance;
         `;
       }).join('') || '<tr><td colspan="13" style="text-align:center;color:#999;padding:20px;">No clinic visits found</td></tr>';
     }
+function renderSuspensions() {
+  const canEditSuspensions = canEdit('suspensions');
+  const canDeleteSuspensions = canDeleteSpecific('suspensions');
+  
+  document.getElementById('suspensionsTableBody').innerHTML = suspensionsCache.map(s => {
+    const student = studentsCache.find(st => st.id === s.studentId);
+    return `
+      <tr>
+        <td>${formatDate(s.date)}</td>
+        <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+        <td>${student?.class || '-'}</td>
+        <td>${s.reason}</td>
+        <td>${s.duration}</td>
+        <td><span class="badge ${s.status === 'Active' ? 'badge-danger' : 'badge-success'}">${s.status}</span></td>
+        <td>
+          ${canEditSuspensions ? `<button class="btn btn-primary btn-sm" onclick="showAddSuspensionModal('${s.id}')">Edit</button>` : ''}
+          ${canDeleteSuspensions ? `<button class="btn btn-danger btn-sm" onclick="deleteSuspension('${s.id}')">Del</button>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No suspensions found</td></tr>';
+}
 
     function renderPrefects() {
       const deptFilter = document.getElementById('prefectDeptFilter').value;
@@ -3469,8 +3535,253 @@ window.renderClassPerformance = renderClassPerformance;
     }
 
     window.loadAnalyticsData = function() {
-      showToast('📊 Loading analytics data...', 'info');
-    };
+  const studentId = document.getElementById('analyticsStudentSelect').value;
+  const classSelect = document.getElementById('analyticsClassSelect').value;
+  
+  if (!studentId && !classSelect) {
+    showToast('Please select a student or class', 'warning');
+    return;
+  }
+  
+  // Show loading
+  document.getElementById('analyticsLoading').style.display = 'block';
+  document.getElementById('analyticsLoadBtn').style.display = 'none';
+  
+  // Process data after a short delay
+  setTimeout(() => {
+    document.getElementById('analyticsLoading').style.display = 'none';
+    document.getElementById('analyticsLoadBtn').style.display = 'inline-flex';
+    
+    if (studentId) {
+      renderStudentAnalytics(studentId);
+    } else if (classSelect) {
+      renderClassAnalytics(classSelect);
+    }
+    showToast('✅ Analytics data loaded!', 'success');
+  }, 500);
+};
+
+// ============================================================
+// ANALYTICS HELPER FUNCTIONS
+// ============================================================
+
+function renderStudentAnalytics(studentId) {
+  const student = studentsCache.find(s => s.id === studentId);
+  if (!student) {
+    showToast('Student not found', 'error');
+    return;
+  }
+  
+  const studentGrades = gradesCache.filter(g => g.studentId === studentId && hasActualScores(g));
+  if (studentGrades.length === 0) {
+    showToast('No grades found for this student', 'warning');
+    return;
+  }
+  
+  // --- Student Grades by Subject Chart ---
+  destroyChart('analyticsStudentChart');
+  const subjects = studentGrades.map(g => g.subject);
+  const scores = studentGrades.map(g => (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0));
+  
+  chartInstances['analyticsStudentChart'] = new Chart(document.getElementById('analyticsStudentChart'), {
+    type: 'bar',
+    data: {
+      labels: subjects,
+      datasets: [{
+        data: scores,
+        backgroundColor: scores.map(s => getGradeColor(s)),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { 
+        y: { 
+          beginAtZero: true, 
+          max: 130,
+          title: { display: true, text: 'Score (%)' }
+        }
+      },
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const score = context.parsed.y;
+              const grade = getKenyanGrade(score);
+              return `Score: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // --- Student Grade Trend Chart ---
+  destroyChart('analyticsTrendChart');
+  const terms = ['Term 1', 'Term 2', 'Term 3'];
+  const termAverages = terms.map(term => {
+    const termGrades = studentGrades.filter(g => g.term === term);
+    if (termGrades.length === 0) return 0;
+    const total = termGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
+    return Math.round(total / termGrades.length);
+  });
+  
+  chartInstances['analyticsTrendChart'] = new Chart(document.getElementById('analyticsTrendChart'), {
+    type: 'line',
+    data: {
+      labels: terms,
+      datasets: [{
+        data: termAverages,
+        borderColor: '#2e86c1',
+        backgroundColor: 'rgba(46, 134, 193, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 6,
+        pointBackgroundColor: termAverages.map(s => getGradeColor(s)),
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { 
+        y: { 
+          beginAtZero: true, 
+          max: 100,
+          title: { display: true, text: 'Average Score (%)' }
+        }
+      },
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const score = context.parsed.y;
+              const grade = getKenyanGrade(score);
+              return `Average: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderClassAnalytics(className) {
+  const classStudents = studentsCache.filter(s => s.class === className);
+  if (classStudents.length === 0) {
+    showToast('No students found in this class', 'warning');
+    return;
+  }
+  
+  const classGrades = gradesCache.filter(g => 
+    classStudents.some(s => s.id === g.studentId) && hasActualScores(g)
+  );
+  
+  if (classGrades.length === 0) {
+    showToast('No grades found for this class', 'warning');
+    return;
+  }
+  
+  // --- Class Average by Subject Chart ---
+  destroyChart('analyticsClassChart');
+  const subjects = [...new Set(classGrades.map(g => g.subject))];
+  const averages = subjects.map(subject => {
+    const subjectGrades = classGrades.filter(g => g.subject === subject);
+    if (subjectGrades.length === 0) return 0;
+    const total = subjectGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
+    return Math.round(total / subjectGrades.length);
+  });
+  
+  chartInstances['analyticsClassChart'] = new Chart(document.getElementById('analyticsClassChart'), {
+    type: 'bar',
+    data: {
+      labels: subjects,
+      datasets: [{
+        data: averages,
+        backgroundColor: averages.map(s => getGradeColor(s)),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { 
+        y: { 
+          beginAtZero: true, 
+          max: 100,
+          title: { display: true, text: 'Class Average (%)' }
+        }
+      },
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const score = context.parsed.y;
+              const grade = getKenyanGrade(score);
+              return `Average: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Also update the student trend chart with class data
+  destroyChart('analyticsTrendChart');
+  const terms = ['Term 1', 'Term 2', 'Term 3'];
+  const termAverages = terms.map(term => {
+    const termGrades = classGrades.filter(g => g.term === term);
+    if (termGrades.length === 0) return 0;
+    const total = termGrades.reduce((sum, g) => sum + (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0), 0);
+    return Math.round(total / termGrades.length);
+  });
+  
+  chartInstances['analyticsTrendChart'] = new Chart(document.getElementById('analyticsTrendChart'), {
+    type: 'line',
+    data: {
+      labels: terms,
+      datasets: [{
+        data: termAverages,
+        borderColor: '#27ae60',
+        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 6,
+        pointBackgroundColor: termAverages.map(s => getGradeColor(s)),
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { 
+        y: { 
+          beginAtZero: true, 
+          max: 100,
+          title: { display: true, text: 'Class Average Score (%)' }
+        }
+      },
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const score = context.parsed.y;
+              const grade = getKenyanGrade(score);
+              return `Average: ${score}% - Grade: ${grade?.grade || 'N/A'}`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
 
     function renderUsers() {
       document.getElementById('usersTableBody').innerHTML = usersCache.map(u => {
@@ -3546,7 +3857,57 @@ window.renderClassPerformance = renderClassPerformance;
         `;
       }).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">No registrations found</td></tr>';
     }
+// ============================================================
+// REGISTRATION APPROVAL FUNCTIONS
+// ============================================================
 
+window.approveRegistration = async function(registrationId) {
+  if (!confirm('✅ Approve this registration request?')) return;
+  
+  try {
+    // Update pending registration
+    await updateDoc(doc(db, 'pendingRegistrations', registrationId), { 
+      status: 'approved',
+      approvedAt: serverTimestamp(),
+      approvedBy: currentUser?.email || 'admin'
+    });
+    
+    // Update user record
+    await updateDoc(doc(db, 'users', registrationId), { 
+      approvalStatus: 'approved' 
+    });
+    
+    showToast('✅ Registration approved! User can now login.', 'success');
+    renderRegistrations();
+  } catch (err) {
+    console.error('❌ Approval error:', err);
+    showToast('❌ Error approving registration: ' + err.message, 'error');
+  }
+};
+
+window.rejectRegistration = async function(registrationId) {
+  if (!confirm('❌ Reject this registration request?')) return;
+  
+  try {
+    // Update pending registration
+    await updateDoc(doc(db, 'pendingRegistrations', registrationId), { 
+      status: 'rejected',
+      rejectedAt: serverTimestamp(),
+      rejectedBy: currentUser?.email || 'admin'
+    });
+    
+    // Update user record
+    await updateDoc(doc(db, 'users', registrationId), { 
+      approvalStatus: 'rejected' 
+    });
+    
+    showToast('❌ Registration rejected.', 'warning');
+    renderRegistrations();
+  } catch (err) {
+    console.error('❌ Rejection error:', err);
+    showToast('❌ Error rejecting registration: ' + err.message, 'error');
+  }
+};
     function populateAuditFilter() {
       const select = document.getElementById('auditUserFilter');
       if (!select) return;
@@ -5541,7 +5902,71 @@ populateClassPerformanceDropdown();
 
           showToast('📚 Sample data loaded!', 'success');
   }
+  // ============================================================
+// POPULATE ALL DROPDOWNS
+// ============================================================
+function populateAllDropdowns() {
+  console.log('📋 Populating all dropdowns...');
   
+  // 1. Populate grade class filter
+  const gradeClassSelect = document.getElementById('gradeClassFilter');
+  if (gradeClassSelect && gradeClassSelect.options.length <= 1) {
+    gradeClassSelect.innerHTML = '<option value="">All Classes</option>';
+    const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
+    for (const [group, classes] of Object.entries(groups)) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group;
+      classes.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        optgroup.appendChild(option);
+      });
+      gradeClassSelect.appendChild(optgroup);
+    }
+  }
+  
+  // 2. Populate performance class dropdown
+  populateClassPerformanceDropdown();
+  
+  // 3. Populate maintenance class filter
+  const maintClassSelect = document.getElementById('maintenanceClassFilter');
+  if (maintClassSelect && maintClassSelect.options.length <= 1) {
+    maintClassSelect.innerHTML = '<option value="">All Classes</option>';
+    const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
+    for (const [group, classes] of Object.entries(groups)) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group;
+      classes.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        optgroup.appendChild(option);
+      });
+      maintClassSelect.appendChild(optgroup);
+    }
+  }
+  
+  // 4. Populate student class filter
+  const studentClassSelect = document.getElementById('studentClassFilter');
+  if (studentClassSelect && studentClassSelect.options.length <= 1) {
+    studentClassSelect.innerHTML = '<option value="">All Classes</option>';
+    const groups = { 'Junior Secondary': CLASSES.slice(0, 6), 'Senior Secondary': CLASSES.slice(6) };
+    for (const [group, classes] of Object.entries(groups)) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group;
+      classes.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        optgroup.appendChild(option);
+      });
+      studentClassSelect.appendChild(optgroup);
+    }
+  }
+  
+  console.log('✅ All dropdowns populated!');
+}
   // ============================================================
 // INITIALIZATION
 // ============================================================
