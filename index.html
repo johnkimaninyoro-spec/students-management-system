@@ -442,9 +442,13 @@
   <div class="form-group">
     <label>Academic Year</label>
     <select id="dashboardYearFilter" onchange="renderDashboard()">
-      <option value="">All Years</option>
-      ${ACADEMIC_YEARS.map(y => `<option value="${y}">${y}</option>`).join('')}
-    </select>
+  <option value="">All Years</option>
+  <option value="2024">2024</option>
+  <option value="2025">2025</option>
+  <option value="2026">2026</option>
+  <option value="2027">2027</option>
+  <option value="2028">2028</option>
+</select>
   </div>
 </div>
             <div class="stats-grid" id="dashboardStats"></div>
@@ -534,9 +538,13 @@
             </div>
             <div class="form-group"><label>Academic Year</label>
   <select id="gradeYearFilter" onchange="renderGrades()">
-    <option value="">All Years</option>
-    ${ACADEMIC_YEARS.map(y => `<option value="${y}">${y}</option>`).join('')}
-  </select>
+  <option value="">All Years</option>
+  <option value="2024">2024</option>
+  <option value="2025">2025</option>
+  <option value="2026">2026</option>
+  <option value="2027">2027</option>
+  <option value="2028">2028</option>
+</select>
 </div>
             <div class="table-container">
               <table id="gradesTable"><thead><tr><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Exam Type</th><th>Test 1</th><th>Test 2</th><th>Test 3</th><th>Final Exam</th><th>Total</th><th>Grade</th><th>Actions</th></tr></thead>
@@ -585,9 +593,13 @@
             </div>
             <div class="form-group"><label>Select Year</label>
   <select id="performanceYearSelect" onchange="renderClassPerformance()">
-    <option value="">All Years</option>
-    ${ACADEMIC_YEARS.map(y => `<option value="${y}">${y}</option>`).join('')}
-  </select>
+  <option value="">All Years</option>
+  <option value="2024">2024</option>
+  <option value="2025">2025</option>
+  <option value="2026">2026</option>
+  <option value="2027">2027</option>
+  <option value="2028">2028</option>
+</select>
 </div>
           </div>
           <div class="charts-grid">
@@ -1131,8 +1143,13 @@
     ];
     const MAINTENANCE_STATUSES = ['Pending', 'In Progress', 'Resolved'];
     const EXAM_TYPES = ['Opener', 'Midterm', 'End Term'];
-const ACADEMIC_YEARS = ['2024', '2025', '2026', '2027', '2028'];
-const CURRENT_YEAR = new Date().getFullYear().toString();
+    // Define in global scope so HTML can access it
+window.ACADEMIC_YEARS = ['2024', '2025', '2026', '2027', '2028'];
+window.CURRENT_YEAR = new Date().getFullYear().toString();
+
+// Also keep local references for use inside the module
+const ACADEMIC_YEARS = window.ACADEMIC_YEARS;
+const CURRENT_YEAR = window.CURRENT_YEAR;
     const REFERRAL_OPTIONS = ['None', 'Dentist', 'Eye Specialist', 'Orthopedic', 'Dermatologist', 'ENT Specialist', 'Psychologist', 'Nutritionist', 'Other'];
     const CONDITIONS = ['New Illness', 'Pre-existing Condition', 'Injury', 'Chronic Condition'];
     const ROLES = ['admin', 'principal', 'teacher', 'nurse', 'doctor', 'secretary', 'director', 'hrio', 'nutritionist', 'labtech', 'radiographer', 'maintenance'];
@@ -2221,8 +2238,12 @@ window.uploadStudentPhotoToFirebase = async function(file, studentId) {
   <div class="form-group">
   <label>Academic Year *</label>
   <select id="g_academicYear">
-    ${ACADEMIC_YEARS.map(y => `<option value="${y}" ${(grade?.academicYear || CURRENT_YEAR) === y ? 'selected' : ''}>${y}</option>`).join('')}
-  </select>
+  <option value="2024" ${(grade?.academicYear || CURRENT_YEAR) === '2024' ? 'selected' : ''}>2024</option>
+  <option value="2025" ${(grade?.academicYear || CURRENT_YEAR) === '2025' ? 'selected' : ''}>2025</option>
+  <option value="2026" ${(grade?.academicYear || CURRENT_YEAR) === '2026' ? 'selected' : ''}>2026</option>
+  <option value="2027" ${(grade?.academicYear || CURRENT_YEAR) === '2027' ? 'selected' : ''}>2027</option>
+  <option value="2028" ${(grade?.academicYear || CURRENT_YEAR) === '2028' ? 'selected' : ''}>2028</option>
+</select>
 </div>        
           <div class="form-group">
             <label>Exam Type *</label>
