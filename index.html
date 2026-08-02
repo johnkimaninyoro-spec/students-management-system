@@ -1121,14 +1121,21 @@
   if (score === undefined || score === null || score === '' || isNaN(score)) {
     return null;
   }
+  
   const percentage = Math.round(score);
-  // Only assign grades to actual scores
+  
+  // IMPORTANT: If score is 0, it's a valid score (the student got 0%)
+  // So we still assign 'E' grade for 0%
+  // But only if the score was actually provided (not null/empty)
+  
+  // Only assign grades to actual scores (including 0)
   for (const grade of KENYAN_GRADES) {
     if (percentage >= grade.min && percentage <= grade.max) {
       return grade;
     }
   }
-  // Return null for any score that doesn't fit (shouldn't happen with valid scores)
+  
+  // Return null for any score that doesn't fit
   return null;
 }
 
@@ -3079,22 +3086,29 @@ function renderClassPerformance() {
   
   // Calculate student averages
   const studentAverages = classStudents.map(student => {
-    const grades = studentGrades.filter(g => g.studentId === student.id && hasActualScores(g));
-    let totalScore = 0;
-    let count = 0;
-    
-    grades.forEach(g => {
-      if (hasActualScores(g)) {
-        totalScore += (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
-        count++;
-      }
-    });
-    
-    const avg = count > 0 ? Math.round(totalScore / count) : 0;
-    return { student, average: avg, passed: avg >= 50, subjects: count };
+  const grades = studentGrades.filter(g => g.studentId === student.id && hasActualScores(g));
+  let totalScore = 0;
+  let count = 0;
+  
+  grades.forEach(g => {
+    if (hasActualScores(g)) {
+      totalScore += (g.test1 || 0) + (g.test2 || 0) + (g.test3 || 0) + (g.exam || 0);
+      count++;
+    }
   });
   
-  const studentsWithGrades = studentAverages.filter(s => s.subjects > 0);
+  // Use null when no scores, not 0
+  const avg = count > 0 ? Math.round(totalScore / count) : null;
+  return { 
+    student, 
+    average: avg, 
+    passed: avg !== null && avg >= 50, 
+    subjects: count 
+  };
+});
+
+// Only include students with actual scores
+const studentsWithGrades = studentAverages.filter(s => s.subjects > 0 && s.average !== null);
   studentsWithGrades.sort((a, b) => b.average - a.average);
   
   // Render rankings
@@ -4099,7 +4113,7 @@ window.rejectRegistration = async function(registrationId) {
     filteredRows = data.rows
       .map(row => {
         const hasScores = hasActualScores(row);
-        const total = hasScores ? (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0) : 0;
+        const total = hasScores ? (row.test1 || 0) + (row.test2 || 0) + (row.test3 || 0) + (row.exam || 0) : null;
         const mean = row.studentId && studentTotals[row.studentId] && studentCounts[row.studentId] > 0 ? 
           Math.round(studentTotals[row.studentId] / studentCounts[row.studentId]) : 0;
         const student = studentsCache.find(s => s.id === row.studentId);
@@ -5765,7 +5779,7 @@ function printAnalytics() {
       <td>${g.test3 ?? '-'}</td>
       <td>${g.exam ?? '-'}</td>
       <td><strong>${hasScores ? total : '-'}</strong></td>
-      <td>${getGradeBadgeForDisplay(hasScores ? total : null)}</td>
+      <td>${hasScores ? getGradeBadgeForDisplay(total) : '<span class="badge badge-na">N/A</span>'}</td>
       <td>
         <button class="btn btn-primary btn-sm" onclick="showAddGradeModal('${g.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteGrade('${g.id}')">Del</button>
