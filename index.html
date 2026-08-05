@@ -38,11 +38,12 @@
       --glass-border: rgba(255, 255, 255, 0.08);
       --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     }
-    /* ============================================================
-       AURORA MORPHISM - Green, Black & Maroon Theme
+       /* ============================================================
+       AURORA MORPHISM - Dark & Readable Theme
+       Green, Black & Maroon
        ============================================================ */
 
-    /* Aurora Background Animation */
+    /* Dark Aurora Background */
     body {
       background: #0a0a0a;
       position: relative;
@@ -57,13 +58,13 @@
       bottom: 0;
       z-index: -2;
       background: 
-        radial-gradient(ellipse at 20% 30%, rgba(26, 122, 58, 0.25) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 70%, rgba(128, 0, 0, 0.20) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(26, 26, 26, 0.30) 0%, transparent 70%),
-        radial-gradient(ellipse at 10% 80%, rgba(39, 174, 96, 0.15) 0%, transparent 40%),
-        radial-gradient(ellipse at 90% 20%, rgba(165, 42, 42, 0.15) 0%, transparent 40%);
+        radial-gradient(ellipse at 20% 30%, rgba(26, 122, 58, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 70%, rgba(128, 0, 0, 0.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.40) 0%, transparent 70%),
+        radial-gradient(ellipse at 10% 80%, rgba(39, 174, 96, 0.08) 0%, transparent 40%),
+        radial-gradient(ellipse at 90% 20%, rgba(165, 42, 42, 0.08) 0%, transparent 40%);
       background-size: 300% 300%;
-      animation: auroraMove 25s ease-in-out infinite alternate;
+      animation: auroraMove 30s ease-in-out infinite alternate;
     }
 
     body::after {
@@ -74,8 +75,8 @@
       right: 0;
       bottom: 0;
       z-index: -1;
-      backdrop-filter: blur(2px);
-      background: rgba(10, 10, 10, 0.4);
+      backdrop-filter: blur(1px);
+      background: rgba(10, 10, 10, 0.85);
     }
 
     @keyframes auroraMove {
@@ -86,22 +87,22 @@
       100% { background-position: 100% 50%; }
     }
 
-    /* ===== GLASS CARDS - Maroon & Green Theme ===== */
+    /* ===== DARK GLASS CARDS ===== */
     .card {
-      background: rgba(255, 255, 255, 0.04) !important;
-      backdrop-filter: blur(20px) !important;
-      -webkit-backdrop-filter: blur(20px) !important;
+      background: rgba(20, 20, 20, 0.85) !important;
+      backdrop-filter: blur(15px) !important;
+      -webkit-backdrop-filter: blur(15px) !important;
       border: 1px solid rgba(128, 0, 0, 0.15) !important;
       border-radius: var(--radius) !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
     .card:hover {
-      background: rgba(255, 255, 255, 0.07) !important;
-      transform: translateY(-4px);
-      box-shadow: 0 12px 48px rgba(128, 0, 0, 0.15) !important;
-      border-color: rgba(26, 122, 58, 0.25) !important;
+      background: rgba(30, 30, 30, 0.90) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6) !important;
+      border-color: rgba(26, 122, 58, 0.20) !important;
     }
 
     .card-header {
@@ -110,26 +111,24 @@
 
     .card-header h2 {
       color: #e8d5b7 !important;
-      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
     .card-header h3 {
-      color: #c9b99a !important;
+      color: #d4c4a8 !important;
     }
 
     .card-header span {
       color: rgba(255, 255, 255, 0.3) !important;
     }
 
-    /* ===== LOGIN PAGE - Maroon & Green Theme ===== */
+    /* ===== DARK LOGIN PAGE ===== */
     .login-box {
-      background: rgba(255, 255, 255, 0.04) !important;
+      background: rgba(20, 20, 20, 0.90) !important;
       backdrop-filter: blur(30px) !important;
       -webkit-backdrop-filter: blur(30px) !important;
-      border: 1px solid rgba(128, 0, 0, 0.20) !important;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
-      position: relative;
-      overflow: hidden;
+      border: 1px solid rgba(128, 0, 0, 0.15) !important;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7) !important;
     }
 
     .login-box::before {
@@ -139,16 +138,16 @@
       left: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle at 30% 40%, rgba(26, 122, 58, 0.08) 0%, transparent 60%),
-                  radial-gradient(circle at 70% 60%, rgba(128, 0, 0, 0.08) 0%, transparent 60%);
+      background: radial-gradient(circle at 30% 40%, rgba(26, 122, 58, 0.05) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 60%, rgba(128, 0, 0, 0.05) 0%, transparent 60%);
       animation: auroraPulse 10s ease-in-out infinite alternate;
       z-index: -1;
       pointer-events: none;
     }
 
     @keyframes auroraPulse {
-      0% { transform: scale(1) rotate(0deg); opacity: 0.5; }
-      100% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+      0% { transform: scale(1) rotate(0deg); opacity: 0.3; }
+      100% { transform: scale(1.2) rotate(3deg); opacity: 0.6; }
     }
 
     .login-box .form-group label {
@@ -164,37 +163,37 @@
     .login-box .form-group input:focus {
       border-color: var(--secondary-light) !important;
       background: rgba(255, 255, 255, 0.06) !important;
-      box-shadow: 0 0 30px rgba(26, 122, 58, 0.15) !important;
+      box-shadow: 0 0 30px rgba(26, 122, 58, 0.10) !important;
     }
 
     .login-box .form-group input::placeholder {
-      color: rgba(255, 255, 255, 0.2) !important;
+      color: rgba(255, 255, 255, 0.15) !important;
     }
 
     .login-box .login-btn {
-      background: linear-gradient(135deg, rgba(128, 0, 0, 0.6), rgba(26, 122, 58, 0.6)) !important;
+      background: linear-gradient(135deg, rgba(128, 0, 0, 0.5), rgba(26, 122, 58, 0.5)) !important;
       backdrop-filter: blur(10px) !important;
       border: 1px solid rgba(128, 0, 0, 0.15) !important;
       color: #e8d5b7 !important;
     }
 
     .login-box .login-btn:hover {
-      background: linear-gradient(135deg, rgba(128, 0, 0, 0.8), rgba(26, 122, 58, 0.8)) !important;
-      box-shadow: 0 8px 30px rgba(128, 0, 0, 0.3) !important;
+      background: linear-gradient(135deg, rgba(128, 0, 0, 0.7), rgba(26, 122, 58, 0.7)) !important;
+      box-shadow: 0 8px 30px rgba(128, 0, 0, 0.2) !important;
     }
 
     .login-box .test-login-hint {
-      background: rgba(255, 255, 255, 0.03) !important;
+      background: rgba(255, 255, 255, 0.02) !important;
       border: 1px dashed rgba(128, 0, 0, 0.10) !important;
-      color: rgba(255, 255, 255, 0.4) !important;
+      color: rgba(255, 255, 255, 0.3) !important;
     }
 
     .login-logo .motto-text {
-      color: rgba(255, 255, 255, 0.4) !important;
+      color: rgba(255, 255, 255, 0.3) !important;
     }
 
     .login-box .register-link {
-      color: rgba(255, 255, 255, 0.5) !important;
+      color: rgba(255, 255, 255, 0.4) !important;
     }
 
     .login-box .register-link a {
@@ -205,92 +204,96 @@
       color: #2ecc71 !important;
     }
 
-    /* ===== TOP BAR - Maroon & Green ===== */
+    /* ===== DARK TOP BAR ===== */
     .top-bar {
-      background: rgba(26, 26, 26, 0.7) !important;
+      background: rgba(10, 10, 10, 0.85) !important;
       backdrop-filter: blur(20px) !important;
       -webkit-backdrop-filter: blur(20px) !important;
-      border-bottom: 1px solid rgba(128, 0, 0, 0.15) !important;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
+      border-bottom: 1px solid rgba(128, 0, 0, 0.10) !important;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4) !important;
     }
 
     .top-bar .user-section .sync-status {
-      background: rgba(255, 255, 255, 0.04) !important;
-      border: 1px solid rgba(26, 122, 58, 0.15) !important;
-    }
-
-    .top-bar .user-section .user-badge {
-      background: rgba(128, 0, 0, 0.2) !important;
-      border: 1px solid rgba(128, 0, 0, 0.15) !important;
-      color: #e8d5b7 !important;
-    }
-
-    /* ===== SIDEBAR - Maroon & Green ===== */
-    .sidebar {
-      background: rgba(26, 26, 26, 0.6) !important;
-      backdrop-filter: blur(20px) !important;
-      -webkit-backdrop-filter: blur(20px) !important;
-      border-right: 1px solid rgba(128, 0, 0, 0.08) !important;
-    }
-
-    .sidebar .sidebar-section {
-      color: rgba(255, 255, 255, 0.15) !important;
-    }
-
-    .sidebar .nav-item {
+      background: rgba(255, 255, 255, 0.02) !important;
+      border: 1px solid rgba(26, 122, 58, 0.10) !important;
       color: rgba(255, 255, 255, 0.5) !important;
     }
 
+    .top-bar .user-section .user-badge {
+      background: rgba(128, 0, 0, 0.15) !important;
+      border: 1px solid rgba(128, 0, 0, 0.10) !important;
+      color: #e8d5b7 !important;
+    }
+
+    #currentUserDisplay {
+      color: #e8d5b7 !important;
+    }
+
+    /* ===== DARK SIDEBAR ===== */
+    .sidebar {
+      background: rgba(10, 10, 10, 0.85) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      border-right: 1px solid rgba(128, 0, 0, 0.06) !important;
+    }
+
+    .sidebar .sidebar-section {
+      color: rgba(255, 255, 255, 0.10) !important;
+    }
+
+    .sidebar .nav-item {
+      color: rgba(255, 255, 255, 0.4) !important;
+    }
+
     .sidebar .nav-item:hover {
-      background: rgba(26, 122, 58, 0.08) !important;
+      background: rgba(26, 122, 58, 0.06) !important;
       color: #e8d5b7 !important;
     }
 
     .sidebar .nav-item.active {
-      background: rgba(128, 0, 0, 0.15) !important;
+      background: rgba(128, 0, 0, 0.12) !important;
       border-left-color: var(--secondary-light) !important;
       color: #e8d5b7 !important;
-      box-shadow: 0 2px 20px rgba(26, 122, 58, 0.1) !important;
+      box-shadow: 0 2px 20px rgba(26, 122, 58, 0.05) !important;
     }
 
-    /* ===== GLASS MODALS ===== */
+    /* ===== DARK MODALS ===== */
     .modal {
-      background: rgba(26, 26, 26, 0.85) !important;
+      background: rgba(15, 15, 15, 0.92) !important;
       backdrop-filter: blur(30px) !important;
       -webkit-backdrop-filter: blur(30px) !important;
-      border: 1px solid rgba(128, 0, 0, 0.15) !important;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+      border: 1px solid rgba(128, 0, 0, 0.10) !important;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7) !important;
     }
 
     .modal-header {
-      border-bottom: 1px solid rgba(128, 0, 0, 0.10) !important;
+      border-bottom: 1px solid rgba(128, 0, 0, 0.08) !important;
     }
 
     .modal-header h2 {
       color: #e8d5b7 !important;
-      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
     }
 
     .modal-header .modal-close {
-      color: rgba(255, 255, 255, 0.3) !important;
+      color: rgba(255, 255, 255, 0.2) !important;
     }
 
     .modal-header .modal-close:hover {
       color: #e74c3c !important;
     }
 
-    /* ===== GLASS TABLES ===== */
+    /* ===== DARK TABLES ===== */
     th {
-      background: rgba(128, 0, 0, 0.2) !important;
+      background: rgba(128, 0, 0, 0.15) !important;
       backdrop-filter: blur(10px) !important;
       color: #e8d5b7 !important;
-      border-bottom: 1px solid rgba(128, 0, 0, 0.10) !important;
+      border-bottom: 1px solid rgba(128, 0, 0, 0.08) !important;
     }
 
     td {
       background: rgba(255, 255, 255, 0.01) !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.02) !important;
-      color: rgba(255, 255, 255, 0.75) !important;
+      color: #d4c4a8 !important;
     }
 
     tr:hover td {
@@ -301,154 +304,154 @@
       background: rgba(255, 255, 255, 0.005) !important;
     }
 
-    /* ===== GLASS FORM INPUTS ===== */
+    /* ===== DARK FORM INPUTS ===== */
     .form-group input,
     .form-group select,
     .form-group textarea {
-      background: rgba(255, 255, 255, 0.03) !important;
-      border: 1px solid rgba(128, 0, 0, 0.10) !important;
-      color: #e8d5b7 !important;
+      background: rgba(255, 255, 255, 0.02) !important;
+      border: 1px solid rgba(128, 0, 0, 0.08) !important;
+      color: #d4c4a8 !important;
     }
 
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
       border-color: var(--secondary-light) !important;
-      background: rgba(255, 255, 255, 0.05) !important;
-      box-shadow: 0 0 30px rgba(26, 122, 58, 0.08) !important;
+      background: rgba(255, 255, 255, 0.04) !important;
+      box-shadow: 0 0 30px rgba(26, 122, 58, 0.05) !important;
     }
 
     .form-group input::placeholder,
     .form-group textarea::placeholder {
-      color: rgba(255, 255, 255, 0.15) !important;
+      color: rgba(255, 255, 255, 0.10) !important;
     }
 
     .form-group label {
       color: #c9b99a !important;
     }
 
-    /* ===== GLASS BUTTONS ===== */
+    /* ===== DARK BUTTONS ===== */
     .btn-primary {
-      background: rgba(128, 0, 0, 0.4) !important;
-      border: 1px solid rgba(128, 0, 0, 0.15) !important;
+      background: rgba(128, 0, 0, 0.30) !important;
+      border: 1px solid rgba(128, 0, 0, 0.10) !important;
       color: #e8d5b7 !important;
     }
 
     .btn-primary:hover {
-      background: rgba(128, 0, 0, 0.6) !important;
-      box-shadow: 0 4px 20px rgba(128, 0, 0, 0.2) !important;
+      background: rgba(128, 0, 0, 0.50) !important;
+      box-shadow: 0 4px 20px rgba(128, 0, 0, 0.15) !important;
     }
 
     .btn-success {
-      background: rgba(26, 122, 58, 0.4) !important;
-      border: 1px solid rgba(26, 122, 58, 0.15) !important;
+      background: rgba(26, 122, 58, 0.30) !important;
+      border: 1px solid rgba(26, 122, 58, 0.10) !important;
       color: #e8d5b7 !important;
     }
 
     .btn-success:hover {
-      background: rgba(26, 122, 58, 0.6) !important;
-      box-shadow: 0 4px 20px rgba(26, 122, 58, 0.2) !important;
+      background: rgba(26, 122, 58, 0.50) !important;
+      box-shadow: 0 4px 20px rgba(26, 122, 58, 0.15) !important;
     }
 
     .btn-danger {
-      background: rgba(192, 57, 43, 0.4) !important;
-      border: 1px solid rgba(192, 57, 43, 0.15) !important;
+      background: rgba(192, 57, 43, 0.30) !important;
+      border: 1px solid rgba(192, 57, 43, 0.10) !important;
       color: #e8d5b7 !important;
     }
 
     .btn-danger:hover {
-      background: rgba(192, 57, 43, 0.6) !important;
-      box-shadow: 0 4px 20px rgba(192, 57, 43, 0.2) !important;
+      background: rgba(192, 57, 43, 0.50) !important;
+      box-shadow: 0 4px 20px rgba(192, 57, 43, 0.15) !important;
     }
 
     .btn-print {
-      background: rgba(52, 73, 94, 0.4) !important;
-      border: 1px solid rgba(52, 73, 94, 0.15) !important;
+      background: rgba(52, 73, 94, 0.30) !important;
+      border: 1px solid rgba(52, 73, 94, 0.10) !important;
       color: #e8d5b7 !important;
     }
 
     .btn-print:hover {
-      background: rgba(52, 73, 94, 0.6) !important;
+      background: rgba(52, 73, 94, 0.50) !important;
     }
 
     .btn-view {
-      background: rgba(142, 68, 173, 0.4) !important;
-      border: 1px solid rgba(142, 68, 173, 0.15) !important;
+      background: rgba(142, 68, 173, 0.30) !important;
+      border: 1px solid rgba(142, 68, 173, 0.10) !important;
       color: #e8d5b7 !important;
     }
 
     .btn-view:hover {
-      background: rgba(142, 68, 173, 0.6) !important;
+      background: rgba(142, 68, 173, 0.50) !important;
     }
 
     .btn-approve {
-      background: rgba(26, 122, 58, 0.4) !important;
-      border: 1px solid rgba(26, 122, 58, 0.15) !important;
+      background: rgba(26, 122, 58, 0.30) !important;
+      border: 1px solid rgba(26, 122, 58, 0.10) !important;
       color: #e8d5b7 !important;
     }
 
     .btn-approve:hover {
-      background: rgba(26, 122, 58, 0.6) !important;
+      background: rgba(26, 122, 58, 0.50) !important;
     }
 
     .btn-reject {
-      background: rgba(192, 57, 43, 0.4) !important;
-      border: 1px solid rgba(192, 57, 43, 0.15) !important;
+      background: rgba(192, 57, 43, 0.30) !important;
+      border: 1px solid rgba(192, 57, 43, 0.10) !important;
       color: #e8d5b7 !important;
     }
 
     .btn-reject:hover {
-      background: rgba(192, 57, 43, 0.6) !important;
+      background: rgba(192, 57, 43, 0.50) !important;
     }
 
-    /* ===== GLASS BADGES ===== */
+    /* ===== DARK BADGES ===== */
     .badge-success {
-      background: rgba(26, 122, 58, 0.2) !important;
+      background: rgba(26, 122, 58, 0.15) !important;
       color: #6fcf97 !important;
     }
 
     .badge-danger {
-      background: rgba(192, 57, 43, 0.2) !important;
+      background: rgba(192, 57, 43, 0.15) !important;
       color: #ff6b6b !important;
     }
 
     .badge-warning {
-      background: rgba(243, 156, 18, 0.2) !important;
+      background: rgba(243, 156, 18, 0.15) !important;
       color: #f1c40f !important;
     }
 
     .badge-info {
-      background: rgba(46, 134, 193, 0.2) !important;
+      background: rgba(46, 134, 193, 0.15) !important;
       color: #5dade2 !important;
     }
 
     .badge-primary {
-      background: rgba(128, 0, 0, 0.2) !important;
+      background: rgba(128, 0, 0, 0.15) !important;
       color: #e8d5b7 !important;
     }
 
     .badge-gold {
-      background: rgba(241, 196, 15, 0.2) !important;
+      background: rgba(241, 196, 15, 0.15) !important;
       color: #f1c40f !important;
     }
 
     .badge-na {
-      background: rgba(255, 255, 255, 0.03) !important;
-      color: rgba(255, 255, 255, 0.2) !important;
+      background: rgba(255, 255, 255, 0.02) !important;
+      color: rgba(255, 255, 255, 0.15) !important;
     }
 
-    /* ===== GLASS STATS CARDS ===== */
+    /* ===== DARK STATS CARDS ===== */
     .stat-card {
-      background: rgba(255, 255, 255, 0.03) !important;
+      background: rgba(20, 20, 20, 0.80) !important;
       backdrop-filter: blur(10px) !important;
       -webkit-backdrop-filter: blur(10px) !important;
-      border: 1px solid rgba(128, 0, 0, 0.08) !important;
+      border: 1px solid rgba(128, 0, 0, 0.06) !important;
       border-top: 3px solid var(--secondary-light) !important;
     }
 
     .stat-card:hover {
-      background: rgba(255, 255, 255, 0.06) !important;
-      border-color: rgba(26, 122, 58, 0.2) !important;
+      background: rgba(30, 30, 30, 0.85) !important;
+      border-color: rgba(26, 122, 58, 0.15) !important;
     }
 
     .stat-card .stat-number {
@@ -456,23 +459,23 @@
     }
 
     .stat-card .stat-label {
-      color: rgba(255, 255, 255, 0.4) !important;
+      color: rgba(255, 255, 255, 0.30) !important;
     }
 
     .stat-card .stat-icon {
-      color: rgba(255, 255, 255, 0.5) !important;
+      color: rgba(255, 255, 255, 0.35) !important;
     }
 
     .stat-card .click-hint {
-      color: rgba(255, 255, 255, 0.15) !important;
+      color: rgba(255, 255, 255, 0.10) !important;
     }
 
-    /* ===== GLASS REGISTRATION STATS ===== */
+    /* ===== DARK REGISTRATION STATS ===== */
     .registration-stat-card {
-      background: rgba(255, 255, 255, 0.03) !important;
+      background: rgba(20, 20, 20, 0.80) !important;
       backdrop-filter: blur(10px) !important;
       -webkit-backdrop-filter: blur(10px) !important;
-      border: 1px solid rgba(128, 0, 0, 0.08) !important;
+      border: 1px solid rgba(128, 0, 0, 0.06) !important;
     }
 
     .registration-stat-card .stat-number {
@@ -480,19 +483,19 @@
     }
 
     .registration-stat-card .stat-label {
-      color: rgba(255, 255, 255, 0.4) !important;
+      color: rgba(255, 255, 255, 0.30) !important;
     }
 
-    /* ===== GLASS PROFILE ===== */
+    /* ===== DARK PROFILE ===== */
     .profile-header {
-      background: rgba(255, 255, 255, 0.03) !important;
+      background: rgba(20, 20, 20, 0.80) !important;
       backdrop-filter: blur(10px) !important;
       -webkit-backdrop-filter: blur(10px) !important;
-      border: 1px solid rgba(128, 0, 0, 0.08) !important;
+      border: 1px solid rgba(128, 0, 0, 0.06) !important;
     }
 
     .profile-section {
-      background: rgba(255, 255, 255, 0.02) !important;
+      background: rgba(20, 20, 20, 0.60) !important;
       backdrop-filter: blur(10px) !important;
       -webkit-backdrop-filter: blur(10px) !important;
       border-left: 4px solid var(--secondary-light) !important;
@@ -503,7 +506,7 @@
     }
 
     .profile-grid .item {
-      color: rgba(255, 255, 255, 0.7) !important;
+      color: rgba(255, 255, 255, 0.60) !important;
     }
 
     .profile-grid .item strong {
@@ -515,103 +518,100 @@
     }
 
     .profile-info p {
-      color: rgba(255, 255, 255, 0.5) !important;
+      color: rgba(255, 255, 255, 0.40) !important;
     }
 
-    /* ===== GLASS CLINIC ===== */
+    .profile-avatar {
+      background: rgba(128, 0, 0, 0.30) !important;
+    }
+
+    /* ===== DARK CLINIC ===== */
     .clinic-section {
-      background: rgba(255, 255, 255, 0.02) !important;
+      background: rgba(20, 20, 20, 0.60) !important;
       backdrop-filter: blur(10px) !important;
       -webkit-backdrop-filter: blur(10px) !important;
       border-left: 4px solid var(--secondary-light) !important;
     }
 
     .clinic-section .checkbox-group label {
-      color: rgba(255, 255, 255, 0.7) !important;
+      color: rgba(255, 255, 255, 0.60) !important;
     }
 
-    /* ===== TOAST NOTIFICATIONS ===== */
+    /* ===== DARK TOASTS ===== */
     .toast.success {
-      background: rgba(26, 122, 58, 0.6) !important;
+      background: rgba(26, 122, 58, 0.70) !important;
       backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(26, 122, 58, 0.2) !important;
+      border: 1px solid rgba(26, 122, 58, 0.15) !important;
     }
 
     .toast.error {
-      background: rgba(192, 57, 43, 0.6) !important;
+      background: rgba(192, 57, 43, 0.70) !important;
       backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(192, 57, 43, 0.2) !important;
+      border: 1px solid rgba(192, 57, 43, 0.15) !important;
     }
 
     .toast.info {
-      background: rgba(46, 134, 193, 0.6) !important;
+      background: rgba(46, 134, 193, 0.70) !important;
       backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(46, 134, 193, 0.2) !important;
+      border: 1px solid rgba(46, 134, 193, 0.15) !important;
     }
 
     .toast.warning {
-      background: rgba(243, 156, 18, 0.6) !important;
+      background: rgba(243, 156, 18, 0.70) !important;
       backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(243, 156, 18, 0.2) !important;
+      border: 1px solid rgba(243, 156, 18, 0.15) !important;
     }
 
-    /* ===== GRADE BADGES ===== */
-    .badge-grade-a { background: rgba(39, 174, 96, 0.25) !important; color: #2ecc71 !important; }
-    .badge-grade-a- { background: rgba(46, 204, 113, 0.2) !important; color: #55efc4 !important; }
-    .badge-grade-b-plus { background: rgba(133, 193, 233, 0.2) !important; color: #85c1e9 !important; }
-    .badge-grade-b { background: rgba(93, 173, 226, 0.2) !important; color: #5dade2 !important; }
-    .badge-grade-b- { background: rgba(169, 204, 227, 0.2) !important; color: #a9cce3 !important; }
-    .badge-grade-c-plus { background: rgba(245, 176, 65, 0.2) !important; color: #f5b041 !important; }
-    .badge-grade-c { background: rgba(243, 156, 18, 0.2) !important; color: #f39c12 !important; }
-    .badge-grade-c- { background: rgba(247, 220, 111, 0.2) !important; color: #f7dc6f !important; }
-    .badge-grade-d-plus { background: rgba(230, 126, 34, 0.2) !important; color: #e67e22 !important; }
-    .badge-grade-d { background: rgba(211, 84, 0, 0.2) !important; color: #d35400 !important; }
-    .badge-grade-d- { background: rgba(245, 183, 177, 0.2) !important; color: #f5b7b1 !important; }
-    .badge-grade-e { background: rgba(231, 76, 60, 0.2) !important; color: #e74c3c !important; }
+    /* ===== DARK GRADE BADGES ===== */
+    .badge-grade-a { background: rgba(39, 174, 96, 0.20) !important; color: #2ecc71 !important; }
+    .badge-grade-a- { background: rgba(46, 204, 113, 0.15) !important; color: #55efc4 !important; }
+    .badge-grade-b-plus { background: rgba(133, 193, 233, 0.15) !important; color: #85c1e9 !important; }
+    .badge-grade-b { background: rgba(93, 173, 226, 0.15) !important; color: #5dade2 !important; }
+    .badge-grade-b- { background: rgba(169, 204, 227, 0.15) !important; color: #a9cce3 !important; }
+    .badge-grade-c-plus { background: rgba(245, 176, 65, 0.15) !important; color: #f5b041 !important; }
+    .badge-grade-c { background: rgba(243, 156, 18, 0.15) !important; color: #f39c12 !important; }
+    .badge-grade-c- { background: rgba(247, 220, 111, 0.15) !important; color: #f7dc6f !important; }
+    .badge-grade-d-plus { background: rgba(230, 126, 34, 0.15) !important; color: #e67e22 !important; }
+    .badge-grade-d { background: rgba(211, 84, 0, 0.15) !important; color: #d35400 !important; }
+    .badge-grade-d- { background: rgba(245, 183, 177, 0.15) !important; color: #f5b7b1 !important; }
+    .badge-grade-e { background: rgba(231, 76, 60, 0.15) !important; color: #e74c3c !important; }
 
-    /* ===== PENDING APPROVAL BADGES ===== */
-    .pending-approval-badge.pending {
-      background: rgba(243, 156, 18, 0.2) !important;
-      color: #f1c40f !important;
+    /* ===== DARK FILTER BADGE ===== */
+    .filter-clear-btn {
+      background: rgba(192, 57, 43, 0.30) !important;
+      color: #e8d5b7 !important;
+      border: 1px solid rgba(192, 57, 43, 0.10) !important;
     }
 
-    .pending-approval-badge.approved {
-      background: rgba(26, 122, 58, 0.2) !important;
-      color: #6fcf97 !important;
+    .filter-clear-btn:hover {
+      background: rgba(192, 57, 43, 0.50) !important;
     }
 
-    .pending-approval-badge.rejected {
-      background: rgba(192, 57, 43, 0.2) !important;
-      color: #ff6b6b !important;
+    .stat-card.active-filter {
+      box-shadow: 0 0 0 2px var(--secondary-light) !important;
     }
 
-    /* ===== SCROLLBAR ===== */
+    /* ===== DARK SCROLLBAR ===== */
     ::-webkit-scrollbar-track {
       background: rgba(255, 255, 255, 0.01);
     }
 
     ::-webkit-scrollbar-thumb {
-      background: rgba(128, 0, 0, 0.15);
+      background: rgba(128, 0, 0, 0.10);
       border-radius: 10px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(26, 122, 58, 0.2);
+      background: rgba(26, 122, 58, 0.15);
     }
 
-    /* ===== FILTER BADGE ===== */
-    .filter-clear-btn {
-      background: rgba(192, 57, 43, 0.4) !important;
-      color: #e8d5b7 !important;
-      border: 1px solid rgba(192, 57, 43, 0.15) !important;
+    /* ===== TEXT COLORS ===== */
+    .content-area {
+      color: #d4c4a8 !important;
     }
 
-    .filter-clear-btn:hover {
-      background: rgba(192, 57, 43, 0.6) !important;
-    }
-
-    .stat-card.active-filter {
-      box-shadow: 0 0 0 2px var(--secondary-light) !important;
+    .table-container {
+      color: #d4c4a8 !important;
     }
 
     /* ===== RESPONSIVE ===== */
@@ -619,6 +619,96 @@
       .content-area { padding: 16px !important; }
       .card { padding: 16px !important; }
       .login-box { padding: 30px 20px !important; }
+    }
+
+    /* ===== EXISTING COLOR OVERRIDES ===== */
+    .rank-1 { background: rgba(241, 196, 15, 0.10) !important; }
+    .rank-2 { background: rgba(192, 192, 192, 0.08) !important; }
+    .rank-3 { background: rgba(205, 127, 50, 0.08) !important; }
+
+    .pending-approval-badge.pending {
+      background: rgba(243, 156, 18, 0.15) !important;
+      color: #f1c40f !important;
+    }
+
+    .pending-approval-badge.approved {
+      background: rgba(26, 122, 58, 0.15) !important;
+      color: #6fcf97 !important;
+    }
+
+    .pending-approval-badge.rejected {
+      background: rgba(192, 57, 43, 0.15) !important;
+      color: #ff6b6b !important;
+    }
+
+    .maintenance-status-badge.pending {
+      background: rgba(243, 156, 18, 0.15) !important;
+      color: #f1c40f !important;
+    }
+
+    .maintenance-status-badge.inprogress {
+      background: rgba(46, 134, 193, 0.15) !important;
+      color: #5dade2 !important;
+    }
+
+    .maintenance-status-badge.resolved {
+      background: rgba(26, 122, 58, 0.15) !important;
+      color: #6fcf97 !important;
+    }
+
+    .prefect-role-badge.head {
+      background: rgba(241, 196, 15, 0.15) !important;
+      color: #f1c40f !important;
+    }
+
+    .prefect-role-badge.deputy {
+      background: rgba(46, 134, 193, 0.15) !important;
+      color: #5dade2 !important;
+    }
+
+    .prefect-role-badge.class {
+      background: rgba(26, 122, 58, 0.15) !important;
+      color: #6fcf97 !important;
+    }
+
+    .prefect-role-badge.assistant {
+      background: rgba(243, 156, 18, 0.15) !important;
+      color: #f1c40f !important;
+    }
+
+    .exam-type-badge.opener {
+      background: rgba(46, 134, 193, 0.15) !important;
+      color: #5dade2 !important;
+    }
+
+    .exam-type-badge.midterm {
+      background: rgba(243, 156, 18, 0.15) !important;
+      color: #f1c40f !important;
+    }
+
+    .exam-type-badge.endterm {
+      background: rgba(26, 122, 58, 0.15) !important;
+      color: #6fcf97 !important;
+    }
+
+    .staff-type-badge.teacher {
+      background: rgba(46, 134, 193, 0.15) !important;
+      color: #5dade2 !important;
+    }
+
+    .staff-type-badge.clinician {
+      background: rgba(192, 57, 43, 0.15) !important;
+      color: #ff6b6b !important;
+    }
+
+    .staff-type-badge.maintenance {
+      background: rgba(243, 156, 18, 0.15) !important;
+      color: #f1c40f !important;
+    }
+
+    /* ===== TOAST CONTAINER ===== */
+    .toast {
+      color: #e8d5b7 !important;
     }
 /* ===== FILTER BADGE STYLES ===== */
 .filter-clear-btn {
