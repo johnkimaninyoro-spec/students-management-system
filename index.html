@@ -2346,12 +2346,15 @@ function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy
 window.handleLogin = function() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  
+  // Only use test mode if explicitly requested
   if (email === 'test@test.com' && password === 'test123') {
     forceTestLogin();
     return;
   }
-  showToast('Using test mode (Firebase offline)', 'info');
-  forceTestLogin();
+  
+  // Try Firebase login normally
+  firebaseLogin();
 };
 
 window.forceTestLogin = function() {
