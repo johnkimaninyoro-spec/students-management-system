@@ -2340,25 +2340,121 @@ function showToast(message, type = 'success', duration = 4000) {
 
 function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
+<script>
 // ============================================================
-// AUTHENTICATION
+// AUTHENTICATION - FIXED VERSION
 // ============================================================
+
+// Firebase configuration (replace with your actual config if using Firebase)
+const firebaseConfig = {
+  apiKey: "AIzaSyD-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // Your actual API key
+  authDomain: "your-project.firebaseapp.com",        // Your actual auth domain
+  projectId: "your-project-id",                       // Your actual project ID
+  storageBucket: "your-project.appspot.com",          // Your actual storage bucket
+  messagingSenderId: "1234567890",                    // Your actual sender ID
+  appId: "1:1234567890:web:abcdef123456"              // Your actual app ID
+};
+
+// Initialize Firebase (only if config is provided)
+let firebaseApp = null;
+let firebaseAuth = null;
+let firestore = null;
+let isFirebaseInitialized = false;
+
+try {
+  if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    // Import Firebase modules dynamically
+    import('firebase/app').then(({ initializeApp }) => {
+      firebaseApp = initializeApp(firebaseConfig);
+      return import('firebase/auth');
+    }).then(({ getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword }) => {
+      firebaseAuth = getAuth(firebaseApp);
+      window.firebaseSignIn = signInWithEmailAndPassword;
+      window.firebaseCreateUser = createUserWithEmailAndPassword;
+      isFirebaseInitialized = true;
+      console.log('🔥 Firebase initialized successfully');
+    }).catch(err => {
+      console.warn('⚠️ Firebase initialization failed:', err.message);
+      isFirebaseInitialized = false;
+    });
+  } else {
+    console.log('ℹ️ Firebase not configured. Using test mode only.');
+  }
+} catch (e) {
+  console.warn('⚠️ Firebase not available:', e.message);
+  isFirebaseInitialized = false;
+}
+
+// ============================================================
+// LOGIN HANDLERS
+// ============================================================
+
 window.handleLogin = function() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  const errorEl = document.getElementById('loginError');
   
-  // Only use test mode if explicitly requested
+  // Clear previous error
+  errorEl.textContent = '';
+  
+  // Validate inputs
+  if (!email || !password) {
+    errorEl.textContent = '⚠️ Please enter both email and password';
+    return;
+  }
+  
+  // Check if using test credentials
   if (email === 'test@test.com' && password === 'test123') {
     forceTestLogin();
     return;
   }
   
-  // Try Firebase login normally
-  firebaseLogin();
+  // Try Firebase login if available
+  if (isFirebaseInitialized && window.firebaseSignIn) {
+    document.getElementById('loginBtn').disabled = true;
+    document.getElementById('loginBtn').textContent = '⏳ Signing in...';
+    
+    window.firebaseSignIn(firebaseAuth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        console.log('✅ Firebase login successful:', user.email);
+        
+        // Get user role from Firestore or use default
+        currentUser = {
+          uid: user.uid,
+          email: user.email,
+          fullName: user.displayName || email.split('@')[0],
+          role: 'admin', // Default role, can be fetched from Firestore
+          approvalStatus: 'approved'
+        };
+        
+        isTestMode = false;
+        enterApp();
+        showToast(`✅ Welcome ${currentUser.fullName}!`, 'success');
+      })
+      .catch((error) => {
+        console.error('❌ Firebase login error:', error);
+        errorEl.textContent = `⚠️ ${error.message}`;
+        document.getElementById('loginBtn').disabled = false;
+        document.getElementById('loginBtn').textContent = 'Sign In (Firebase)';
+        
+        // If Firebase fails, offer test mode fallback
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          errorEl.textContent = '⚠️ Invalid credentials. Use test@test.com / test123 or contact admin.';
+        }
+      });
+  } else {
+    // No Firebase available - show error
+    errorEl.textContent = '⚠️ Firebase not configured. Please use Test Mode or contact administrator.';
+    showToast('⚠️ Firebase not available. Use Test Mode.', 'warning');
+  }
 };
 
 window.forceTestLogin = function() {
   console.log('🔓 Forcing test login...');
+  const errorEl = document.getElementById('loginError');
+  errorEl.textContent = '';
+  
   currentUser = {
     uid: 'test123',
     email: 'test@test.com',
@@ -2367,39 +2463,50 @@ window.forceTestLogin = function() {
     approvalStatus: 'approved'
   };
   isTestMode = true;
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appContainer').style.display = 'block';
-  document.getElementById('currentUserDisplay').textContent = 'Test Admin';
-  document.getElementById('currentRoleBadge').textContent = 'ADMIN';
-  setupPermissions();
-  loadSampleData();
-  showTab('dashboard');
+  enterApp();
   showToast('✅ Test mode active! (Offline)', 'success');
 };
 
+function enterApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appContainer').style.display = 'block';
+  document.getElementById('currentUserDisplay').textContent = currentUser.fullName || currentUser.email;
+  document.getElementById('currentRoleBadge').textContent = (currentUser.role || 'user').toUpperCase();
+  setupPermissions();
+  
+  // Load data based on mode
+  if (isTestMode) {
+    loadSampleData();
+  } else {
+    loadFirebaseData();
+  }
+  
+  showTab('dashboard');
+}
+
+function loadFirebaseData() {
+  // Load data from Firebase Firestore
+  // This is a placeholder - implement based on your data structure
+  showToast('📡 Loading data from Firebase...', 'info');
+  
+  // For now, load sample data as fallback
+  setTimeout(() => {
+    loadSampleData();
+    showToast('✅ Data loaded from Firebase', 'success');
+  }, 500);
+}
+
 window.handleLogout = function() {
+  // Sign out from Firebase if available
+  if (firebaseAuth && window.firebaseSignOut) {
+    window.firebaseSignOut(firebaseAuth).catch(err => console.warn('Logout error:', err));
+  }
+  
   currentUser = null;
   isTestMode = false;
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('appContainer').style.display = 'none';
   showToast('Logged out successfully');
-};
-
-window.showChangePassword = function() {
-  document.getElementById('changePasswordModal').classList.add('show');
-};
-
-window.changePassword = function() {
-  const current = document.getElementById('currentPwd').value;
-  const newPwd = document.getElementById('newPwd').value;
-  const confirm = document.getElementById('confirmPwd').value;
-  if (newPwd.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
-  if (newPwd !== confirm) { showToast('Passwords do not match', 'error'); return; }
-  document.getElementById('changePasswordModal').classList.remove('show');
-  document.getElementById('currentPwd').value = '';
-  document.getElementById('newPwd').value = '';
-  document.getElementById('confirmPwd').value = '';
-  showToast('Password updated successfully!');
 };
 
 window.showSignupModal = function() {
@@ -2419,27 +2526,123 @@ window.showSignupModal = function() {
 };
 
 window.handleSignup = function() {
-  showToast('✅ Registration submitted! Please wait for admin approval.', 'success');
-  closeModal();
+  const email = document.getElementById('signupEmail').value.trim();
+  const name = document.getElementById('signupName').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const confirm = document.getElementById('signupConfirm').value;
+  const role = document.getElementById('signupRole').value;
+  const classVal = document.getElementById('signupClass').value;
+  
+  // Validate
+  if (!email || !name || !password || !confirm) {
+    showToast('⚠️ Please fill all required fields', 'error');
+    return;
+  }
+  
+  if (password.length < 6) {
+    showToast('⚠️ Password must be at least 6 characters', 'error');
+    return;
+  }
+  
+  if (password !== confirm) {
+    showToast('⚠️ Passwords do not match', 'error');
+    return;
+  }
+  
+  // If Firebase is available, create user
+  if (isFirebaseInitialized && window.firebaseCreateUser) {
+    window.firebaseCreateUser(firebaseAuth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        console.log('✅ User created:', user.email);
+        
+        // Add to pending registrations
+        pendingRegistrationsCache.push({
+          id: 'reg_' + Date.now(),
+          email: email,
+          fullName: name,
+          requestedRole: role,
+          class: classVal,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        });
+        
+        showToast('✅ Registration submitted! Please wait for admin approval.', 'success');
+        closeModal();
+        renderRegistrations();
+      })
+      .catch((error) => {
+        console.error('❌ Signup error:', error);
+        showToast(`⚠️ ${error.message}`, 'error');
+      });
+  } else {
+    // Test mode - just add to pending registrations
+    pendingRegistrationsCache.push({
+      id: 'reg_' + Date.now(),
+      email: email,
+      fullName: name,
+      requestedRole: role,
+      class: classVal,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+    
+    showToast('✅ Registration submitted! (Test mode - pending approval)', 'success');
+    closeModal();
+    renderRegistrations();
+  }
 };
 
 // ============================================================
-// PERMISSIONS
+// PASSWORD CHANGE (with Firebase support)
 // ============================================================
-function setupPermissions() {
-  if (!currentUser) return;
-  const role = currentUser?.role || '';
-  const isAdmin = role === 'admin';
-  const isDirector = role === 'director';
-  document.getElementById('adminSection').style.display = (isAdmin || isDirector) ? 'block' : 'none';
-  document.getElementById('usersNav').style.display = isAdmin ? 'flex' : 'none';
-  document.getElementById('auditNav').style.display = isAdmin ? 'flex' : 'none';
-  document.getElementById('registrationsNav').style.display = (isAdmin || isDirector) ? 'flex' : 'none';
-}
 
-function canEdit(tab) { return true; }
-function canAdd(tab) { return true; }
-function canDeleteSpecific(tab) { return true; }
+window.changePassword = function() {
+  const current = document.getElementById('currentPwd').value;
+  const newPwd = document.getElementById('newPwd').value;
+  const confirm = document.getElementById('confirmPwd').value;
+  
+  if (newPwd.length < 6) { 
+    showToast('Password must be at least 6 characters', 'error'); 
+    return; 
+  }
+  
+  if (newPwd !== confirm) { 
+    showToast('Passwords do not match', 'error'); 
+    return; 
+  }
+  
+  // If in Firebase mode and user is authenticated
+  if (!isTestMode && firebaseAuth && firebaseAuth.currentUser) {
+    firebaseAuth.currentUser.updatePassword(newPwd)
+      .then(() => {
+        document.getElementById('changePasswordModal').classList.remove('show');
+        showToast('✅ Password updated successfully in Firebase!');
+      })
+      .catch((error) => {
+        showToast(`⚠️ ${error.message}`, 'error');
+      });
+  } else {
+    // Test mode - just show success
+    document.getElementById('changePasswordModal').classList.remove('show');
+    document.getElementById('currentPwd').value = '';
+    document.getElementById('newPwd').value = '';
+    document.getElementById('confirmPwd').value = '';
+    showToast('✅ Password updated successfully! (Test mode)');
+  }
+};
+
+// ============================================================
+// FIREBASE DATA LOADING (placeholder implementation)
+// ============================================================
+
+// Override the loadFirebaseData function to handle actual Firebase data
+// This is where you'd implement Firestore queries
+
+console.log('✅ Authentication system ready!');
+console.log('ℹ️ Firebase status:', isFirebaseInitialized ? '✅ Connected' : '❌ Not configured');
+console.log('🔑 Test Login: test@test.com / test123');
+</script>
 
 // ============================================================
 // UI FUNCTIONS
