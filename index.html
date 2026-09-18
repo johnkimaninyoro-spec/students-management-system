@@ -682,6 +682,15 @@
                 <button class="btn btn-primary" id="addClinicBtn" onclick="showAddClinicModal()">+ Record Visit</button>
               </div>
             </div>
+            <div class="card-header">
+  <h2>🏥 Clinic Visits</h2>
+  <div class="share-btn-group no-print">
+    <button class="btn btn-print btn-sm" onclick="printTab('clinic')">🖨️ Print</button>
+    <button class="btn btn-share btn-sm" onclick="shareTab('clinic')">📤 Share</button>
+    <button class="btn btn-success btn-sm" onclick="showMonthlyClinicReportModal()" style="background:#8e44ad;">📅 Monthly Report</button>
+    <button class="btn btn-primary" id="addClinicBtn" onclick="showAddClinicModal()">+ Record Visit</button>
+  </div>
+</div>
             <div class="table-container">
               <table id="clinicTable">
                 <thead><tr><th>Date</th><th>Student</th><th>Doctor/Nurse</th><th>Condition</th><th>Complaint</th><th>Diagnosis</th><th>Medication</th><th>Follow-Up</th><th>Follow-Up Date</th><th>Referred To</th><th>Parent Contacted</th><th>Time Back</th><th>Actions</th></tr></thead>
@@ -6104,7 +6113,632 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ System initialized successfully!');
+// ============================================================
+// MONTHLY CLINIC REPORT
+// ============================================================
 
+window.showMonthlyClinicReportModal = function() {
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  const html = `
+    <div class="monthly-report-modal">
+      <p style="color:#666;margin-bottom:15px;">📅 Generate a monthly clinic report with all visits, conditions, and statistics.</p>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Month *</label>
+          <select id="reportMonth">
+            ${months.map((m, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${m}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year *</label>
+          <select id="reportYear">
+            <option value="${currentYear - 1}">${currentYear - 1}</option>
+            <option value="${currentYear}" selected>${currentYear}</option>
+            <option value="${currentYear + 1}">${currentYear + 1}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Filter by Class (Optional)</label>
+          <select id="reportClassFilter">
+            <option value="">All Classes</option>
+            ${CLASSES.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Filter by Condition (Optional)</label>
+          <select id="reportConditionFilter">
+            <option value="">All Conditions</option>
+            ${CONDITIONS.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      
+      <div style="background:#f0f8ff;padding:12px;border-radius:6px;margin:15px 0;border-left:3px solid #3498db;">
+        <strong>📊 Report Includes:</strong>
+        <ul style="margin:8px 0 0 20px;font-size:0.85em;color:#666;">
+          <li>Total visits in the month</li>
+          <li>Breakdown by condition type</li>
+          <li>Breakdown by class</li>
+          <li>Top diagnoses</li>
+          <li>Follow-up appointments</li>
+          <li>Parent contact statistics</li>
+          <li>Complete visit details table</li>
+        </ul>
+      </div>
+      
+      <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="generateMonthlyClinicReport()" style="flex:1;padding:12px;">
+          👁️ Preview Report
+        </button>
+        <button class="btn btn-success" onclick="downloadMonthlyClinicReport()" style="flex:1;padding:12px;background:#27ae60;">
+          ⬇️ Download PDF
+        </button>
+      </div>
+    </div>
+  `;
+  openModal('📅 Monthly Clinic Report', html);
+};
+
+// Generate the report data
+function generateClinicReportData(month, year, classFilter, conditionFilter) {
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+  
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  // Filter clinic visits in the selected month
+  let visits = clinicCache.filter(c => {
+    if (!c.date) return false;
+    const visitDate = new Date(c.date);
+    return visitDate >= startDate && visitDate <= endDate;
+  });
+  
+  // Apply class filter
+  if (classFilter) {
+    visits = visits.filter(c => {
+      const student = studentsCache.find(s => s.id === c.studentId);
+      return student && student.class === classFilter;
+    });
+  }
+  
+  // Apply condition filter
+  if (conditionFilter) {
+    visits = visits.filter(c => c.condition === conditionFilter);
+  }
+  
+  // Sort by date
+  visits.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Calculate statistics
+  const totalVisits = visits.length;
+  
+  // Condition breakdown
+  const conditionBreakdown = {};
+  CONDITIONS.forEach(c => conditionBreakdown[c] = 0);
+  visits.forEach(v => {
+    if (v.condition) {
+      conditionBreakdown[v.condition] = (conditionBreakdown[v.condition] || 0) + 1;
+    }
+  });
+  
+  // Class breakdown
+  const classBreakdown = {};
+  visits.forEach(v => {
+    const student = studentsCache.find(s => s.id === v.studentId);
+    const cls = student?.class || 'Unknown';
+    classBreakdown[cls] = (classBreakdown[cls] || 0) + 1;
+  });
+  
+  // Top diagnoses
+  const diagnosisCount = {};
+  visits.forEach(v => {
+    if (v.diagnosis && v.diagnosis.trim()) {
+      const diag = v.diagnosis.trim();
+      diagnosisCount[diag] = (diagnosisCount[diag] || 0) + 1;
+    }
+  });
+  const topDiagnoses = Object.entries(diagnosisCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+  
+  // Follow-up stats
+  const followUps = visits.filter(v => v.followUp === 'Yes').length;
+  
+  // Parent contacted stats
+  const parentsContacted = visits.filter(v => v.parentContacted).length;
+  
+  // Referrals
+  const referrals = visits.filter(v => v.referredTo && v.referredTo !== 'None');
+  const referralBreakdown = {};
+  referrals.forEach(v => {
+    referralBreakdown[v.referredTo] = (referralBreakdown[v.referredTo] || 0) + 1;
+  });
+  
+  // Doctor stats
+  const doctorStats = {};
+  visits.forEach(v => {
+    if (v.doctor) {
+      doctorStats[v.doctor] = (doctorStats[v.doctor] || 0) + 1;
+    }
+  });
+  
+  // Gender stats
+  const genderStats = { Male: 0, Female: 0 };
+  visits.forEach(v => {
+    const student = studentsCache.find(s => s.id === v.studentId);
+    if (student?.gender === 'Male') genderStats.Male++;
+    else if (student?.gender === 'Female') genderStats.Female++;
+  });
+  
+  // Unique students
+  const uniqueStudents = new Set(visits.map(v => v.studentId)).size;
+  
+  return {
+    month: monthNames[month],
+    year: year,
+    visits: visits,
+    totalVisits: totalVisits,
+    uniqueStudents: uniqueStudents,
+    conditionBreakdown: conditionBreakdown,
+    classBreakdown: classBreakdown,
+    topDiagnoses: topDiagnoses,
+    followUps: followUps,
+    parentsContacted: parentsContacted,
+    referrals: referrals,
+    referralBreakdown: referralBreakdown,
+    doctorStats: doctorStats,
+    genderStats: genderStats,
+    classFilter: classFilter,
+    conditionFilter: conditionFilter,
+    generatedAt: new Date().toLocaleString('en-GB')
+  };
+}
+
+// Preview the report
+window.generateMonthlyClinicReport = function() {
+  const month = parseInt(document.getElementById('reportMonth').value);
+  const year = parseInt(document.getElementById('reportYear').value);
+  const classFilter = document.getElementById('reportClassFilter').value;
+  const conditionFilter = document.getElementById('reportConditionFilter').value;
+  
+  const data = generateClinicReportData(month, year, classFilter, conditionFilter);
+  
+  if (data.totalVisits === 0) {
+    showToast('⚠️ No clinic visits found for the selected period', 'warning');
+    return;
+  }
+  
+  const html = buildClinicReportHTML(data, false);
+  
+  // Show preview in a new modal
+  document.getElementById('modalTitle').textContent = `📅 Clinic Report - ${data.month} ${data.year}`;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="max-height:65vh;overflow-y:auto;border:1px solid #ddd;padding:15px;border-radius:8px;background:white;">
+      ${html}
+    </div>
+    <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;">
+      <button class="btn btn-success" onclick="downloadMonthlyClinicReport()" style="flex:1;background:#27ae60;">⬇️ Download</button>
+      <button class="btn btn-primary" onclick="shareMonthlyClinicWhatsApp()" style="flex:1;background:#25D366;">📱 WhatsApp</button>
+      <button class="btn btn-danger" onclick="shareMonthlyClinicEmail()" style="flex:1;background:#ea4335;">📧 Email</button>
+      <button class="btn btn-print" onclick="printMonthlyClinicReport()" style="flex:1;">🖨️ Print</button>
+    </div>
+  `;
+};
+
+// Build report HTML
+function buildClinicReportHTML(data, forPrint) {
+  const months = data.month;
+  
+  const style = forPrint ? `
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      .report-header { text-align: center; border-bottom: 3px solid #1a5276; padding-bottom: 15px; margin-bottom: 20px; }
+      .report-header h1 { color: #1a5276; margin: 0; }
+      .report-header .sub { color: #666; font-size: 14px; }
+      .report-section { margin: 20px 0; page-break-inside: avoid; }
+      .report-section h3 { color: #1a5276; border-bottom: 2px solid #eee; padding-bottom: 5px; font-size: 14px; }
+      .stats-grid-report { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
+      .stat-box { background: #f8f9fa; padding: 12px; border-radius: 6px; text-align: center; border-left: 4px solid #3498db; }
+      .stat-box .num { font-size: 22px; font-weight: bold; color: #1a5276; }
+      .stat-box .lbl { font-size: 11px; color: #666; }
+      table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+      th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; }
+      td { padding: 5px 8px; border-bottom: 1px solid #eee; }
+      tr:nth-child(even) td { background: #fafbfc; }
+      .footer { text-align: center; color: #999; font-size: 11px; margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; }
+      @media print { .no-print { display: none; } }
+    </style>
+  ` : '';
+
+  let html = `
+    ${style}
+    <div class="report-header">
+      <h1>Mara Christian High School</h1>
+      <div class="sub">Monthly Clinic Report - ${months} ${data.year}</div>
+      <div style="color:#999;font-size:12px;margin-top:5px;">Generated: ${data.generatedAt}</div>
+    </div>
+
+    <div class="report-section">
+      <h3>📊 Summary Statistics</h3>
+      <div class="stats-grid-report">
+        <div class="stat-box">
+          <div class="num">${data.totalVisits}</div>
+          <div class="lbl">Total Visits</div>
+        </div>
+        <div class="stat-box" style="border-left-color:#27ae60;">
+          <div class="num">${data.uniqueStudents}</div>
+          <div class="lbl">Unique Students</div>
+        </div>
+        <div class="stat-box" style="border-left-color:#f39c12;">
+          <div class="num">${data.followUps}</div>
+          <div class="lbl">Follow-Ups</div>
+        </div>
+        <div class="stat-box" style="border-left-color:#e74c3c;">
+          <div class="num">${data.parentsContacted}</div>
+          <div class="lbl">Parents Contacted</div>
+        </div>
+      </div>
+      <div class="stats-grid-report" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-box" style="border-left-color:#3498db;">
+          <div class="num">${data.genderStats.Male}</div>
+          <div class="lbl">👦 Male</div>
+        </div>
+        <div class="stat-box" style="border-left-color:#e91e8c;">
+          <div class="num">${data.genderStats.Female}</div>
+          <div class="lbl">👧 Female</div>
+        </div>
+        <div class="stat-box" style="border-left-color:#8e44ad;">
+          <div class="num">${data.referrals.length}</div>
+          <div class="lbl">Referrals</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <h3>🏥 Visits by Condition</h3>
+      <table>
+        <thead><tr><th>Condition Type</th><th>Number of Visits</th><th>Percentage</th></tr></thead>
+        <tbody>
+          ${CONDITIONS.map(cond => {
+            const count = data.conditionBreakdown[cond] || 0;
+            const pct = data.totalVisits > 0 ? Math.round((count / data.totalVisits) * 100) : 0;
+            return `<tr>
+              <td>${cond}</td>
+              <td><strong>${count}</strong></td>
+              <td>${pct}%</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="report-section">
+      <h3>📚 Visits by Class</h3>
+      <table>
+        <thead><tr><th>Class</th><th>Number of Visits</th></tr></thead>
+        <tbody>
+          ${Object.entries(data.classBreakdown)
+            .sort((a, b) => b[1] - a[1])
+            .map(([cls, count]) => `<tr><td>${cls}</td><td><strong>${count}</strong></td></tr>`)
+            .join('') || '<tr><td colspan="2" style="text-align:center;color:#999;">No data</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    ${data.topDiagnoses.length > 0 ? `
+    <div class="report-section">
+      <h3>🔬 Top 10 Diagnoses</h3>
+      <table>
+        <thead><tr><th>#</th><th>Diagnosis</th><th>Frequency</th></tr></thead>
+        <tbody>
+          ${data.topDiagnoses.map((d, i) => `<tr><td>${i + 1}</td><td>${d[0]}</td><td><strong>${d[1]}</strong></td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+
+    ${Object.keys(data.doctorStats).length > 0 ? `
+    <div class="report-section">
+      <h3>👨‍⚕️ Visits by Doctor/Nurse</h3>
+      <table>
+        <thead><tr><th>Doctor/Nurse</th><th>Number of Visits</th></tr></thead>
+        <tbody>
+          ${Object.entries(data.doctorStats)
+            .sort((a, b) => b[1] - a[1])
+            .map(([doc, count]) => `<tr><td>${doc}</td><td><strong>${count}</strong></td></tr>`)
+            .join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+
+    ${data.referrals.length > 0 ? `
+    <div class="report-section">
+      <h3>🏥 Referrals to Specialists</h3>
+      <table>
+        <thead><tr><th>Referred To</th><th>Number</th></tr></thead>
+        <tbody>
+          ${Object.entries(data.referralBreakdown)
+            .sort((a, b) => b[1] - a[1])
+            .map(([ref, count]) => `<tr><td>${ref}</td><td><strong>${count}</strong></td></tr>`)
+            .join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+
+    <div class="report-section">
+      <h3>📋 Complete Visit Details (${data.visits.length} visits)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Condition</th>
+            <th>Complaint</th>
+            <th>Diagnosis</th>
+            <th>Medication</th>
+            <th>Follow-Up</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.visits.map(v => {
+            const student = studentsCache.find(s => s.id === v.studentId);
+            return `<tr>
+              <td>${formatDate(v.date)}</td>
+              <td>${student ? `${student.firstName} ${student.lastName}` : 'Unknown'}</td>
+              <td>${student?.class || '-'}</td>
+              <td>${v.condition || '-'}</td>
+              <td>${v.complaint || '-'}</td>
+              <td>${v.diagnosis || '-'}</td>
+              <td>${v.medication || '-'}</td>
+              <td>${v.followUp === 'Yes' ? '📅 ' + formatDate(v.followUpDate) : 'No'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <p><strong>Mara Christian High School</strong> - Educating For Eternity</p>
+      <p>Monthly Clinic Report - ${months} ${data.year}</p>
+      <p>This is a system-generated report.</p>
+    </div>
+  `;
+  
+  return html;
+}
+
+// Download the report as HTML file (can be saved as PDF via print)
+window.downloadMonthlyClinicReport = function() {
+  const month = parseInt(document.getElementById('reportMonth').value);
+  const year = parseInt(document.getElementById('reportYear').value);
+  const classFilter = document.getElementById('reportClassFilter').value;
+  const conditionFilter = document.getElementById('reportConditionFilter').value;
+  
+  const data = generateClinicReportData(month, year, classFilter, conditionFilter);
+  
+  if (data.totalVisits === 0) {
+    showToast('⚠️ No clinic visits found for the selected period', 'warning');
+    return;
+  }
+  
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Clinic Report - ${data.month} ${data.year}</title></head><body>${buildClinicReportHTML(data, true)}</body></html>`;
+  
+  // Create a Blob and download
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Clinic_Report_${data.month}_${data.year}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showToast('✅ Report downloaded! Open it and use "Print > Save as PDF" to convert to PDF.', 'success', 6000);
+};
+
+// Share via WhatsApp
+window.shareMonthlyClinicWhatsApp = function() {
+  const month = parseInt(document.getElementById('reportMonth').value);
+  const year = parseInt(document.getElementById('reportYear').value);
+  const classFilter = document.getElementById('reportClassFilter').value;
+  const conditionFilter = document.getElementById('reportConditionFilter').value;
+  
+  const data = generateClinicReportData(month, year, classFilter, conditionFilter);
+  
+  if (data.totalVisits === 0) {
+    showToast('⚠️ No clinic visits found for the selected period', 'warning');
+    return;
+  }
+  
+  // Build WhatsApp message
+  let message = `🏥 *MARA CHRISTIAN HIGH SCHOOL*\n`;
+  message += `*Monthly Clinic Report*\n`;
+  message += `📅 *${data.month} ${data.year}*\n\n`;
+  
+  message += `📊 *SUMMARY*\n`;
+  message += `━━━━━━━━━━━━━━━\n`;
+  message += `👥 Total Visits: *${data.totalVisits}*\n`;
+  message += `🎓 Unique Students: *${data.uniqueStudents}*\n`;
+  message += `📅 Follow-Ups: *${data.followUps}*\n`;
+  message += `📞 Parents Contacted: *${data.parentsContacted}*\n`;
+  message += `🏥 Referrals: *${data.referrals.length}*\n\n`;
+  
+  message += `👫 *Gender Breakdown*\n`;
+  message += `👦 Male: ${data.genderStats.Male}\n`;
+  message += `👧 Female: ${data.genderStats.Female}\n\n`;
+  
+  message += `🏥 *Condition Breakdown*\n`;
+  CONDITIONS.forEach(cond => {
+    const count = data.conditionBreakdown[cond] || 0;
+    if (count > 0) {
+      const pct = Math.round((count / data.totalVisits) * 100);
+      message += `• ${cond}: *${count}* (${pct}%)\n`;
+    }
+  });
+  
+  message += `\n📚 *Top Classes*\n`;
+  Object.entries(data.classBreakdown)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .forEach(([cls, count]) => {
+      message += `• ${cls}: *${count}*\n`;
+    });
+  
+  if (data.topDiagnoses.length > 0) {
+    message += `\n🔬 *Top Diagnoses*\n`;
+    data.topDiagnoses.slice(0, 5).forEach((d, i) => {
+      message += `${i + 1}. ${d[0]}: *${d[1]}*\n`;
+    });
+  }
+  
+  message += `\n━━━━━━━━━━━━━━━\n`;
+  message += `_Generated: ${data.generatedAt}_\n`;
+  message += `_Mara Christian High School_\n`;
+  message += `_Educating For Eternity_`;
+  
+  // Encode and open WhatsApp
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+  window.open(whatsappUrl, '_blank');
+  
+  showToast('📱 Opening WhatsApp...', 'success');
+};
+
+// Share via Email
+window.shareMonthlyClinicEmail = function() {
+  const month = parseInt(document.getElementById('reportMonth').value);
+  const year = parseInt(document.getElementById('reportYear').value);
+  const classFilter = document.getElementById('reportClassFilter').value;
+  const conditionFilter = document.getElementById('reportConditionFilter').value;
+  
+  const data = generateClinicReportData(month, year, classFilter, conditionFilter);
+  
+  if (data.totalVisits === 0) {
+    showToast('⚠️ No clinic visits found for the selected period', 'warning');
+    return;
+  }
+  
+  const subject = `Monthly Clinic Report - ${data.month} ${data.year} - Mara Christian High School`;
+  
+  // Build email body
+  let body = `Dear Recipient,\n\n`;
+  body += `Please find below the Monthly Clinic Report for ${data.month} ${data.year}.\n\n`;
+  
+  body += `═══════════════════════════════════\n`;
+  body += `SUMMARY STATISTICS\n`;
+  body += `═══════════════════════════════════\n`;
+  body += `Total Visits: ${data.totalVisits}\n`;
+  body += `Unique Students: ${data.uniqueStudents}\n`;
+  body += `Follow-Ups Scheduled: ${data.followUps}\n`;
+  body += `Parents Contacted: ${data.parentsContacted}\n`;
+  body += `Referrals to Specialists: ${data.referrals.length}\n\n`;
+  
+  body += `GENDER BREAKDOWN\n`;
+  body += `───────────────────────────────────\n`;
+  body += `Male: ${data.genderStats.Male}\n`;
+  body += `Female: ${data.genderStats.Female}\n\n`;
+  
+  body += `VISITS BY CONDITION\n`;
+  body += `───────────────────────────────────\n`;
+  CONDITIONS.forEach(cond => {
+    const count = data.conditionBreakdown[cond] || 0;
+    if (count > 0) {
+      const pct = Math.round((count / data.totalVisits) * 100);
+      body += `${cond}: ${count} (${pct}%)\n`;
+    }
+  });
+  
+  body += `\nVISITS BY CLASS\n`;
+  body += `───────────────────────────────────\n`;
+  Object.entries(data.classBreakdown)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([cls, count]) => {
+      body += `${cls}: ${count}\n`;
+    });
+  
+  if (data.topDiagnoses.length > 0) {
+    body += `\nTOP DIAGNOSES\n`;
+    body += `───────────────────────────────────\n`;
+    data.topDiagnoses.forEach((d, i) => {
+      body += `${i + 1}. ${d[0]}: ${d[1]}\n`;
+    });
+  }
+  
+  if (Object.keys(data.doctorStats).length > 0) {
+    body += `\nVISITS BY DOCTOR/NURSE\n`;
+    body += `───────────────────────────────────\n`;
+    Object.entries(data.doctorStats)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([doc, count]) => {
+        body += `${doc}: ${count}\n`;
+      });
+  }
+  
+  body += `\n═══════════════════════════════════\n`;
+  body += `COMPLETE VISIT DETAILS (${data.visits.length} visits)\n`;
+  body += `═══════════════════════════════════\n\n`;
+  
+  data.visits.forEach((v, i) => {
+    const student = studentsCache.find(s => s.id === v.studentId);
+    body += `${i + 1}. ${formatDate(v.date)} - ${student ? `${student.firstName} ${student.lastName}` : 'Unknown'} (${student?.class || '-'})\n`;
+    body += `   Condition: ${v.condition || '-'}\n`;
+    body += `   Complaint: ${v.complaint || '-'}\n`;
+    body += `   Diagnosis: ${v.diagnosis || '-'}\n`;
+    body += `   Medication: ${v.medication || '-'}\n`;
+    if (v.followUp === 'Yes') {
+      body += `   Follow-Up: ${formatDate(v.followUpDate)}\n`;
+    }
+    body += `\n`;
+  });
+  
+  body += `\n═══════════════════════════════════\n`;
+  body += `Generated: ${data.generatedAt}\n`;
+  body += `Mara Christian High School\n`;
+  body += `Educating For Eternity\n`;
+  
+  // Use mailto link
+  const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoUrl;
+  
+  showToast('📧 Opening email client...', 'success');
+};
+
+// Print the report
+window.printMonthlyClinicReport = function() {
+  const month = parseInt(document.getElementById('reportMonth').value);
+  const year = parseInt(document.getElementById('reportYear').value);
+  const classFilter = document.getElementById('reportClassFilter').value;
+  const conditionFilter = document.getElementById('reportConditionFilter').value;
+  
+  const data = generateClinicReportData(month, year, classFilter, conditionFilter);
+  
+  if (data.totalVisits === 0) {
+    showToast('⚠️ No clinic visits found for the selected period', 'warning');
+    return;
+  }
+  
+  const html = buildClinicReportHTML(data, true);
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`<!DOCTYPE html><html><head><title>Clinic Report - ${data.month} ${data.year}</title></head><body>${html}<script>window.onload=function(){window.print();}<\/script></body></html>`);
+  printWindow.document.close();
+};
   </script>
 </body>
 </html>
