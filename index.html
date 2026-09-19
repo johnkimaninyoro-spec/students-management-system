@@ -2653,35 +2653,34 @@ document.addEventListener('click', function(e) {
   const currentTime = new Date().toTimeString().slice(0, 5);
 
   // Get the student name if editing
-  let studentName = '';
-  let studentClass = '';
-  if (visit && visit.studentId) {
-    const student = studentsCache.find(s => s.id === visit.studentId);
-    if (student) {
-      studentName = student.firstName + ' ' + student.lastName;
-      studentClass = student.class;
-    }
-  }
+  let selectedStudentId = visit?.studentId || '';
 
   const html = `
     <div class="form-grid">
       <div class="form-group" style="grid-column:1/-1;">
-        <label>Student Name *</label>
-        <div style="position:relative;">
-          <input type="text" id="c_studentSearch" placeholder="Type student name to search..." 
-                 oninput="filterClinicStudentList(this.value)" 
-                 value="${studentName}"
-                 autocomplete="off"
-                 style="width:100%;padding:8px 12px;border:2px solid #ddd;border-radius:6px;font-size:0.9em;">
-          <div id="c_studentSuggestions" style="display:none;position:absolute;background:white;border:1px solid #ddd;border-radius:6px;max-height:200px;overflow-y:auto;width:100%;z-index:1000;margin-top:2px;box-shadow:0 4px 10px rgba(0,0,0,0.1);"></div>
-        </div>
-        <input type="hidden" id="c_studentId" value="${visit?.studentId || ''}">
-        <small style="color:#999;font-size:0.75em;">Start typing to search for a student by name or admission number</small>
+        <label>🔍 Search Student (Type name or admission number)</label>
+        <input type="text" id="c_studentSearchBox" 
+               placeholder="Type to filter the student list below..." 
+               oninput="filterClinicStudentDropdown(this.value)"
+               autocomplete="off"
+               style="width:100%;padding:10px 12px;border:2px solid #ddd;border-radius:6px;font-size:0.9em;">
+        <small style="color:#999;font-size:0.75em;">Or just select from the dropdown below</small>
       </div>
 
-      <div id="c_selectedStudentDisplay" style="grid-column:1/-1;padding:8px 12px;background:#f0f8ff;border-radius:6px;margin-bottom:8px;border-left:3px solid #2e86c1;${visit?.studentId ? '' : 'display:none;'}">
-        ✅ Selected: <strong id="c_selectedStudentName">${studentName}</strong>
-        (Class: <span id="c_selectedStudentClass">${studentClass}</span>)
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Student Name *</label>
+        <select id="c_student" size="8" style="width:100%;padding:8px;border:2px solid #ddd;border-radius:6px;font-size:0.9em;height:auto;min-height:180px;">
+          ${studentsCache
+            .slice()
+            .sort((a, b) => {
+              const nameA = ((a.firstName || '') + ' ' + (a.lastName || '')).toLowerCase();
+              const nameB = ((b.firstName || '') + ' ' + (b.lastName || '')).toLowerCase();
+              return nameA.localeCompare(nameB);
+            })
+            .map(s => `<option value="${s.id}" ${selectedStudentId === s.id ? 'selected' : ''}>${s.firstName} ${s.lastName} — ${s.class}${s.admNo ? ' (Adm: ' + s.admNo + ')' : ''}</option>`)
+            .join('')}
+        </select>
+        <small style="color:#999;font-size:0.75em;">Click on a student to select them. Use the search box above to filter.</small>
       </div>
 
       <div class="form-group"><label>Date *</label><input type="date" id="c_date" value="${visit?.date || today}"></div>
@@ -2691,12 +2690,12 @@ document.addEventListener('click', function(e) {
     <div class="form-group"><label>Complaint *</label><textarea id="c_complaint" rows="2">${visit?.complaint || ''}</textarea></div>
     <div class="form-group"><label>Diagnosis</label><textarea id="c_diagnosis" rows="2">${visit?.diagnosis || ''}</textarea></div>
     <div class="form-group"><label>Treatment / Medication</label><input type="text" id="c_medication" value="${visit?.medication || ''}" placeholder="e.g., Amoxicillin 250mg"></div>
-    
+
     <div class="form-grid">
       <div class="form-group"><label>Follow-Up Appointment?</label><select id="c_followUp"><option value="No" ${visit?.followUp === 'No' ? 'selected' : ''}>No</option><option value="Yes" ${visit?.followUp === 'Yes' ? 'selected' : ''}>Yes</option></select></div>
       <div class="form-group" id="followUpDateGroup" style="display:${visit?.followUp === 'Yes' ? 'block' : 'none'}"><label>Follow-Up Date</label><input type="date" id="c_followUpDate" value="${visit?.followUpDate || ''}"></div>
     </div>
-    
+
     <div class="clinic-section">
       <h4>📋 Additional Information</h4>
       <div class="form-grid">
@@ -2716,10 +2715,45 @@ document.addEventListener('click', function(e) {
         <label for="c_parentContacted">📞 Parent/Guardian Contacted</label>
       </div>
     </div>
-    
+
     <button class="btn btn-success" onclick="saveClinic('${editId || ''}')" style="width:100%;margin-top:16px;">${editId ? 'Update' : 'Save'} Visit</button>
   `;
   openModal(editId ? 'Edit Clinic Visit' : 'Record Clinic Visit', html);
+};
+
+// Filter the clinic student dropdown by search term
+window.filterClinicStudentDropdown = function(searchTerm) {
+  const select = document.getElementById('c_student');
+  if (!select) return;
+
+  const term = (searchTerm || '').toLowerCase().trim();
+
+  // Sort students alphabetically
+  const sorted = studentsCache.slice().sort((a, b) => {
+    const nameA = ((a.firstName || '') + ' ' + (a.lastName || '')).toLowerCase();
+    const nameB = ((b.firstName || '') + ' ' + (b.lastName || '')).toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+
+  // Filter by name or admission number
+  const filtered = term
+    ? sorted.filter(s => {
+        const fullName = ((s.firstName || '') + ' ' + (s.lastName || '')).toLowerCase();
+        const adm = (s.admNo || '').toLowerCase();
+        const cls = (s.class || '').toLowerCase();
+        return fullName.includes(term) || adm.includes(term) || cls.includes(term);
+      })
+    : sorted;
+
+  // Rebuild the dropdown
+  if (filtered.length === 0) {
+    select.innerHTML = '<option value="" disabled>No students match your search</option>';
+    return;
+  }
+
+  select.innerHTML = filtered
+    .map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} — ${s.class}${s.admNo ? ' (Adm: ' + s.admNo + ')' : ''}</option>`)
+    .join('');
 };
 
     window.saveClinic = async function(editId) {
