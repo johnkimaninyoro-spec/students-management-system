@@ -2735,7 +2735,7 @@ window.filterClinicStudentDropdown = function(searchTerm) {
     return nameA.localeCompare(nameB);
   });
 
-  // Filter by name or admission number
+  // Filter by name, admission number, or class
   const filtered = term
     ? sorted.filter(s => {
         const fullName = ((s.firstName || '') + ' ' + (s.lastName || '')).toLowerCase();
@@ -2745,19 +2745,27 @@ window.filterClinicStudentDropdown = function(searchTerm) {
       })
     : sorted;
 
-  // Rebuild the dropdown
+  // Rebuild the dropdown, preserving the currently-selected student if still visible
+  const previouslySelected = select.value;
+
   if (filtered.length === 0) {
     select.innerHTML = '<option value="" disabled>No students match your search</option>';
+    select.value = '';
     return;
   }
 
   select.innerHTML = filtered
     .map(s => `<option value="${s.id}">${s.firstName} ${s.lastName} — ${s.class}${s.admNo ? ' (Adm: ' + s.admNo + ')' : ''}</option>`)
     .join('');
+
+  // Restore the selection if the student is still in the filtered list
+  if (previouslySelected && filtered.some(s => s.id === previouslySelected)) {
+    select.value = previouslySelected;
+  }
 };
 
     window.saveClinic = async function(editId) {
-      const studentId = document.getElementById('c_studentId').value;
+      const studentId = document.getElementById('c_student').value;
       const date = document.getElementById('c_date').value;
       const doctor = document.getElementById('c_doctor').value.trim();
       const condition = document.getElementById('c_condition').value;
