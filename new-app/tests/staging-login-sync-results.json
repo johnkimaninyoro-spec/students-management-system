@@ -1,0 +1,20 @@
+{
+  "two_separate_client_logins": true,
+  "ui_edit_synced_to_second_client": true,
+  "reload_persistence": true,
+  "reverse_sync_and_cleanup": true,
+  "admin_boundary_checks": {
+    "list": "permission-denied",
+    "otherPath": "permission-denied",
+    "invalidRevision": "permission-denied",
+    "delete": "permission-denied"
+  },
+  "anonymous_read": "permission-denied",
+  "non_admin": {
+    "read": 403,
+    "write": 403,
+    "temporaryAccountRemoved": true
+  },
+  "signout_locks_records": true,
+  "page_errors": []
+}
