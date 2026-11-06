@@ -1,0 +1,6 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "START-HERE.md", "firestore.rules.candidate", "tests/**"]
+  }
+}
