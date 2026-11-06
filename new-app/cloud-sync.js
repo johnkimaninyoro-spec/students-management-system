@@ -69,5 +69,5 @@ function boot(){
  // app.js dispatches this only after its lexical flushAutoSave successfully persists.
  document.addEventListener('mara:autosave',markEdit);
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+const start=()=>Promise.resolve(window.maraAppReady).then(boot).catch(e=>{console.error(e);document.getElementById('cloudStatus').textContent='App failed to load. Records remain locked.'});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
