@@ -13,3 +13,7 @@ Fixed an actual Firestore limitation: nested arrays inside the school snapshot c
 The dedicated fictional test administrator remains in test Auth. Its password and account details are not included here, in repository files or test results. They are not user-facing login credentials. The test database contains only the blank fictional school snapshot and configuration. Temporary denial account removed.
 
 The public preview stays disconnected. No website deployment, production rules change or real pupil data use occurred. Teacher permissions, simultaneous edit-conflict stress tests, offline recovery, local-cache confidentiality, user-device behavior and production readiness are not established by these checks. This is an admin-only staging pilot, not a production security approval.
+
+## User test access prepared
+
+A separate user-owned staging administrator was created and replaced the temporary fictional administrator in the staging-only allowlist. Actual app login, server snapshot read and signout lock passed. Password remains private; no reset email sent and no staging website deployed. User access results are recorded separately. Previous sync tests used the earlier temporary administrator and were not rerun for this identity.

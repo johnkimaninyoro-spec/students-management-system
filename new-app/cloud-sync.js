@@ -1,7 +1,7 @@
 /* Isolated test-project connection. Admin access remains locked until explicitly provisioned. */
 (()=>{
 "use strict";
-const ADMIN_UID="7f1a8Q2xrYfGZm6FkD4TWs2X3462";
+const ADMIN_UID="QDzGG9f4fPgEBdGKm93gbnOXeC63";
 const MAX_BYTES=700*1024;
 const CONFIG={apiKey:"AIzaSyDz5FMMPh00O_ff4SF1-FQc6yEO2oM8CVk",authDomain:"mara-school-test.firebaseapp.com",projectId:"mara-school-test",storageBucket:"mara-school-test.firebasestorage.app",messagingSenderId:"923219623153",appId:"1:923219623153:web:8adc3603f0e0581e8cbd50"};
 if(CONFIG.projectId!=="mara-school-test"||CONFIG.authDomain!=="mara-school-test.firebaseapp.com")throw Error("Test isolation check failed. Connection blocked.");
