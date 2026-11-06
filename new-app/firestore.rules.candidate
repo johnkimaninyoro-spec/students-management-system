@@ -1,22 +1,8 @@
 rules_version = '2';
-// STANDALONE transitional rules for this Firebase project only.
-// Deploy as the entire Firestore ruleset only after removing every legacy broad
-// allow (especially match /{document=**} allow read, write: if request.auth != null).
-// Firestore permissions OR together; a broad authenticated wildcard overrides
-// a restrictive block. Do NOT paste this below such a rule and call it protected.
+// Test project only: mara-school-test. Not deployed by this commit.
+// Keep deny-all until a dedicated staging admin and scoped rules are reviewed.
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isMaraAdmin() {
-      return request.auth != null
-        && request.auth.uid == '8oI8nKYo43ftqUkk0FJ4SdvIa3l1';
-    }
-
-    match /newAppSnapshots/wholeSchool {
-      allow read, create, update, delete: if isMaraAdmin();
-    }
-
-    // Explicit legacy catch-all denial: non-admins cannot read or write any
-    // legacy document while this transitional pilot ruleset is deployed.
     match /{document=**} {
       allow read, write: if false;
     }
