@@ -15,7 +15,7 @@ const context={console,document,CustomEvent:function(type){this.type=type},TextE
  firebase:{initializeApp:()=>{},auth:()=>authObject,firestore:Object.assign(()=>db,{FieldValue:{serverTimestamp:()=>({'.sv':'timestamp'})}})}
 };
 (async()=>{
-vm.createContext(context);vm.runInContext(source,context,{filename:'cloud-sync.js'});
+context.window={maraAppReady:Promise.resolve()};vm.createContext(context);vm.runInContext(source,context,{filename:'cloud-sync.js'});await new Promise(r=>setImmediate(r));
 authObject.currentUser=admin;authCallback(admin);assert(listener,'authorized user starts listener');
 listener.ok({exists:true,data:()=>structuredClone(remote),metadata:{hasPendingWrites:false}});
 assert(!body.classList.contains('cloud-locked'),'authorized remote snapshot unlocks records');
