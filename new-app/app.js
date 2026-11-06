@@ -1,0 +1,1 @@
+window.maraAppReady=(async()=>{const b=Uint8Array.from(atob(window.maraSourceParts.join("")),c=>c.charCodeAt(0));const text=await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"))).text();const s=document.createElement("script");s.textContent=text;document.body.appendChild(s);window.maraSourceParts=null;})();
