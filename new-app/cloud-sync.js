@@ -1,73 +1,36 @@
-/* Isolated Mara NEW app: Firebase Auth + Firestore whole-school snapshot pilot.
-   This is deliberately admin-only and remains an undeployed pilot. */
+/* Isolated test-project connection. Admin access remains locked until explicitly provisioned. */
 (()=>{
-'use strict';
-const ADMIN_UID='8oI8nKYo43ftqUkk0FJ4SdvIa3l1';
+"use strict";
+const ADMIN_UID="TEST_ADMIN_NOT_CONFIGURED";
 const MAX_BYTES=700*1024;
-const CONFIG={apiKey:'AIzaSyDH5MhXMp5WCXLdBtsNaVz1bPs13DrOkFw',authDomain:'mara-christian-school.firebaseapp.com',projectId:'mara-christian-school',storageBucket:'mara-christian-school.firebasestorage.app',messagingSenderId:'348620195835',appId:'1:348620195835:web:dba83222f99204cd62ed5e'};
-const COLLECTION='newAppSnapshots', DOC='wholeSchool';
+const CONFIG={apiKey:"AIzaSyDz5FMMPh00O_ff4SF1-FQc6yEO2oM8CVk",authDomain:"mara-school-test.firebaseapp.com",projectId:"mara-school-test",storageBucket:"mara-school-test.firebasestorage.app",messagingSenderId:"923219623153",appId:"1:923219623153:web:8adc3603f0e0581e8cbd50"};
+if(CONFIG.projectId!=="mara-school-test"||CONFIG.authDomain!=="mara-school-test.firebaseapp.com")throw Error("Test isolation check failed. Connection blocked.");
+const COLLECTION="newAppSnapshots",DOC="wholeSchool";
 let db=null,auth=null,unsubscribe=null,revision=null,initialized=false,applyingRemote=false,writing=false,halted=false;
 let editVersion=0,savedVersion=0,drainQueued=false,lockedBlank=null;
 const el=id=>document.getElementById(id);
-const status=t=>{const x=el('cloudStatus');if(x)x.textContent=t};
-const admin=user=>!!user&&user.uid===ADMIN_UID;
-function setLocked(locked){document.body.classList.toggle('cloud-locked',locked);const cover=el('cloudLock');if(cover)cover.hidden=!locked}
-function setUi(user){const ok=admin(user);el('cloudSignOut').hidden=!user;el('cloudActions').hidden=!ok;el('cloudEmail').disabled=!!user;el('cloudPassword').disabled=!!user;el('cloudSignIn').disabled=!!user;if(!user)status('Sign in is required. School records are locked.');else if(!ok)status('Access denied. This account is not the configured admin.')}
+const status=t=>{const x=el("cloudStatus");if(x)x.textContent=t};
+const admin=user=>!!user&&ADMIN_UID!=="TEST_ADMIN_NOT_CONFIGURED"&&user.uid===ADMIN_UID;
+function setLocked(locked){document.body.classList.toggle("cloud-locked",locked);const cover=el("cloudLock");if(cover)cover.hidden=!locked}
+function setUi(user){const ok=admin(user);el("cloudSignOut").hidden=!user;el("cloudActions").hidden=!ok;el("cloudEmail").disabled=!!user;el("cloudPassword").disabled=!!user;el("cloudSignIn").disabled=!!user||ADMIN_UID==="TEST_ADMIN_NOT_CONFIGURED";if(!user)status(ADMIN_UID==="TEST_ADMIN_NOT_CONFIGURED"?"Test Firebase configured. Dedicated test admin not configured; records remain locked.":"Sign in is required. School records are locked.");else if(!ok)status("Access denied. This account is not the configured admin.")}
 const bytes=s=>new TextEncoder().encode(s).length;
 const current=()=>checkBackup(schoolSnapshot());
-function showError(prefix,error){console.error(prefix,error);status(prefix+': '+(error&&error.message?error.message:'operation failed')+'. Cloud sync is stopped.');}
+function showError(prefix,error){console.error(prefix,error);status(prefix+": "+(error&&error.message?error.message:"operation failed")+". Cloud sync is stopped.")}
 function stop(){if(unsubscribe){unsubscribe();unsubscribe=null}}
-function blankFrom(snapshot){const blank=JSON.parse(JSON.stringify(snapshot)),d=blank.data;for(const k of ['admissions','students','dorms','ledger','movements','teachers','teachingLoads','schedule','academicTerms','corrections'])d[k]=[];for(const k of ['allocations','away','roll','marks','assessments','reportComments','seniorChoices','classTeachers','teacherAttendance','parentContacts','feeAccounts'])d[k]={};blank.savedAt=new Date().toISOString();return checkBackup(blank)}
-function hideCachedRecords(){try{if(lockedBlank){restoreSchool(JSON.parse(JSON.stringify(lockedBlank)));render()}}catch(e){console.error('Could not clear in-memory records',e)}}
+function blankFrom(snapshot){const blank=JSON.parse(JSON.stringify(snapshot)),d=blank.data;for(const k of ["admissions","students","dorms","ledger","movements","teachers","teachingLoads","schedule","academicTerms","corrections"])d[k]=[];for(const k of ["allocations","away","roll","marks","assessments","reportComments","seniorChoices","classTeachers","teacherAttendance","parentContacts","feeAccounts"])d[k]={};blank.savedAt=new Date().toISOString();return checkBackup(blank)}
+function hideCachedRecords(){try{if(lockedBlank){restoreSchool(JSON.parse(JSON.stringify(lockedBlank)));render()}}catch(e){console.error("Could not clear in-memory records",e)}}
 function queueDrain(){if(drainQueued||writing||halted||!initialized||!admin(auth&&auth.currentUser)||applyingRemote)return;drainQueued=true;queueMicrotask(()=>{drainQueued=false;drainWrites()})}
 async function drainWrites(){
- if(writing||halted||!initialized||!admin(auth&&auth.currentUser)||applyingRemote)return;
- writing=true;
- try{
-  while(savedVersion<editVersion){
-   const targetVersion=editVersion; let snapshot,json;
-   try{snapshot=current();json=JSON.stringify(snapshot)}catch(e){halted=true;showError('Cloud save blocked: records are invalid',e);break}
-   if(bytes(json)>MAX_BYTES){halted=true;status('Cloud save blocked: snapshot exceeds 700 KB. Export a backup and reduce records.');break}
-   status('Saving admin snapshot…'); const expected=revision;
-   try{
-    await db.runTransaction(async tx=>{const ref=db.collection(COLLECTION).doc(DOC),before=await tx.get(ref);if(!before.exists)throw Error('Cloud is empty. Choose Initialize blank cloud before syncing.');const remote=before.data();if(remote.revision!==expected)throw Error('Revision conflict. A newer remote snapshot exists; your pending edits were not overwritten. Export a backup, reload, then reconcile.');tx.set(ref,{format:'mara-new-admin-snapshot',version:1,revision:expected+1,snapshot,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:ADMIN_UID},{merge:false})});
-    // Advance immediately; the listener may first receive our pending local write.
-    revision=expected+1;savedVersion=targetVersion;status('Cloud saved (admin pilot).');
-   }catch(e){halted=true;showError('Cloud save blocked',e);break}
-  }
- }finally{writing=false;if(!halted&&savedVersion<editVersion)queueDrain()}
+if(writing||halted||!initialized||!admin(auth&&auth.currentUser)||applyingRemote)return;writing=true;
+try{while(savedVersion<editVersion){const targetVersion=editVersion;let snapshot,json;try{snapshot=current();json=JSON.stringify(snapshot)}catch(e){halted=true;showError("Cloud save blocked: records are invalid",e);break}
+if(bytes(json)>MAX_BYTES){halted=true;status("Cloud save blocked: snapshot exceeds 700 KB. Export a backup and reduce records.");break}
+status("Saving admin snapshot…");const expected=revision;
+try{await db.runTransaction(async tx=>{const ref=db.collection(COLLECTION).doc(DOC),before=await tx.get(ref);if(!before.exists)throw Error("Cloud is empty. Choose Initialize blank cloud before syncing.");const remote=before.data();if(remote.revision!==expected)throw Error("Revision conflict. A newer remote snapshot exists; your pending edits were not overwritten. Export a backup, reload, then reconcile.");tx.set(ref,{format:"mara-new-admin-snapshot",version:1,revision:expected+1,snapshot,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:ADMIN_UID},{merge:false})});revision=expected+1;savedVersion=targetVersion;status("Cloud saved (admin pilot).")}catch(e){halted=true;showError("Cloud save blocked",e);break}}}finally{writing=false;if(!halted&&savedVersion<editVersion)queueDrain()}
 }
-function observe(){
- stop();const ref=db.collection(COLLECTION).doc(DOC);
- unsubscribe=ref.onSnapshot(snap=>{
-  if(!admin(auth&&auth.currentUser))return;
-  if(!snap.exists){initialized=false;revision=null;setLocked(true);status('Cloud is empty. Admin may initialize a BLANK cloud snapshot.');return}
-  const d=snap.data();
-  if(!d||d.format!=='mara-new-admin-snapshot'||d.version!==1||!Number.isSafeInteger(d.revision)||d.revision<0||!d.snapshot){initialized=false;setLocked(true);status('Cloud snapshot rejected: invalid format. Records remain locked.');return}
-  try{checkBackup(d.snapshot)}catch(e){initialized=false;setLocked(true);showError('Cloud snapshot rejected',e);return}
-  initialized=true;
-  // A local pending acknowledgement is never applied back into the model. It still
-  // advances the revision so a following queued edit compares against the right one.
-  if(snap.metadata&&snap.metadata.hasPendingWrites){revision=d.revision;setLocked(false);return}
-  if(revision===d.revision){setLocked(false);return}
-  if(writing||savedVersion<editVersion){halted=true;setLocked(true);status('Remote update detected while local edits are pending. Nothing was overwritten; export a backup, reload and reconcile.');return}
-  try{applyingRemote=true;restoreSchool(d.snapshot);revision=d.revision;savedVersion=editVersion;render();setLocked(false);status('Remote admin snapshot loaded (revision '+revision+').')}catch(e){initialized=false;setLocked(true);showError('Cloud snapshot rejected; records remain locked',e)}finally{applyingRemote=false}
- },e=>{initialized=false;setLocked(true);showError('Cloud listener failed',e)});
-}
-async function initializeBlank(){
- if(!admin(auth&&auth.currentUser))return;
- if(!confirm('Initialize the NEW cloud with a blank school snapshot? This does not upload any current local records.'))return;
- const blank=blankFrom(current()),raw=JSON.stringify(blank);if(bytes(raw)>MAX_BYTES){status('Blank initialization blocked: snapshot exceeds 700 KB.');return}
- try{await db.runTransaction(async tx=>{const ref=db.collection(COLLECTION).doc(DOC),before=await tx.get(ref);if(before.exists)throw Error('Cloud already exists. Reload or use Retry sync.');tx.set(ref,{format:'mara-new-admin-snapshot',version:1,revision:0,snapshot:blank,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:ADMIN_UID},{merge:false})});status('Blank cloud initialized. Waiting for authorization snapshot.')}catch(e){showError('Blank initialization blocked',e)}
-}
+function observe(){stop();const ref=db.collection(COLLECTION).doc(DOC);unsubscribe=ref.onSnapshot(snap=>{if(!admin(auth&&auth.currentUser))return;if(!snap.exists){initialized=false;revision=null;setLocked(true);status("Cloud is empty. Admin may initialize a BLANK cloud snapshot.");return}const d=snap.data();if(!d||d.format!=="mara-new-admin-snapshot"||d.version!==1||!Number.isSafeInteger(d.revision)||d.revision<0||!d.snapshot){initialized=false;setLocked(true);status("Cloud snapshot rejected: invalid format. Records remain locked.");return}try{checkBackup(d.snapshot)}catch(e){initialized=false;setLocked(true);showError("Cloud snapshot rejected",e);return}initialized=true;if(snap.metadata&&snap.metadata.hasPendingWrites){revision=d.revision;setLocked(false);return}if(revision===d.revision){setLocked(false);return}if(writing||savedVersion<editVersion){halted=true;setLocked(true);status("Remote update detected while local edits are pending. Nothing was overwritten; export a backup, reload and reconcile.");return}try{applyingRemote=true;restoreSchool(d.snapshot);revision=d.revision;savedVersion=editVersion;render();setLocked(false);status("Remote admin snapshot loaded (revision "+revision+").")}catch(e){initialized=false;setLocked(true);showError("Cloud snapshot rejected; records remain locked",e)}finally{applyingRemote=false}},e=>{initialized=false;setLocked(true);showError("Cloud listener failed",e)})}
+async function initializeBlank(){if(!admin(auth&&auth.currentUser))return;if(!confirm("Initialize the NEW cloud with a blank school snapshot? This does not upload any current local records."))return;const blank=blankFrom(current()),raw=JSON.stringify(blank);if(bytes(raw)>MAX_BYTES){status("Blank initialization blocked: snapshot exceeds 700 KB.");return}try{await db.runTransaction(async tx=>{const ref=db.collection(COLLECTION).doc(DOC),before=await tx.get(ref);if(before.exists)throw Error("Cloud already exists. Reload or use Retry sync.");tx.set(ref,{format:"mara-new-admin-snapshot",version:1,revision:0,snapshot:blank,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:ADMIN_UID},{merge:false})});status("Blank cloud initialized. Waiting for authorization snapshot.")}catch(e){showError("Blank initialization blocked",e)}}
 function markEdit(){if(initialized&&!applyingRemote&&admin(auth&&auth.currentUser)){editVersion++;queueDrain()}}
-function boot(){
- try{lockedBlank=blankFrom(current());setLocked(true);firebase.initializeApp(CONFIG);auth=firebase.auth();db=firebase.firestore()}catch(e){setLocked(true);showError('Firebase setup failed',e);return}
- el('cloudSignIn').onclick=async()=>{const email=el('cloudEmail').value.trim(),pass=el('cloudPassword').value;if(!email||!pass){status('Enter the admin email and password.');return}status('Signing in…');try{await auth.signInWithEmailAndPassword(email,pass)}catch(e){showError('Sign-in failed',e)}};
- el('cloudSignOut').onclick=()=>auth.signOut();el('cloudInitialize').onclick=initializeBlank;el('cloudRetry').onclick=()=>{if(admin(auth.currentUser)){halted=false;observe();queueDrain()}};
- auth.onAuthStateChanged(user=>{stop();initialized=false;revision=null;editVersion=0;savedVersion=0;halted=false;setUi(user);setLocked(true);if(!admin(user)){hideCachedRecords();if(user)auth.signOut();return}status('Admin authenticated. Checking isolated cloud…');observe()});
- // app.js dispatches this only after its lexical flushAutoSave successfully persists.
- document.addEventListener('mara:autosave',markEdit);
-}
-const start=()=>Promise.resolve(window.maraAppReady).then(boot).catch(e=>{console.error(e);document.getElementById('cloudStatus').textContent='App failed to load. Records remain locked.'});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+function boot(){try{lockedBlank=blankFrom(current());setLocked(true);if(firebase.apps&&firebase.apps.length)throw Error("Unexpected existing Firebase app. Test connection blocked.");firebase.initializeApp(CONFIG);auth=firebase.auth();db=firebase.firestore()}catch(e){setLocked(true);showError("Firebase setup failed",e);return}
+el("cloudSignIn").onclick=async()=>{if(ADMIN_UID==="TEST_ADMIN_NOT_CONFIGURED"){status("Dedicated test admin must be configured first.");return}const email=el("cloudEmail").value.trim(),pass=el("cloudPassword").value;if(!email||!pass){status("Enter the admin email and password.");return}status("Signing in…");try{await auth.signInWithEmailAndPassword(email,pass)}catch(e){showError("Sign-in failed",e)}};el("cloudSignOut").onclick=()=>auth.signOut();el("cloudInitialize").onclick=initializeBlank;el("cloudRetry").onclick=()=>{if(admin(auth.currentUser)){halted=false;observe();queueDrain()}};auth.onAuthStateChanged(user=>{stop();initialized=false;revision=null;editVersion=0;savedVersion=0;halted=false;setUi(user);setLocked(true);if(!admin(user)){hideCachedRecords();if(user)auth.signOut();return}status("Admin authenticated. Checking isolated cloud…");observe()});document.addEventListener("mara:autosave",markEdit)}
+const start=()=>Promise.resolve(window.maraAppReady).then(boot).catch(e=>{console.error(e);document.getElementById("cloudStatus").textContent="App failed to load. Records remain locked."});if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
