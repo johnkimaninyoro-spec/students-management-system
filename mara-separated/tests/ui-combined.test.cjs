@@ -1,0 +1,6 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const root=__dirname+'/../public/',base=fs.readFileSync(root+'index.html','utf8'),app=fs.readFileSync(root+'app.js','utf8'),mods=fs.readFileSync(root+'modules.html','utf8'),mjs=fs.readFileSync(root+'modules.js','utf8'),rules=fs.readFileSync(__dirname+'/../firestore.merged.rules','utf8');
+test('baseline remains the original application and links separately to modules',()=>{assert.match(base,/src="\/app\.js"/);assert.doesNotMatch(base,/modules\.html|modules\.js/);assert.match(app,/collection\(db,'staff'\)/);assert.match(app,/collection\(db,'attendance'\)/);assert.match(app,/function saveStaff/);assert.match(app,/function saveAttendance/);});
+test('modules page uses modules.js and has a baseline back link',()=>{assert.match(mods,/src="\/modules\.js"/);assert.doesNotMatch(mods,/src="\/app\.js"/);assert.match(mods,/Back to baseline school workspace/);});
+test('rule files retain immutable backend indexes and correction state',()=>{for(const s of ['match /paymentReferenceIndex','match /reversalIndex','match /departureIndex','match /returnIndex','match /markRevisionState','function markCorrection'])assert.ok(rules.includes(s),s);assert.doesNotMatch(mjs,/deleteDoc|delete\(/);});
