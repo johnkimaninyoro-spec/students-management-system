@@ -1,0 +1,63 @@
+// INSERT INSIDE the existing `match /testWorkspaces/modules-v1 { ... }` block, before catch-all.
+// Owner-only, archive-only recovery. No rule grants writes to live candidate paths.
+function recoveryId(id) { return id is string && id.matches('^[A-Za-z0-9][A-Za-z0-9_-]{0,119}$'); }
+function recoveryHash(h) { return h is string && h.matches('^[a-f0-9]{64}$'); }
+function recoveryTotals(v) { return v is map && v.size() <= 32; }
+function recoveryChunkPath(snapshotId, number) { return /databases/$(database)/documents/testWorkspaces/modules-v1/recoverySnapshots/$(snapshotId)/chunks/$(number); }
+function recoveryRootPath(snapshotId) { return /databases/$(database)/documents/testWorkspaces/modules-v1/recoverySnapshots/$(snapshotId); }
+function recoveryRootCreate(d) {
+ return d.keys().hasOnly(['format','version','projectId','sourceHash','sourceCreatedAt','totalRecords','totals','expectedChunks','state','completionVerification','createdAt','createdBy'])
+  && d.format == 'mara-candidate-backup' && d.version == 1 && d.projectId == 'mara-school-test'
+  && recoveryHash(d.sourceHash) && d.sourceCreatedAt is string && d.sourceCreatedAt.size() <= 40
+  && d.totalRecords is int && d.totalRecords >= 0 && d.totalRecords <= 4000
+  && recoveryTotals(d.totals) && d.expectedChunks is int && d.expectedChunks >= 1 && d.expectedChunks <= 16
+  && d.state == 'staging' && d.completionVerification == 'server-required-not-run'
+  && d.createdAt == request.time && d.createdBy == request.auth.uid;
+}
+// Exact fixed chunk IDs make duplicate indexes impossible. Completion confirms every
+// required archive slot exists. It cannot hash payloads; server-side verification is required.
+function requiredRecoveryChunks(snapshotId, count) {
+ return (count < 1 || exists(recoveryChunkPath(snapshotId,'00000')))
+  && (count < 2 || exists(recoveryChunkPath(snapshotId,'00001')))
+  && (count < 3 || exists(recoveryChunkPath(snapshotId,'00002')))
+  && (count < 4 || exists(recoveryChunkPath(snapshotId,'00003')))
+  && (count < 5 || exists(recoveryChunkPath(snapshotId,'00004')))
+  && (count < 6 || exists(recoveryChunkPath(snapshotId,'00005')))
+  && (count < 7 || exists(recoveryChunkPath(snapshotId,'00006')))
+  && (count < 8 || exists(recoveryChunkPath(snapshotId,'00007')))
+  && (count < 9 || exists(recoveryChunkPath(snapshotId,'00008')))
+  && (count < 10 || exists(recoveryChunkPath(snapshotId,'00009')))
+  && (count < 11 || exists(recoveryChunkPath(snapshotId,'00010')))
+  && (count < 12 || exists(recoveryChunkPath(snapshotId,'00011')))
+  && (count < 13 || exists(recoveryChunkPath(snapshotId,'00012')))
+  && (count < 14 || exists(recoveryChunkPath(snapshotId,'00013')))
+  && (count < 15 || exists(recoveryChunkPath(snapshotId,'00014')))
+  && (count < 16 || exists(recoveryChunkPath(snapshotId,'00015')));
+}
+function recoveryComplete(d, snapshotId) {
+ return d.diff(resource.data).affectedKeys().hasOnly(['state','completedAt','completedBy','completionVerification'])
+  && resource.data.state == 'staging' && d.state == 'complete'
+  && d.completionVerification == 'archive-slots-present-payload-digest-not-server-verified'
+  && d.completedAt == request.time && d.completedBy == request.auth.uid
+  && requiredRecoveryChunks(snapshotId, resource.data.expectedChunks);
+}
+match /recoverySnapshots/{snapshotId} {
+ allow get, list: if own();
+ allow create: if own() && recoveryId(snapshotId) && recoveryRootCreate(request.resource.data);
+ // Only a trusted server/admin workflow should make this transition after digest review.
+ allow update: if false;
+ allow delete: if false;
+ match /chunks/{chunkId} {
+  allow get, list: if own();
+  allow create: if own() && recoveryId(chunkId) && request.resource.data.keys().hasOnly(['index','recordCount','payload','sourceHash','createdAt','createdBy'])
+   && request.resource.data.index is int && request.resource.data.index >= 0 && request.resource.data.index < 16
+   && ((request.resource.data.index == 0 && chunkId == '00000') || (request.resource.data.index == 1 && chunkId == '00001') || (request.resource.data.index == 2 && chunkId == '00002') || (request.resource.data.index == 3 && chunkId == '00003') || (request.resource.data.index == 4 && chunkId == '00004') || (request.resource.data.index == 5 && chunkId == '00005') || (request.resource.data.index == 6 && chunkId == '00006') || (request.resource.data.index == 7 && chunkId == '00007') || (request.resource.data.index == 8 && chunkId == '00008') || (request.resource.data.index == 9 && chunkId == '00009') || (request.resource.data.index == 10 && chunkId == '00010') || (request.resource.data.index == 11 && chunkId == '00011') || (request.resource.data.index == 12 && chunkId == '00012') || (request.resource.data.index == 13 && chunkId == '00013') || (request.resource.data.index == 14 && chunkId == '00014') || (request.resource.data.index == 15 && chunkId == '00015'))
+   && request.resource.data.recordCount is int && request.resource.data.recordCount >= 1 && request.resource.data.recordCount <= 100
+   && request.resource.data.payload is string && request.resource.data.payload.size() <= 180000
+   && exists(recoveryRootPath(snapshotId)) && get(recoveryRootPath(snapshotId)).data.state == 'staging'
+   && request.resource.data.index < get(recoveryRootPath(snapshotId)).data.expectedChunks
+   && request.resource.data.sourceHash == get(recoveryRootPath(snapshotId)).data.sourceHash
+   && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+  allow update, delete: if false;
+ }
+}
