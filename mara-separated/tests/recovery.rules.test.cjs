@@ -1,0 +1,17 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');
+const {doc,setDoc,updateDoc,deleteDoc,serverTimestamp}=require('firebase/firestore');
+const OWNER='QDzGG9f4fPgEBdGKm93gbnOXeC63';
+const [host,portText]=(process.env.FIRESTORE_EMULATOR_HOST||'127.0.0.1:8080').split(':'),port=+portText; let env;
+const root=(db,id)=>doc(db,'testWorkspaces','modules-v1','recoverySnapshots',id);
+const chunk=(db,id,n='00000')=>doc(db,'testWorkspaces','modules-v1','recoverySnapshots',id,'chunks',n);
+const manifest=(chunks=1)=>({format:'mara-candidate-backup',version:1,projectId:'mara-school-test',sourceHash:'a'.repeat(64),sourceCreatedAt:'2026-11-07T08:00:00.000Z',totalRecords:1,totals:{classes:1},expectedChunks:chunks,state:'staging',completionVerification:'server-required-not-run',createdAt:serverTimestamp(),createdBy:OWNER});
+const payload=(index=0)=>({index,recordCount:1,payload:'[{"path":["classes","c1"],"data":{"$type":"map","value":{}}}]',sourceHash:'a'.repeat(64),createdAt:serverTimestamp(),createdBy:OWNER});
+test.before(async()=>env=await initializeTestEnvironment({projectId:'mara-recovery-rules',firestore:{host,port,rules:fs.readFileSync(__dirname+'/../firestore.merged.rules','utf8')}}));
+test.after(async()=>env?.cleanup());
+test.beforeEach(async()=>env.clearFirestore());
+test('non-owner cannot read or create recovery manifest or chunks',async()=>{const db=env.authenticatedContext('OTHER').firestore();await assertFails(setDoc(root(db,'r1'),manifest()));await assertFails(setDoc(chunk(db,'r1'),payload()));});
+test('owner can stage only a valid append-only manifest and correctly numbered chunk',async()=>{const db=env.authenticatedContext(OWNER).firestore();await assertSucceeds(setDoc(root(db,'r1'),manifest()));await assertSucceeds(setDoc(chunk(db,'r1'),payload()));await assertFails(setDoc(chunk(db,'r1','00001'),payload(0)));await assertFails(setDoc(chunk(db,'r1','00000'),payload(1)));});
+test('recovery chunks and manifest cannot be mutated, deleted, or client-completed',async()=>{const db=env.authenticatedContext(OWNER).firestore();await assertSucceeds(setDoc(root(db,'r1'),manifest()));await assertSucceeds(setDoc(chunk(db,'r1'),payload()));await assertFails(updateDoc(chunk(db,'r1'),{payload:'forged'}));await assertFails(deleteDoc(chunk(db,'r1')));await assertFails(deleteDoc(root(db,'r1')));await assertFails(updateDoc(root(db,'r1'),{state:'complete',completedAt:new Date(),completedBy:OWNER,completionVerification:'archive-slots-present-payload-digest-not-server-verified'}));});
+test('manifest cannot claim completion when a required chunk is missing',async()=>{const db=env.authenticatedContext(OWNER).firestore();await assertSucceeds(setDoc(root(db,'r2'),manifest(2)));await assertSucceeds(setDoc(chunk(db,'r2','00000'),payload(0)));await assertFails(updateDoc(root(db,'r2'),{state:'complete',completedAt:new Date(),completedBy:OWNER,completionVerification:'archive-slots-present-payload-digest-not-server-verified'}));});
