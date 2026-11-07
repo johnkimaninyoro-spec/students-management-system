@@ -1,1 +1,52 @@
-// source-only frozen sync
+// Insert inside match /testWorkspaces/modules-v1, before its final catch-all.
+// This module deliberately uses the candidate's real base collections:
+// classes, learners and candidateRecords (terms/subjects), not a second /new-admin tree.
+function opText(v,min,max){ return v is string && v.size()>=min && v.size()<=max; }
+function opStaffPath(id){ return /databases/$(database)/documents/testWorkspaces/modules-v1/operationsStaff/$(id); }
+function opStaffHistoryPath(id,rid){ return /databases/$(database)/documents/testWorkspaces/modules-v1/operationsStaff/$(id)/history/$(rid); }
+function opAttendancePath(id){ return /databases/$(database)/documents/testWorkspaces/modules-v1/operationsAttendance/$(id); }
+function opAttendanceHistoryPath(id,rid){ return /databases/$(database)/documents/testWorkspaces/modules-v1/operationsAttendance/$(id)/history/$(rid); }
+function opLessonPath(id){ return /databases/$(database)/documents/testWorkspaces/modules-v1/operationsTimetable/$(id); }
+function opLessonHistoryPath(id,rid){ return /databases/$(database)/documents/testWorkspaces/modules-v1/operationsTimetable/$(id)/history/$(rid); }
+function opAudit(d,rev,action){ return d.keys().hasOnly(['revision','action','reason','changedBy','changedAt']) && d.revision==rev && d.action==action && opText(d.reason,3,200) && d.changedBy==request.auth.uid && d.changedAt==request.time; }
+function opStaff(d){ return d.keys().hasOnly(['code','name','jobTitle','active','revision','historyId','createdAt','updatedAt']) && opText(d.code,1,40) && opText(d.name,1,100) && opText(d.jobTitle,1,100) && d.active is bool && d.revision is int && d.revision>=1 && d.historyId=='r'+string(d.revision); }
+match /operationsStaff/{id} {
+ allow read: if owner();
+ allow create: if owner() && opStaff(request.resource.data) && request.resource.data.revision==1 && request.resource.data.createdAt==request.time && request.resource.data.updatedAt==request.time && getAfter(opStaffHistoryPath(id,'r1')).data.revision==1 && opAudit(getAfter(opStaffHistoryPath(id,'r1')).data,1,'created');
+ // Code is immutable. Name/job title may be corrected only with a new immutable revision audit.
+ allow update: if owner() && opStaff(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','jobTitle','active','revision','historyId','updatedAt']) && request.resource.data.code==resource.data.code && request.resource.data.revision==resource.data.revision+1 && request.resource.data.updatedAt==request.time && ((request.resource.data.name!=resource.data.name || request.resource.data.jobTitle!=resource.data.jobTitle) && request.resource.data.active==resource.data.active && opAudit(getAfter(opStaffHistoryPath(id,'r'+string(request.resource.data.revision))).data,request.resource.data.revision,'details-corrected') || request.resource.data.name==resource.data.name && request.resource.data.jobTitle==resource.data.jobTitle && opAudit(getAfter(opStaffHistoryPath(id,'r'+string(request.resource.data.revision))).data,request.resource.data.revision,request.resource.data.active?'restored':'archived'));
+ allow delete: if false;
+ match /history/{rid} { allow read:if owner(); allow create:if owner() && !exists(opStaffHistoryPath(id,rid)) && getAfter(opStaffPath(id)).data.historyId==rid && getAfter(opStaffPath(id)).data.revision==request.resource.data.revision && opAudit(request.resource.data,request.resource.data.revision,request.resource.data.action); allow update,delete:if false; }
+}
+function opAttendance(d,id){ return d.keys().hasOnly(['date','classId','learnerId','status','revision','historyId','createdAt','updatedAt']) && validDate(d.date) && id==d.date+'_'+d.classId+'_'+d.learnerId && exists(candidateClassPath(d.classId)) && exists(candidateLearnerPath(d.learnerId)) && get(candidateLearnerPath(d.learnerId)).data.classId==d.classId && d.status in ['present','absent','late','excused'] && d.revision is int && d.revision>=1 && d.historyId=='r'+string(d.revision); }
+match /operationsAttendance/{id} {
+ allow read:if owner();
+ allow create:if owner() && opAttendance(request.resource.data,id) && request.resource.data.revision==1 && request.resource.data.createdAt==request.time && request.resource.data.updatedAt==request.time && opAudit(getAfter(opAttendanceHistoryPath(id,'r1')).data,1,'created');
+ allow update:if owner() && opAttendance(request.resource.data,id) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','revision','historyId','updatedAt']) && request.resource.data.revision==resource.data.revision+1 && request.resource.data.updatedAt==request.time && opAudit(getAfter(opAttendanceHistoryPath(id,'r'+string(request.resource.data.revision))).data,request.resource.data.revision,'corrected');
+ allow delete:if false;
+ match /history/{rid} { allow read:if owner(); allow create:if owner() && !exists(opAttendanceHistoryPath(id,rid)) && getAfter(opAttendancePath(id)).data.historyId==rid && getAfter(opAttendancePath(id)).data.revision==request.resource.data.revision && opAudit(request.resource.data,request.resource.data.revision,request.resource.data.action); allow update,delete:if false; }
+}
+// Read each related record once: a four-hour lesson writes sixteen slot locks, so repeated
+// get/exists evaluations here can exhaust Firestore's 20-call batched-write limit.
+function opLesson(d){
+ let term=get(/databases/$(database)/documents/testWorkspaces/modules-v1/candidateRecords/$(d.termId));
+ let subject=get(/databases/$(database)/documents/testWorkspaces/modules-v1/candidateRecords/$(d.subjectId));
+ let staff=get(opStaffPath(d.teacherId));
+ return d.keys().hasOnly(['classId','subjectId','teacherId','termId','day','startMinute','endMinute','active','revision','historyId','createdAt','updatedAt']) && term.data.kind=='term' && exists(/databases/$(database)/documents/testWorkspaces/modules-v1/classes/$(d.classId)) && subject.data.kind=='subject' && subject.data.classId==d.classId && staff.data.active==true && d.day is int && d.day>=1 && d.day<=5 && d.startMinute is int && d.endMinute is int && d.startMinute>=0 && d.endMinute<=1440 && d.startMinute<d.endMinute && d.endMinute-d.startMinute<=240 && d.startMinute%30==0 && d.endMinute%30==0 && d.active is bool && d.revision is int && d.revision>=1 && d.historyId=='r'+string(d.revision);
+}
+match /operationsTimetable/{id} {
+ allow read:if owner();
+ allow create:if owner() && opLesson(request.resource.data) && request.resource.data.active==true && request.resource.data.revision==1 && request.resource.data.createdAt==request.time && request.resource.data.updatedAt==request.time && opAudit(getAfter(opLessonHistoryPath(id,'r1')).data,1,'created');
+ // Cancellation retains the lesson and creates immutable history; no deletion or content rewrite.
+ allow update:if owner() && opLesson(request.resource.data) && resource.data.active==true && request.resource.data.active==false && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','revision','historyId','updatedAt']) && request.resource.data.revision==resource.data.revision+1 && request.resource.data.updatedAt==request.time && opAudit(getAfter(opLessonHistoryPath(id,'r'+string(request.resource.data.revision))).data,request.resource.data.revision,'cancelled');
+ allow delete:if false;
+ match /history/{rid}{allow read:if owner();allow create:if owner() && !exists(opLessonHistoryPath(id,rid)) && getAfter(opLessonPath(id)).data.historyId==rid && getAfter(opLessonPath(id)).data.revision==request.resource.data.revision && opAudit(request.resource.data,request.resource.data.revision,request.resource.data.action);allow update,delete:if false;}
+}
+// Each 30-minute class/teacher slot is term-scoped. An inactive lock is reusable only by a
+// new revision/lesson; cancellation may only deactivate the matching active lesson lock.
+function opSlotShape(d){return d.keys().hasOnly(['entryId','active','revision','createdAt','updatedAt']) && d.entryId is string && d.active is bool && d.revision is int && d.revision>=1 && d.createdAt is timestamp && d.updatedAt==request.time;}
+function opSlotCreate(d,lessonId){return opSlotShape(d) && d.entryId==lessonId && d.active==true && d.revision==1 && d.createdAt==request.time && getAfter(opLessonPath(lessonId)).data.active==true && getAfter(opLessonPath(lessonId)).data.revision==1;}
+function opSlotReuse(d,lessonId){return opSlotShape(d) && resource.data.active==false && d.entryId==lessonId && d.active==true && d.revision==resource.data.revision+1 && d.createdAt==resource.data.createdAt && getAfter(opLessonPath(lessonId)).data.active==true && getAfter(opLessonPath(lessonId)).data.revision==1;}
+function opSlotRelease(d){return opSlotShape(d) && resource.data.active==true && d.entryId==resource.data.entryId && d.active==false && d.revision==resource.data.revision+1 && d.createdAt==resource.data.createdAt && getAfter(opLessonPath(d.entryId)).data.active==false && getAfter(opLessonPath(d.entryId)).data.revision==resource.data.revision+1;}
+match /operationsClassSlots/{id}{allow read:if owner();allow create:if owner()&&opSlotCreate(request.resource.data,request.resource.data.entryId);allow update:if owner()&&(opSlotReuse(request.resource.data,request.resource.data.entryId)||opSlotRelease(request.resource.data));allow delete:if false;}
+match /operationsTeacherSlots/{id}{allow read:if owner();allow create:if owner()&&opSlotCreate(request.resource.data,request.resource.data.entryId);allow update:if owner()&&(opSlotReuse(request.resource.data,request.resource.data.entryId)||opSlotRelease(request.resource.data));allow delete:if false;}
