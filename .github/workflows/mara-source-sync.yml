@@ -1,0 +1,36 @@
+name: Materialize verified Mara source
+on:
+  push:
+    branches: [mara-separated-release]
+    paths: ['.github/workflows/mara-source-sync.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore reviewed source bundle
+        shell: python
+        run: |
+          import pathlib,json,zlib,base64,hashlib
+          root=pathlib.Path('.')
+          bundle=''.join(p.read_text().strip() for p in sorted(root.glob('_mara_import/part-*.txt')))
+          assert hashlib.sha256(bundle.encode()).hexdigest()=='c892764ebc609ebd43329f83712a8507d4730fbb194f1ad4e92e27b576d63c52'
+          files=json.loads(zlib.decompress(base64.b64decode(bundle)))
+          assert len(files)==19
+          for item in files:
+            p=pathlib.Path(item['path'])
+            assert p.parts[0]=='mara-separated' and '..' not in p.parts
+            p.parent.mkdir(parents=True,exist_ok=True)
+            p.write_text(item['content'])
+      - name: Verify client tests
+        run: node --test mara-separated/tests/*.test.cjs
+      - name: Commit verified source
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add mara-separated
+          git diff --cached --quiet || git commit -m 'Materialize verified Mara hosted source [skip ci]'
+          git push origin HEAD:mara-separated-release
