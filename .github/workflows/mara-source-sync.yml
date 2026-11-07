@@ -25,7 +25,11 @@ jobs:
             assert p.parts[0]=='mara-separated' and '..' not in p.parts
             p.parent.mkdir(parents=True,exist_ok=True)
             p.write_text(item['content'])
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Verify client tests
+        timeout-minutes: 2
         run: node --test mara-separated/tests/*.test.cjs
       - name: Commit verified source
         run: |
