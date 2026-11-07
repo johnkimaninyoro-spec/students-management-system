@@ -1,0 +1,7 @@
+node_modules/
+.firebase/
+*.log
+*.private.*
+release-evidence/
+online-rules-review/
+*.zip
